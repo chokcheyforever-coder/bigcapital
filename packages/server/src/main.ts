@@ -11,6 +11,13 @@ global.__static_dirname = path.join(__dirname, '../static');
 global.__views_dirname = path.join(global.__static_dirname, '/views');
 global.__images_dirname = path.join(global.__static_dirname, '/images');
 
+// 103 DiTech: one tenant's failed background promise (e.g. an invite email
+// when SMTP is unreachable) must not crash the process for every tenant on
+// the cell. Node 18 exits on unhandled rejections by default; log instead.
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason);
+});
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
