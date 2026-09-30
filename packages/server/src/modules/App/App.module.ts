@@ -105,6 +105,7 @@ import { ExchangeRatesModule } from '../ExchangeRates/ExchangeRates.module';
 import { TenantModelsInitializeModule } from '../Tenancy/TenantModelsInitialize.module';
 import { SocketModule } from '../Socket/Socket.module';
 import { EEModule } from '../EE/EE.module';
+import { DiTechModule } from '../DiTech/DiTech.module';
 import { AnalyticsModule } from '../Analytics/Analytics.module';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AppThrottleModule } from './AppThrottle.module';
@@ -261,6 +262,8 @@ import { AppThrottleModule } from './AppThrottle.module';
     ContactsModule,
     SocketModule,
     EEModule,
+    // Must stay after AuthModule/TenancyModule: its global guard runs last.
+    DiTechModule,
     AnalyticsModule,
     ExchangeRatesModule,
   ],
