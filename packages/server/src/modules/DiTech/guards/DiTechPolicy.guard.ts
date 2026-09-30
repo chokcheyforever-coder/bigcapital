@@ -45,6 +45,9 @@ export class DiTechPolicyGuard implements CanActivate {
     const path: string = req.path ?? req.url;
     // Internal routes have their own guard.
     if (path.startsWith('/api/ditech/')) return true;
+    // Container health check (Dockerfile HEALTHCHECK) comes from inside the
+    // container, not the gateway. It only pings the system DB.
+    if (req.method === 'GET' && path === '/api/system_db') return true;
 
     const { enforceGateway } = ditechConfig();
     const pinned = verifiedPinnedOrg(req.headers);
