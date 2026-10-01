@@ -20,7 +20,8 @@ if npx tsc --noEmit -p tsconfig.json > "$out/typecheck.log" 2>&1; then echo "typ
 status=0
 if [ "$MODE" = all ] || [ "$MODE" = unit ]; then
   echo "== unit tests"
-  npx jest --ci > "$out/unit.log" 2>&1 || status=1
+  # Two workers: more get killed for memory in a default Docker Desktop VM.
+  npx jest --ci --maxWorkers=2 > "$out/unit.log" 2>&1 || status=1
   grep -E "^(Tests|Test Suites):" "$out/unit.log"
   grep -E "^FAIL " "$out/unit.log" | sort -u
 fi
