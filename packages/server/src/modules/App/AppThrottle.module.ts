@@ -1,7 +1,16 @@
-import { Module } from '@nestjs/common';
+import { ExecutionContext, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+
+// 103 DiTech: @nestjs/throttler applies every named throttler to every route.
+// The strict "auth" limit (30/min) is meant for the sign-in routes, which
+// opt in with @Throttle({ auth: {} }); without this check it also capped
+// every other route (lists, reports, journals) at 30 requests a minute.
+export const AUTH_THROTTLE_METADATA = 'THROTTLER:LIMITauth';
+export const skipAuthThrottle = (context: ExecutionContext): boolean =>
+  !Reflect.hasMetadata(AUTH_THROTTLE_METADATA, context.getHandler()) &&
+  !Reflect.hasMetadata(AUTH_THROTTLE_METADATA, context.getClass());
 
 @Module({
   imports: [
@@ -53,6 +62,7 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
               name: 'auth',
               ttl: authTtl,
               limit: authLimit,
+              skipIf: skipAuthThrottle,
             },
           ],
           storage: new ThrottlerStorageRedisService({

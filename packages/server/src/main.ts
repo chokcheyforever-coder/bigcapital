@@ -23,6 +23,11 @@ async function bootstrap() {
     rawBody: true,
   });
   app.set('query parser', 'extended');
+  // 103 DiTech: behind Traefik every request comes from the proxy's address,
+  // so rate limits keyed by IP were shared by all tenants on the cell. Trust
+  // exactly the proxy hops in front of the server (TRUST_PROXY_HOPS, 0 = none).
+  const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS ?? 0);
+  if (trustProxyHops > 0) app.set('trust proxy', trustProxyHops);
   app.setGlobalPrefix('/api');
 
   // create and mount the middleware manually here
