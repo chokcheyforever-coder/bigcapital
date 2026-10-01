@@ -1,5 +1,6 @@
 # Stage 1: Build
-FROM node:18.16.0-alpine AS builder
+# 103 DiTech: Node 22 LTS (18 is end-of-life); the unit and e2e suites pass on 22.
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -27,7 +28,7 @@ COPY --chown=node:node ./packages/server ./packages/server
 RUN pnpm run build:server --skip-nx-cache
 
 # Stage 2: Production
-FROM node:18.16.0-alpine AS production
+FROM node:22-alpine AS production
 
 WORKDIR /app
 
