@@ -11,6 +11,8 @@ export interface DiTechPolicy {
   status: PolicyStatus;
   pinned_host: string;
   entitlements: Entitlements;
+  /** Organization base currency (tenants_metadata), for the multi_currency gate. Read-only. */
+  base_currency?: string;
 }
 
 /** Plan features and the API route prefixes they unlock (architecture.md §5). */

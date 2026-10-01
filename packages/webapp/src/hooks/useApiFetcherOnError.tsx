@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useAuthActions, useSetGlobalErrors } from './state';
 import type { ApiError } from 'openapi-typescript-fetch';
+import { PLAN_ERROR_CODES } from '@/ditech/plan';
 
 /**
  * Returns a stable callback that translates SDK fetcher rejections into
@@ -18,6 +19,10 @@ export function useApiFetcherOnError() {
       const { status, data } = (error as ApiError) ?? {};
       if (typeof status !== 'number') return;
 
+      if ((status === 402 || status === 403) && PLAN_ERROR_CODES.includes(data?.code)) {
+        setGlobalErrors({ planUpgrade: { message: data?.message } });
+        return;
+      }
       if (status >= 500) {
         setGlobalErrors({ something_wrong: true });
       }

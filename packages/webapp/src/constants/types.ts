@@ -26,6 +26,8 @@ export interface PreferencesMenuItem {
   disabled?: boolean;
   href: string;
   feature?: string;
+  /** 103 DiTech plan feature required to use this page (shown locked otherwise). */
+  planFeature?: string;
 }
 
 export interface QuickNewActionOption {

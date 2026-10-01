@@ -12,6 +12,7 @@ import { DiTechTenantsService } from './services/DiTechTenants.service';
 import { DiTechSsoService } from './services/DiTechSso.service';
 import { DiTechTenantsController } from './controllers/DiTechTenants.controller';
 import { DiTechSsoController } from './controllers/DiTechSso.controller';
+import { DiTechPlanController } from './controllers/DiTechPlan.controller';
 
 /**
  * 103 DiTech Cloud Accounting integration: internal provisioning API, SSO
@@ -29,7 +30,7 @@ import { DiTechSsoController } from './controllers/DiTechSso.controller';
       }),
     }),
   ],
-  controllers: [DiTechTenantsController, DiTechSsoController],
+  controllers: [DiTechTenantsController, DiTechSsoController, DiTechPlanController],
   providers: [
     DiTechPolicyService,
     DiTechTenantsService,

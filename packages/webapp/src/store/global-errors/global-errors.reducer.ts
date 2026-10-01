@@ -13,6 +13,8 @@ export interface GlobalErrorsData {
   transactionsLocked?: TransactionsLockedError;
   subscriptionInactive?: boolean;
   userInactive?: boolean;
+  /** 103 DiTech: request blocked by the subscription plan. */
+  planUpgrade?: { message?: string };
 }
 
 interface GlobalErrorsState {

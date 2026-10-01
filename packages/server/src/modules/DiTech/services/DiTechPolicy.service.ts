@@ -24,8 +24,9 @@ export class DiTechPolicyService {
 
     const row = await this.systemKnex('ditech_policies as p')
       .join('tenants as t', 't.id', 'p.tenant_id')
+      .leftJoin('tenants_metadata as m', 'm.tenant_id', 't.id')
       .where('t.organization_id', organizationId)
-      .first('p.company_ref', 'p.status', 'p.pinned_host', 'p.entitlements');
+      .first('p.company_ref', 'p.status', 'p.pinned_host', 'p.entitlements', 'm.base_currency');
     // The system knex returns camelCase keys (see SystemDB.module.ts).
     const policy: DiTechPolicy | null = row
       ? {
@@ -33,6 +34,7 @@ export class DiTechPolicyService {
           status: row.status,
           pinned_host: row.pinnedHost,
           entitlements: typeof row.entitlements === 'string' ? JSON.parse(row.entitlements) : row.entitlements,
+          base_currency: row.baseCurrency ?? undefined,
         }
       : null;
     this.cache.set(organizationId, { at: Date.now(), policy });

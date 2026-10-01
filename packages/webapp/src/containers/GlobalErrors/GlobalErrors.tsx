@@ -1,6 +1,7 @@
 import { Intent } from '@blueprintjs/core';
 import * as FF from 'fp-ts/function';
 import intl from 'react-intl-universal';
+import { portalUrl } from '@/ditech/plan';
 import { withGlobalErrors } from './withGlobalErrors';
 import { withGlobalErrorsActions } from './withGlobalErrorsActions';
 import type { WithGlobalErrorsProps } from './withGlobalErrors';
@@ -11,6 +12,7 @@ let toastKeySomethingWrong: string | undefined;
 let toastKeySessionExpired: string | undefined;
 let toastKeyTooManyRequests: string | undefined;
 let toastKeyAccessDenied: string | undefined;
+let toastKeyPlanUpgrade: string | undefined;
 
 interface GlobalErrorsInnerProps
   extends WithGlobalErrorsProps,
@@ -57,6 +59,24 @@ function GlobalErrorsInner({
         },
       },
       toastKeyTooManyRequests,
+    );
+  }
+  if (globalErrors.planUpgrade) {
+    toastKeyPlanUpgrade = AppToaster.show(
+      {
+        message: globalErrors.planUpgrade.message || intl.get('ditech.upgrade.feature_locked'),
+        intent: Intent.WARNING,
+        icon: 'lock',
+        timeout: 10000,
+        action: {
+          text: intl.get('ditech.upgrade.button'),
+          onClick: () => window.location.assign(portalUrl()),
+        },
+        onDismiss: () => {
+          globalErrorsSet({ planUpgrade: undefined });
+        },
+      },
+      toastKeyPlanUpgrade,
     );
   }
   if (globalErrors.access_denied) {

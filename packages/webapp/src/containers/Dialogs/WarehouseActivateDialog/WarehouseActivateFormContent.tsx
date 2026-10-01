@@ -8,12 +8,7 @@ export function WarehouseActivateFormContent(): React.ReactElement {
   return (
     <Form>
       <div className={Classes.DIALOG_BODY}>
-        <p
-          className="paragraph"
-          dangerouslySetInnerHTML={{
-            __html: intl.getHTML('warehouse_activate.dialog_paragraph'),
-          }}
-        />
+        <p className="paragraph">{intl.getHTML('warehouse_activate.dialog_paragraph')}</p>
 
         <ul className="paragraph list">
           <li>{intl.get('warehouse_activate.dialog_paragraph.line_1')}</li>

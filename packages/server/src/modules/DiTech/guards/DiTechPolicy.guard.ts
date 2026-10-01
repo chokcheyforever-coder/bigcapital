@@ -90,12 +90,28 @@ export class DiTechPolicyGuard implements CanActivate {
         throw deny(403, 'FEATURE_NOT_IN_PLAN', `Your plan does not include ${feature.replace('_', ' ')}.`);
       }
     }
+    if (!features.includes('multi_currency') && this.usesForeignCurrency(req, path, policy.base_currency)) {
+      throw deny(403, 'FEATURE_NOT_IN_PLAN', 'Your plan does not include multi-currency.');
+    }
     if (getAuthApiKey(req.headers['authorization'] ?? '') && !features.includes('api_access')) {
       throw deny(403, 'FEATURE_NOT_IN_PLAN', 'Your plan does not include API access.');
     }
 
     await this.enforceLimits(req, path, policy.entitlements);
     return true;
+  }
+
+  /**
+   * A second currency enters a company only through new currencies or
+   * customers, vendors and accounts whose currency differs from the base
+   * currency; transactions inherit it from those. Existing records are left
+   * alone, so a downgrade never breaks recorded data.
+   */
+  private usesForeignCurrency(req: any, path: string, baseCurrency?: string): boolean {
+    if (SAFE_METHODS.has(req.method)) return false;
+    if (req.method === 'POST' && /^\/api\/currencies\/?$/.test(path)) return true;
+    const code = req.body?.currency_code ?? req.body?.currencyCode;
+    return typeof code === 'string' && !!baseCurrency && code.toUpperCase() !== baseCurrency.toUpperCase();
   }
 
   private async enforceLimits(req: any, path: string, limits: { max_users: number; storage_mb: number }) {

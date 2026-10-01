@@ -45,14 +45,17 @@ export const PreferencesMenu: PreferencesMenuItem[] = [
   {
     text: <T id={'currencies'} />,
     href: '/preferences/currencies',
+    planFeature: 'multi_currency',
   },
   {
     text: <T id={'branches.label'} />,
     href: '/preferences/branches',
+    planFeature: 'multi_branch',
   },
   {
     text: <T id={'warehouses.label'} />,
     href: '/preferences/warehouses',
+    planFeature: 'inventory',
   },
   {
     text: <T id={'accountant'} />,
@@ -78,6 +81,7 @@ export const PreferencesMenu: PreferencesMenuItem[] = [
     text: 'API Keys',
     disabled: false,
     href: '/preferences/api-keys',
+    planFeature: 'api_access',
   },
   {
     text: <T id={'sms_integration.label'} />,

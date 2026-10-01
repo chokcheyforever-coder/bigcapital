@@ -1,0 +1,66 @@
+# 103 DiTech: builds the BigCapital server and webapp images from
+# ditech/main on Linux (the repo has both modules/EE and modules/ee, which
+# case-insensitive macOS checkouts merge) and publishes them to GHCR for the
+# cells to pull.
+name: DiTech images
+
+on:
+  push:
+    branches: [ditech/main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ditech-images-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - app: server
+            check: 'test -s packages/server/dist/main.js && test -s packages/server/dist/modules/DiTech/DiTech.module.js'
+            entrypoint: sh
+          - app: webapp
+            check: 'test -s /usr/share/nginx/html/index.html'
+            entrypoint: sh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/bigcapital-${{ matrix.app }}
+          tags: |
+            type=raw,value=ditech-main
+            type=sha,prefix=sha-,format=short
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packages/${{ matrix.app }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+      - name: Smoke-check the image
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/bigcapital-${{ matrix.app }}:ditech-main
+          docker pull "$IMAGE"
+          # Guards against a truncated build (main.js once came out empty).
+          docker run --rm --entrypoint ${{ matrix.entrypoint }} "$IMAGE" -c '${{ matrix.check }} && echo image ok'
