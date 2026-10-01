@@ -1,22 +1,47 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { RedisService } from '@liaoliaots/nestjs-redis';
+import type { Redis } from 'ioredis';
 import { Knex } from 'knex';
 import { SystemKnexConnection } from '../../System/SystemDB/SystemDB.constants';
 import { DiTechPolicy } from '../DiTech.types';
 
 const CACHE_TTL_MS = 30_000;
+export const POLICY_INVALIDATE_CHANNEL = 'ditech:policy:invalidate';
 
 /**
- * Reads and writes ditech_policies. Lookups are cached in-process for 30 s
- * and invalidated on write (single server process per cell for now).
+ * Reads and writes ditech_policies. Lookups are cached in-process for 30 s.
+ * A cell runs several server processes (replicas), so a write is announced
+ * on Redis and every process drops its cached copy; if a message is lost,
+ * the 30 s expiry still bounds how stale a policy can be.
  */
 @Injectable()
-export class DiTechPolicyService {
+export class DiTechPolicyService implements OnModuleInit, OnModuleDestroy {
   private readonly cache = new Map<string, { at: number; policy: DiTechPolicy | null }>();
+  private readonly logger = new Logger(DiTechPolicyService.name);
+  private subscriber?: Redis;
 
   constructor(
     @Inject(SystemKnexConnection)
     private readonly systemKnex: Knex,
+    private readonly redisService: RedisService,
   ) {}
+
+  async onModuleInit() {
+    try {
+      this.subscriber = this.redisService.getOrThrow().duplicate();
+      this.subscriber.on('message', (channel, organizationId) => {
+        if (channel === POLICY_INVALIDATE_CHANNEL) this.cache.delete(organizationId);
+      });
+      this.subscriber.on('error', (err) => this.logger.warn(`policy invalidation subscriber: ${err.message}`));
+      await this.subscriber.subscribe(POLICY_INVALIDATE_CHANNEL);
+    } catch (err: any) {
+      this.logger.warn(`policy invalidation unavailable, relying on the ${CACHE_TTL_MS / 1000}s expiry: ${err?.message}`);
+    }
+  }
+
+  async onModuleDestroy() {
+    await this.subscriber?.quit().catch(() => undefined);
+  }
 
   async getByOrganization(organizationId: string): Promise<DiTechPolicy | null> {
     const hit = this.cache.get(organizationId);
@@ -51,6 +76,22 @@ export class DiTechPolicyService {
       updated_at: new Date(),
     };
     await (trx ?? this.systemKnex)('ditech_policies').insert(row).onConflict('tenant_id').merge();
+    if (trx) {
+      // Announce only once committed: earlier, another process could re-read
+      // the old row and cache it again.
+      trx.executionPromise.then(() => this.invalidate(organizationId), () => undefined);
+    } else {
+      await this.invalidate(organizationId);
+    }
+  }
+
+  /** Drops the cached policy here and in every other server process of the cell. */
+  async invalidate(organizationId: string) {
     this.cache.delete(organizationId);
+    try {
+      await this.redisService.getOrThrow().publish(POLICY_INVALIDATE_CHANNEL, organizationId);
+    } catch (err: any) {
+      this.logger.warn(`policy invalidation not published for ${organizationId}: ${err?.message}`);
+    }
   }
 }
