@@ -43,5 +43,12 @@ async function bootstrap() {
   SwaggerModule.setup('swagger', app, documentFactory);
 
   await app.listen(process.env.PORT ?? 3000);
+
+  // 103 DiTech: keep idle connections open longer than Traefik does (90 s),
+  // so the proxy never reuses a connection Node is closing (Node's default
+  // 5 s caused occasional 502s under load).
+  const server = app.getHttpServer();
+  server.keepAliveTimeout = 95_000;
+  server.headersTimeout = 96_000;
 }
 bootstrap();
