@@ -1,0 +1,50 @@
+# 103 DiTech: the server's unit and e2e tests (accounting regression) in
+# Docker, on the MariaDB version production uses. Same steps as
+# .github/workflows/server-tests.yml, which only runs on upstream branches.
+#
+#   docker/ditech-test/run.sh            # unit + e2e
+#   docker/ditech-test/run.sh unit       # unit tests only (no database)
+#   docker/ditech-test/run.sh e2e balance-sheet   # e2e files matching a pattern
+#
+# The source is copied into the ditech-fork-src volume (node_modules kept
+# between runs); results go to docker/ditech-test/out/.
+
+name: ditech-fork-test
+
+services:
+  mariadb:
+    image: mariadb:10.11
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: bigcapital_system
+      MARIADB_USER: bigcapital
+      MARIADB_PASSWORD: bigcapital
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    tmpfs: [/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      retries: 30
+
+  redis:
+    image: redis:7.4-alpine
+
+  runner:
+    image: node:18.16.1-bookworm
+    working_dir: /src
+    volumes:
+      - ditech-fork-src:/src
+      - ./out:/out
+      - ./inside.sh:/inside.sh:ro
+    environment:
+      NODE_OPTIONS: --max-old-space-size=6144
+    command: ["bash", "/inside.sh"]
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+volumes:
+  ditech-fork-src:
+    external: true
