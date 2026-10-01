@@ -90,7 +90,15 @@ kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null
 [ "$state" = completed ] || { echo "organization build: $state"; tail -40 "$out/server.log"; exit 1; }
 
 echo "== e2e tests ${PATTERN:+($PATTERN)}"
-npx jest --ci --config ./test/jest-e2e.json --forceExit ${PATTERN:+"$PATTERN"} > "$out/e2e.log" 2>&1 || status=1
-grep -E "^(Tests|Test Suites):" "$out/e2e.log"
+# In shards, each its own process (as upstream CI does): one jest process
+# for all files runs out of memory.
+shards="${SHARDS:-6}"
+[ -n "$PATTERN" ] && shards=1
+: > "$out/e2e.log"
+for i in $(seq 1 "$shards"); do
+  npx jest --ci --config ./test/jest-e2e.json --forceExit --shard="$i/$shards" ${PATTERN:+"$PATTERN"} > "$out/e2e-$i.log" 2>&1 || status=1
+  cat "$out/e2e-$i.log" >> "$out/e2e.log"
+  echo "shard $i/$shards: $(grep -E "^Tests:" "$out/e2e-$i.log" || echo "no summary (killed?)")"
+done
 grep -E "^FAIL " "$out/e2e.log" | sort -u
 exit $status

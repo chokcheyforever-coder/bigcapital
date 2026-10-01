@@ -37,7 +37,7 @@ services:
       - ./out:/out
       - ./inside.sh:/inside.sh:ro
     environment:
-      NODE_OPTIONS: --max-old-space-size=6144
+      NODE_OPTIONS: --max-old-space-size=4096
     command: ["bash", "/inside.sh"]
     depends_on:
       mariadb:
