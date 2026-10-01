@@ -7,9 +7,11 @@ repo="$(cd "$here/../.." && pwd)"
 mode="${1:-all}"
 pattern="${2:-}"
 
-docker volume create ditech-fork-src >/dev/null
+export NODE_IMAGE="${NODE_IMAGE:-node:18.16.1-bookworm}"
+export SRC_VOLUME="${SRC_VOLUME:-ditech-fork-src}"
+docker volume create "$SRC_VOLUME" >/dev/null
 # Fresh source, keeping node_modules (pnpm reinstalls only what changed).
-git -C "$repo" archive --format=tar HEAD | docker run --rm -i -v ditech-fork-src:/src node:18.16.1-bookworm \
+git -C "$repo" archive --format=tar HEAD | docker run --rm -i -v "$SRC_VOLUME":/src "$NODE_IMAGE" \
   bash -c 'find /src -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} + && tar xf - -C /src'
 mkdir -p "$here/out"
 

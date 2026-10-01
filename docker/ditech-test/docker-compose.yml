@@ -5,6 +5,7 @@
 #   docker/ditech-test/run.sh            # unit + e2e
 #   docker/ditech-test/run.sh unit       # unit tests only (no database)
 #   docker/ditech-test/run.sh e2e balance-sheet   # e2e files matching a pattern
+#   NODE_IMAGE=node:22-bookworm SRC_VOLUME=ditech-fork-src-22 docker/ditech-test/run.sh
 #
 # The source is copied into the ditech-fork-src volume (node_modules kept
 # between runs); results go to docker/ditech-test/out/.
@@ -30,7 +31,8 @@ services:
     image: redis:7.4-alpine
 
   runner:
-    image: node:18.16.1-bookworm
+    # NODE_IMAGE: try another Node version (with its own SRC_VOLUME).
+    image: ${NODE_IMAGE:-node:18.16.1-bookworm}
     working_dir: /src
     volumes:
       - ditech-fork-src:/src
@@ -48,3 +50,4 @@ services:
 volumes:
   ditech-fork-src:
     external: true
+    name: ${SRC_VOLUME:-ditech-fork-src}
