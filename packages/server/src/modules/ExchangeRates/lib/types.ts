@@ -4,7 +4,18 @@ export interface IExchangeRateService {
 
 export enum ExchangeRateServiceType {
   OpenExchangeRate = 'OpenExchangeRate',
+  // 103 DiTech: National Bank of Cambodia rates via the MEF API.
+  MefCambodia = 'MefCambodia',
 }
+
+/**
+ * The provider chosen by EXCHANGE_RATE_SERVICE: "mef-cambodia", or
+ * "open-exchange-rate" (the default, as upstream).
+ */
+export const exchangeRateServiceFromEnv = (): ExchangeRateServiceType =>
+  process.env.EXCHANGE_RATE_SERVICE === 'mef-cambodia'
+    ? ExchangeRateServiceType.MefCambodia
+    : ExchangeRateServiceType.OpenExchangeRate;
 
 export enum EchangeRateErrors {
   EX_RATE_SERVICE_NOT_ALLOWED = 'EX_RATE_SERVICE_NOT_ALLOWED',

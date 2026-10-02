@@ -1,4 +1,5 @@
 import { OpenExchangeRate } from './OpenExchangeRate';
+import { MefCambodiaExchangeRate } from './MefCambodiaExchangeRate';
 import { ExchangeRateServiceType, IExchangeRateService } from './types';
 
 export class ExchangeRate {
@@ -22,6 +23,15 @@ export class ExchangeRate {
       this.exchangeRateServiceType === ExchangeRateServiceType.OpenExchangeRate
     ) {
       this.setExchangeRateService(new OpenExchangeRate());
+    } else if (
+      this.exchangeRateServiceType === ExchangeRateServiceType.MefCambodia
+    ) {
+      // Currencies the NBC doesn't publish go to Open Exchange Rates when
+      // it has a key.
+      const fallback = process.env.OPEN_EXCHANGE_RATE_APP_ID
+        ? new OpenExchangeRate()
+        : undefined;
+      this.setExchangeRateService(new MefCambodiaExchangeRate(fallback));
     }
   }
 

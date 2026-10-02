@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ExchangeRate } from './lib/ExchangeRate';
-import { ExchangeRateServiceType } from './lib/types';
+import { exchangeRateServiceFromEnv } from './lib/types';
 import { TenancyContext } from '@/modules/Tenancy/TenancyContext.service';
 import {
   ExchangeRateLatestDTO,
@@ -27,7 +27,7 @@ export class ExchangeRatesService {
     const fromCurrency = exchangeRateLatestDTO.fromCurrency || baseCurrency;
     const toCurrency = exchangeRateLatestDTO.toCurrency || baseCurrency;
 
-    const exchange = new ExchangeRate(ExchangeRateServiceType.OpenExchangeRate);
+    const exchange = new ExchangeRate(exchangeRateServiceFromEnv());
     const exchangeRate = await exchange.latest(fromCurrency, toCurrency);
 
     return {
