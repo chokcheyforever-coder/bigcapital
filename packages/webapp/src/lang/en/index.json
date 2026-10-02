@@ -2264,5 +2264,7 @@
   "api_key.copy_to_clipboard": "Copy to clipboard",
   "the_expenses_has_been_deleted_successfully": "The expenses have been deleted successfully.",
   "ditech.upgrade.button": "Upgrade plan",
-  "ditech.upgrade.feature_locked": "This feature is not included in your plan. Upgrade your plan in your 103 DiTech account to use it."
+  "ditech.upgrade.feature_locked": "This feature is not included in your plan. Upgrade your plan in your 103 DiTech account to use it.",
+  "theme.light_mode": "Light mode",
+  "theme.dark_mode": "Dark mode"
 }

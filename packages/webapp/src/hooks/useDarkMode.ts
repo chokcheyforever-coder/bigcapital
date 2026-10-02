@@ -57,6 +57,20 @@ export const useIsDarkMode = () => {
   return isDarkMode;
 };
 
+/**
+ * 103 DiTech: switches the theme and remembers it in this browser
+ * (read by public/preload-theme.js on the next load).
+ */
+export const setThemeMode = (mode: 'light' | 'dark') => {
+  try {
+    localStorage.setItem('theme', mode);
+  } catch {
+    // Private mode: the choice lasts until the page is reloaded.
+  }
+  document.documentElement.classList.toggle('bp4-dark', mode === 'dark');
+  document.body.classList.toggle('bp4-dark', mode === 'dark');
+};
+
 export const darkMode = (styles: string) => css`
   .bp4-dark & {
     ${styles}

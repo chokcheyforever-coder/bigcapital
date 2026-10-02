@@ -14,6 +14,7 @@ import { withDialogActions } from '@/containers/Dialog/withDialogActions';
 import { useAuthenticatedAccount } from '@/hooks/query';
 import { useAuthActions, useAuthOrganizationId } from '@/hooks/state';
 import { firstLettersArgs } from '@/utils';
+import { setThemeMode, useIsDarkMode } from '@/hooks/useDarkMode';
 
 /**
  * Dashboard topbar user.
@@ -28,6 +29,7 @@ function DashboardTopbarUser({
   // Retrieve authenticated user information.
   const { data: user } = useAuthenticatedAccount();
   const organizationId = useAuthOrganizationId();
+  const isDarkMode = useIsDarkMode();
 
   const onClickLogout = () => {
     setLogout();
@@ -63,6 +65,12 @@ function DashboardTopbarUser({
           <MenuItem
             text={<T id={'preferences'} />}
             onClick={() => history.push('/preferences')}
+          />
+          <MenuItem
+            icon={isDarkMode ? 'flash' : 'moon'}
+            text={<T id={isDarkMode ? 'theme.light_mode' : 'theme.dark_mode'} />}
+            onClick={() => setThemeMode(isDarkMode ? 'light' : 'dark')}
+            shouldDismissPopover={false}
           />
           <MenuItem text={<T id={'logout'} />} onClick={onClickLogout} />
         </Menu>
