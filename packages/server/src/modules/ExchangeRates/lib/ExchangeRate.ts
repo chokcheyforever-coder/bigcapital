@@ -49,7 +49,9 @@ export class ExchangeRate {
    * @param {string} toCurrency
    * @returns {number}
    */
-  public latest(baseCurrency: string, toCurrency: string): Promise<number> {
+  public async latest(baseCurrency: string, toCurrency: string): Promise<number> {
+    // 103 DiTech: a currency to itself is 1, no provider (or API key) needed.
+    if (baseCurrency?.toUpperCase() === toCurrency?.toUpperCase()) return 1;
     return this.exchangeRateService.latest(baseCurrency, toCurrency);
   }
 }
