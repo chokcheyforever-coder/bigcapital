@@ -32,7 +32,11 @@ const POPOVER_MODIFIERS = {
 // Minimum number of workspaces required to show the search input.
 const WORKSPACES_SEARCH_MIN_COUNT = 4;
 
+// White-on-dark like the sidebar it opens from, in light mode too (the
+// popover is otherwise white there and the names disappear).
 const DashboardOrganizationMenu = styled(Menu)`
+  background: var(--color-sidebar-background);
+  color: rgba(255, 255, 255, 0.9);
   padding: 10px;
   min-width: 280px;
   max-height: 500px;
