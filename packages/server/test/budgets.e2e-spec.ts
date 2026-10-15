@@ -164,12 +164,14 @@ describe('Budgets (e2e)', () => {
     it('keeps branch/project lines apart and removes lines', async () => {
       const budget = await createBudget();
       const project = (await http().post('/projects').set(authHeaders()).send({ name: `Budget project ${faker.string.alphanumeric(6)}` }).expect(201)).body;
+      const branch = (await http().post('/branches').set(authHeaders()).send({ name: `Budget branch ${faker.string.alphanumeric(6)}` })).body;
+      expect(branch.id).toBeTruthy();
       const res = await saveLines(budget.id, {
         lockVersion: 0,
         lines: [
           { accountId: expense, amounts: am({ '2031-01': 10 }) },
           { accountId: expense, projectId: project.id, amounts: am({ '2031-01': 20 }) },
-          { accountId: expense, branchId: 1, amounts: am({ '2031-01': 30 }) },
+          { accountId: expense, branchId: branch.id, amounts: am({ '2031-01': 30 }) },
         ],
       }).expect(200);
       expect(res.body.lines).toHaveLength(3);
@@ -268,7 +270,7 @@ describe('Budgets (e2e)', () => {
 
       const res = await http().get('/audit-logs').query({ subject: ['Budget'], pageSize: 100 }).set(authHeaders()).expect(200);
       const rows = (res.body.data ?? res.body.audit_logs ?? res.body).filter((r) => r.subject_id === budget.id);
-      expect(rows.map((r) => r.action).sort()).toEqual(['created', 'deleted', 'lines_saved', 'lines_saved']);
+      expect(rows.map((r) => r.action).sort()).toEqual(['Budget lines saved', 'Budget lines saved', 'Created', 'Deleted']);
       const changes = rows.flatMap((r) => r.metadata?.changes ?? []);
       expect(changes).toEqual(
         expect.arrayContaining([

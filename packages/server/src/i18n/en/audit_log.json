@@ -32,8 +32,11 @@
   "subject.PlaidWebhook": "Plaid Webhook",
   "subject.BankAccount": "Bank Account",
   "subject.RecognizedTransaction": "Recognized Transaction",
+  "subject.Project": "Project",
+  "subject.Budget": "Budget",
 
   "action.created": "Created",
+  "action.lines_saved": "Budget lines saved",
   "action.edited": "Edited",
   "action.deleted": "Deleted",
   "action.opened": "Opened",
