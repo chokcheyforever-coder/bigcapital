@@ -22,9 +22,9 @@ export async function fetchProjects(
   return data;
 }
 
-export async function fetchProject(fetcher: ApiFetcher, id: string): Promise<Project> {
+export async function fetchProject(fetcher: ApiFetcher, id: number | string): Promise<Project> {
   const get = fetcher.path(PROJECTS_ROUTES.BY_ID).method('get').create();
-  const { data } = await get({ id });
+  const { data } = await get({ id: Number(id) });
   return data;
 }
 
@@ -39,15 +39,15 @@ export async function createProject(
 
 export async function editProject(
   fetcher: ApiFetcher,
-  id: string,
+  id: number | string,
   values: EditProjectBody
 ): Promise<Project> {
   const put = fetcher.path(PROJECTS_ROUTES.BY_ID).method('put').create();
-  const { data } = await put({ id, ...values });
+  const { data } = await put({ id: Number(id), ...values });
   return data as Project;
 }
 
-export async function deleteProject(fetcher: ApiFetcher, id: string): Promise<void> {
+export async function deleteProject(fetcher: ApiFetcher, id: number | string): Promise<void> {
   const del = fetcher.path(PROJECTS_ROUTES.BY_ID).method('delete').create();
-  await del({ id });
+  await del({ id: Number(id) });
 }
