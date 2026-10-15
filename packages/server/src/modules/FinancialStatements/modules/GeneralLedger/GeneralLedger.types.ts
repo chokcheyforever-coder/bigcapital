@@ -13,6 +13,7 @@ export interface IGeneralLedgerSheetQuery {
   noneTransactions: boolean;
   accountsIds: number[];
   branchesIds?: number[];
+  projectsIds?: number[];
 }
 
 export type IGeneralLedgerNumberFormat = INumberFormatQuery;

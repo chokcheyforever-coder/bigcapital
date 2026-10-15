@@ -1,3 +1,4 @@
+import { ProjectAction } from '@/modules/Projects/Projects.types';
 import { ItemAction } from '@/interfaces/Item';
 import { ReportsAction } from '../FinancialStatements/types/Report.types';
 import { InventoryAdjustmentAction } from '../InventoryAdjutments/types/InventoryAdjustments.types';
@@ -376,6 +377,16 @@ export const AbilitySchema: ISubjectAbilitiesSchema[] = [
         label: 'ability.delete',
         default: true,
       },
+    ],
+  },
+  {
+    subject: AbilitySubject.Project,
+    subjectLabel: 'ability.projects',
+    abilities: [
+      { key: ProjectAction.View, label: 'ability.view', default: true },
+      { key: ProjectAction.Create, label: 'ability.create', default: true },
+      { key: ProjectAction.Edit, label: 'ability.edit', default: true },
+      { key: ProjectAction.Delete, label: 'ability.delete', default: true },
     ],
   },
 ];

@@ -108,5 +108,8 @@ export class TrialBalanceSheetRepository {
     if (!isEmpty(this.query.branchesIds)) {
       query.modify('filterByBranches', this.query.branchesIds);
     }
+    if (!isEmpty(this.query.projectsIds)) {
+      query.modify('filterByProjects', this.query.projectsIds);
+    }
   };
 }

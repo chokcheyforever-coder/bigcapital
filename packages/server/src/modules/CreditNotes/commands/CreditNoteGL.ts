@@ -68,6 +68,7 @@ export class CreditNoteGL {
       debit: 0,
 
       branchId: this.creditNoteModel.branchId,
+      projectId: this.creditNoteModel.projectId,
     };
   }
 

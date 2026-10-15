@@ -10,6 +10,7 @@ import {
   IsEnum,
   IsNotEmpty,
   IsNumber,
+  IsInt,
   IsOptional,
   IsPositive,
   IsString,
@@ -102,6 +103,12 @@ export class CommandSaleReceiptDto {
     example: 1,
   })
   branchId?: number;
+
+  @IsOptional()
+  @ToNumber()
+  @IsInt()
+  @ApiProperty({ description: 'The project ID', required: false, example: 1 })
+  projectId?: number;
 
   @IsArray()
   @ValidateNested({ each: true })

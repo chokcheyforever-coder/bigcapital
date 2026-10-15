@@ -92,6 +92,7 @@ export class SaleInvoiceCostGLEntries {
       credit: 0,
 
       branchId: inventoryCostLot.invoice.branchId,
+      projectId: inventoryCostLot.invoice.projectId,
     };
   };
 

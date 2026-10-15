@@ -19,5 +19,6 @@ export interface DiTechPolicy {
 export const FEATURE_ROUTES: Record<string, string[]> = {
   inventory: ['/api/inventory-adjustments', '/api/warehouses', '/api/warehouse-transfers'],
   multi_branch: ['/api/branches'],
+  projects: ['/api/projects'],
   bank_rules: ['/api/banking/rules'],
 };

@@ -14,6 +14,7 @@ export interface ITrialBalanceSheetQuery {
   onlyActive: boolean;
   accountIds: number[];
   branchesIds?: number[];
+  projectsIds?: number[];
 }
 
 export interface ITrialBalanceTotal {

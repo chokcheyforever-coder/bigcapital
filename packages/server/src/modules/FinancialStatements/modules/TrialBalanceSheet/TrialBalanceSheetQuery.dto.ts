@@ -1,5 +1,5 @@
 import { NumberFormatQueryDto } from '@/modules/BankingTransactions/dtos/NumberFormatQuery.dto';
-import { FinancialSheetBranchesQueryDto } from '../../dtos/FinancialSheetBranchesQuery.dto';
+import { FinancialSheetProjectsQueryDto } from '../../dtos/FinancialSheetProjectsQuery.dto';
 import { INumberFormatQuery } from '../../types/Report.types';
 import {
   IsArray,
@@ -13,7 +13,7 @@ import { Transform, Type } from 'class-transformer';
 import { parseBoolean } from '@/utils/parse-boolean';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class TrialBalanceSheetQueryDto extends FinancialSheetBranchesQueryDto {
+export class TrialBalanceSheetQueryDto extends FinancialSheetProjectsQueryDto {
   @ApiProperty({
     description: 'Start date for the trial balance sheet',
     required: false,

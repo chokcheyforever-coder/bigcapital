@@ -86,6 +86,7 @@ export class SaleReceiptCostGLEntries {
       credit: 0,
 
       branchId: inventoryCostLot.receipt.branchId,
+      projectId: inventoryCostLot.receipt.projectId,
     };
   };
 

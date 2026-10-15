@@ -13,6 +13,7 @@ import { PdfTemplateModel } from '@/modules/PdfTemplate/models/PdfTemplate';
 import { Warehouse } from '@/modules/Warehouses/models/Warehouse.model';
 import { ItemWarehouseQuantity } from '@/modules/Warehouses/models/ItemWarehouseQuantity';
 import { Branch } from '@/modules/Branches/models/Branch.model';
+import { Project } from '@/modules/Projects/models/Project.model';
 import { SaleEstimate } from '@/modules/SaleEstimates/models/SaleEstimate';
 import { Customer } from '@/modules/Customers/models/Customer';
 import { Contact } from '@/modules/Contacts/models/Contact';
@@ -52,6 +53,7 @@ const models = [
   Warehouse,
   ItemWarehouseQuantity,
   Branch,
+  Project,
   SaleEstimate,
   Customer,
   Contact,

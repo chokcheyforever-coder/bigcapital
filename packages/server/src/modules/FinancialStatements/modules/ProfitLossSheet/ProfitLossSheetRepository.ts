@@ -378,6 +378,9 @@ export class ProfitLossSheetRepository extends flow(FinancialDatePeriods)(
     if (!isEmpty(this.query.query.branchesIds)) {
       query.modify('filterByBranches', this.query.query.branchesIds);
     }
+    if (!isEmpty(this.query.query.projectsIds)) {
+      query.modify('filterByProjects', this.query.query.projectsIds);
+    }
   };
 
   /**

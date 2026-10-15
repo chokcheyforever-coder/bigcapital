@@ -41,6 +41,7 @@ export enum ReportsAction {
 
 export interface IFinancialSheetBranchesQuery {
   branchesIds?: number[];
+  projectsIds?: number[];
 }
 
 export interface IFinancialSheetCommonMeta {

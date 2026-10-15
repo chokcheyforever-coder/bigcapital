@@ -42,6 +42,7 @@ export class SaleInvoiceWriteoffGL {
 
       referenceNo: this.saleInvoiceModel.referenceNo,
       branchId: this.saleInvoiceModel.branchId,
+      projectId: this.saleInvoiceModel.projectId,
     };
   }
 

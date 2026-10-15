@@ -40,6 +40,7 @@ export class VendorCredit extends TenantBaseModel {
   discountType: DiscountType;
 
   branchId: number;
+  projectId: number | null;
   warehouseId: number;
 
   vendor?: Vendor;

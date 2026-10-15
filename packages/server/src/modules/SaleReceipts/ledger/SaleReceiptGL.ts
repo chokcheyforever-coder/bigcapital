@@ -60,6 +60,7 @@ export class SaleReceiptGL {
 
       userId: this.saleReceipt.userId,
       branchId: this.saleReceipt.branchId,
+      projectId: this.saleReceipt.projectId,
     };
   };
 

@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - develop
+      - 'ditech/**'
     paths:
       - '**.ts'
       - '**.tsx'

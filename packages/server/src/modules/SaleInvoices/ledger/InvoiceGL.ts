@@ -77,6 +77,7 @@ export class InvoiceGL {
       indexGroup: 10,
 
       branchId: this.saleInvoice.branchId,
+      projectId: this.saleInvoice.projectId,
     };
   }
 

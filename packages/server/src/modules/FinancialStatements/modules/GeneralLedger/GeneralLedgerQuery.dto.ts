@@ -1,5 +1,5 @@
 import { NumberFormatQueryDto } from '@/modules/BankingTransactions/dtos/NumberFormatQuery.dto';
-import { FinancialSheetBranchesQueryDto } from '../../dtos/FinancialSheetBranchesQuery.dto';
+import { FinancialSheetProjectsQueryDto } from '../../dtos/FinancialSheetProjectsQuery.dto';
 import {
   IsArray,
   IsBoolean,
@@ -12,7 +12,7 @@ import { Transform, Type } from 'class-transformer';
 import { parseBoolean } from '@/utils/parse-boolean';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class GeneralLedgerQueryDto extends FinancialSheetBranchesQueryDto {
+export class GeneralLedgerQueryDto extends FinancialSheetProjectsQueryDto {
   @ApiProperty({
     description: 'Start date for the general ledger report',
     example: '2024-01-01',

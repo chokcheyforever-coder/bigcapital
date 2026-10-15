@@ -60,6 +60,7 @@ export class VendorCreditGL {
       debit: 0,
 
       branchId: this.vendorCredit.branchId,
+      projectId: this.vendorCredit.projectId,
     };
   }
 

@@ -1,4 +1,4 @@
-import { FinancialSheetBranchesQueryDto } from '../../dtos/FinancialSheetBranchesQuery.dto';
+import { FinancialSheetProjectsQueryDto } from '../../dtos/FinancialSheetProjectsQuery.dto';
 
 import {
   IsArray,
@@ -15,7 +15,7 @@ import { ToNumber } from '@/common/decorators/Validators';
 import { parseBoolean } from '@/utils/parse-boolean';
 import { NumberFormatQueryDto } from '@/modules/BankingTransactions/dtos/NumberFormatQuery.dto';
 
-export class ProfitLossSheetQueryDto extends FinancialSheetBranchesQueryDto {
+export class ProfitLossSheetQueryDto extends FinancialSheetProjectsQueryDto {
   @IsString()
   @IsOptional()
   @ApiProperty({ description: 'The basis for the profit and loss sheet' })

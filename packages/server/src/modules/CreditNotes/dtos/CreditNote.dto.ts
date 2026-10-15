@@ -84,6 +84,12 @@ export class CommandCreditNoteDto {
   @ApiProperty({ example: 1, description: 'The branch ID' })
   branchId?: number;
 
+  @IsOptional()
+  @ToNumber()
+  @IsInt()
+  @ApiProperty({ description: 'The project ID', required: false, example: 1 })
+  projectId?: number;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreditNoteEntryDto)

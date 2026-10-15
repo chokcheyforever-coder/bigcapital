@@ -102,6 +102,12 @@ export class CommandVendorCreditDto {
   })
   branchId?: number;
 
+  @IsOptional()
+  @ToNumber()
+  @IsInt()
+  @ApiProperty({ description: 'The project ID', required: false, example: 1 })
+  projectId?: number;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => VendorCreditEntryDto)

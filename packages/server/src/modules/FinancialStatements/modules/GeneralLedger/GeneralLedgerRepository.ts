@@ -119,6 +119,9 @@ export class GeneralLedgerRepository {
         if (!isEmpty(this.filter.branchesIds)) {
           query.modify('filterByBranches', this.filter.branchesIds);
         }
+        if (!isEmpty(this.filter.projectsIds)) {
+          query.modify('filterByProjects', this.filter.projectsIds);
+        }
         query.orderBy('date', 'ASC');
 
         if (this.filter.accountsIds?.length > 0) {
@@ -145,6 +148,9 @@ export class GeneralLedgerRepository {
 
         if (!isEmpty(this.filter.branchesIds)) {
           query.modify('filterByBranches', this.filter.branchesIds);
+        }
+        if (!isEmpty(this.filter.projectsIds)) {
+          query.modify('filterByProjects', this.filter.projectsIds);
         }
         query.withGraphFetched('account');
       });
