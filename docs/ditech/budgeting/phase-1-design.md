@@ -72,9 +72,10 @@ budget_versions
   unique (budget_id, version_no)
 
 budget_lines
-  id, version_id, account_id, branch_id null, branch_key (0 when null, for the unique index),
+  id, version_id, account_id, branch_id null, project_id null,
+  branch_key / project_key (0 when null, for the unique index),
   note, assumption, created_at, updated_at
-  unique (version_id, account_id, branch_key)
+  unique (version_id, account_id, branch_key, project_key)
 
 budget_line_amounts
   line_id, month (date, first of month), amount
@@ -130,13 +131,16 @@ Audit history goes to the existing `audit_logs`, with subject `Budget` and old/n
 
 ## 7. API and permissions
 
-Ability subject `Budget`, actions: `View`, `Create`, `EditDraft`, `Submit`, `Approve`, `Revise`, `Lock`, `ImportExport`, `ViewAudit`, `ConfigurePolicy`.
+Ability subject `Budget`, actions: `View`, `Create`, `EditDraft`, `Delete` (draft budgets; added in Phase 2), `Submit`, `Approve`, `Revise`, `Lock`, `ImportExport`, `ViewAudit`, `ConfigurePolicy`.
+
+Monthly amounts are sent as a list, `amounts: [{ "month": "2027-01", "amount": 1250.5 }]`, not as an object keyed by month: the server camel-cases request keys, which would turn `2027-01` into `202701`. Responses use month keys (`"months": { "2027-01-01": 1250.5 }`).
 
 | Endpoint | Ability |
 |---|---|
 | `GET /api/budgets`, `GET /api/budgets/:id`, `GET /api/budgets/:id/versions/:v` | View |
 | `POST /api/budgets` | Create |
-| `PUT /api/budgets/:id/versions/:v/lines` (bulk upsert, `lock_version` required), `POST …/allocate`, `POST …/prefill` | EditDraft |
+| `PUT /api/budgets/:id` (header), `DELETE /api/budgets/:id` (draft budgets only, soft delete) | EditDraft / Delete |
+| `PUT /api/budgets/:id/versions/:v/lines` (bulk upsert, `lock_version` required), `POST /api/budgets/:id/allocate` (preview only), `POST …/prefill` (Phase 3) | EditDraft |
 | `POST …/versions/:v/submit` | Submit |
 | `POST …/versions/:v/approve`, `…/reject`, `…/delegate` | Approve (and the step's role) |
 | `POST /api/budgets/:id/revisions`, `…/scenarios` | Revise |
