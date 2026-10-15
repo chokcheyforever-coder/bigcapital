@@ -1965,6 +1965,179 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/budgets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lists budgets (paginated) with their latest version. */
+        get: operations["BudgetingController_getBudgets"];
+        put?: never;
+        /** Creates a budget with its original (draft) version. */
+        post: operations["BudgetingController_createBudget"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Budget details, its months and versions with totals. */
+        get: operations["BudgetingController_getBudget"];
+        /** Edits the budget header (name, reference, owner, description, notes). */
+        put: operations["BudgetingController_editBudget"];
+        post?: never;
+        /** Deletes a budget whose versions are all draft, rejected or cancelled. */
+        delete: operations["BudgetingController_deleteBudget"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A version with its lines, monthly/quarterly/total amounts and group totals. */
+        get: operations["BudgetingController_getVersion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Adds/updates lines and monthly amounts of a draft version (only the months given change). */
+        put: operations["BudgetingController_saveLines"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/allocate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Previews an allocation over the budget months (equal, percentage, seasonal, growth); saves nothing. */
+        post: operations["BudgetingController_allocate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/prefill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Previews lines from posted actuals of an earlier period or another budget version (with growth); saves nothing. */
+        post: operations["BudgetingController_prefillPreview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Downloads a version as Excel or CSV (one row per line, one column per month). */
+        get: operations["BudgetingController_exportVersion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/import-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Downloads an empty import template with the budget months and allowed accounts. */
+        get: operations["BudgetingController_importTemplate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}/import/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Checks an Excel/CSV file and reports each row; saves nothing. */
+        post: operations["BudgetingController_importPreview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Imports an Excel/CSV file into a draft version: all rows or none (committed=false with the errors). */
+        post: operations["BudgetingController_importCommit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/warehouse-transfers": {
         parameters: {
             query?: never;
@@ -9355,6 +9528,118 @@ export interface components {
              * @enum {string}
              */
             status: "active" | "closed";
+        };
+        CreateBudgetDto: {
+            /** @example Operating budget 2027 */
+            name: string;
+            /**
+             * @description Unique reference; generated (BUD-2027-001) when left out
+             * @example BUD-2027-001
+             */
+            reference?: string;
+            /** @enum {string} */
+            type: "profit_loss" | "revenue" | "operating_expenses" | "operational" | "capex";
+            /**
+             * @description Fiscal year (the calendar year it starts in)
+             * @example 2027
+             */
+            fiscalYear: number;
+            /**
+             * @description Defaults to the start of the fiscal year
+             * @example 2027-01-01
+             */
+            startDate?: string;
+            /**
+             * @description Defaults to the end of the fiscal year
+             * @example 2027-12-31
+             */
+            endDate?: string;
+            /** @description Branch the whole budget is for */
+            branchId?: number;
+            /** @description Project the whole budget is for */
+            projectId?: number;
+            /** @description User responsible for the budget */
+            ownerUserId?: number;
+            description?: string;
+            notes?: string;
+        };
+        EditBudgetDto: {
+            name: string;
+            reference?: string;
+            ownerUserId?: number;
+            description?: string;
+            notes?: string;
+        };
+        BudgetMonthAmountDto: {
+            /**
+             * @description YYYY-MM or YYYY-MM-01
+             * @example 2027-01
+             */
+            month: string;
+            /**
+             * @description Amount; null removes the month
+             * @example 1250.5
+             */
+            amount?: Record<string, never> | null;
+        };
+        SaveBudgetLineDto: {
+            accountId: number;
+            branchId?: number;
+            projectId?: number;
+            /** @description null clears the note */
+            note?: string;
+            /** @description null clears the assumption */
+            assumption?: string;
+            /** @description Only the months given change; an amount of null removes that month. */
+            amounts?: components["schemas"]["BudgetMonthAmountDto"][];
+        };
+        SaveBudgetLinesDto: {
+            /** @description The version's lock_version as last read; refused (409) if it changed since */
+            lockVersion: number;
+            lines: components["schemas"]["SaveBudgetLineDto"][];
+            /** @description Lines to delete */
+            removeLineIds?: number[];
+        };
+        AllocateBudgetDto: {
+            /** @enum {string} */
+            method: "equal" | "percentage" | "seasonal" | "growth";
+            /** @description Amount to spread (equal, percentage, seasonal) */
+            amount?: Record<string, never>;
+            /** @description One per month: percentages (must add up to 100) or seasonal weights */
+            values?: number[];
+            /** @description growth: the monthly amounts to grow */
+            baseAmounts?: components["schemas"]["BudgetMonthAmountDto"][];
+            /** @description growth: percentage, e.g. 5 or -10 */
+            growthPercent?: number;
+        };
+        PrefillBudgetDto: {
+            /**
+             * @description Posted actuals of an earlier period, or another budget version
+             * @enum {string}
+             */
+            source: "actuals" | "budget";
+            /**
+             * @description actuals: how many years back (1 = the same months last year)
+             * @default 1
+             */
+            yearsBack: number;
+            /**
+             * @description actuals: keep branches or projects on separate lines
+             * @default none
+             * @enum {string}
+             */
+            splitBy: "none" | "branch" | "project";
+            /** @description budget: the budget to copy from */
+            sourceBudgetId?: number;
+            /** @description budget: its version (default: the latest) */
+            sourceVersionNo?: number;
+            /**
+             * @description Growth (or reduction, negative) applied to every month
+             * @example 5
+             */
+            growthPercent?: number;
+            /** @description Only these accounts (default: every account the budget type allows) */
+            accountIds?: number[];
         };
         WarehouseTransferEntryResponseDto: {
             /**
@@ -22019,6 +22304,367 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["GetAuditLogsResponseDto"];
                 };
+            };
+        };
+    };
+    BudgetingController_getBudgets: {
+        parameters: {
+            query?: {
+                fiscalYear?: number;
+                type?: "profit_loss" | "revenue" | "operating_expenses" | "operational" | "capex";
+                /** @description Search by name or reference */
+                search?: string;
+                page?: number;
+                pageSize?: number;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetingController_createBudget: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBudgetDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetingController_getBudget: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The budget was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetingController_editBudget: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditBudgetDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetingController_deleteBudget: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetingController_getVersion: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetingController_saveLines: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBudgetLinesDto"];
+            };
+        };
+        responses: {
+            /** @description The version is not editable, or changed since it was read (lock_version). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetingController_allocate: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AllocateBudgetDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetingController_prefillPreview: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrefillBudgetDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetingController_exportVersion: {
+        parameters: {
+            query?: {
+                format?: "xlsx" | "csv";
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetingController_importTemplate: {
+        parameters: {
+            query?: {
+                format?: "xlsx" | "csv";
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetingController_importPreview: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file?: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetingController_importCommit: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file?: string;
+                    lock_version?: number;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

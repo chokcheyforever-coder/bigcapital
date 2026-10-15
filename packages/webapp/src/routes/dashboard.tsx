@@ -1315,6 +1315,29 @@ export const getDashboardRoutes = () => [
     pageTitle: 'Projects',
     subscriptionActive: [SUBSCRIPTION_TYPE.MAIN],
   },
+  // 103 DiTech: budgeting.
+  {
+    path: '/budgets/:id',
+    component: lazy(() =>
+      import('@/ditech/budgeting/BudgetEditorPage').then((m) => ({
+        default: m.BudgetEditorPage,
+      })),
+    ),
+    pageTitle: 'Budget',
+    sidebarExpand: false,
+    subscriptionActive: [SUBSCRIPTION_TYPE.MAIN],
+  },
+  {
+    path: '/budgets',
+    exact: true,
+    component: lazy(() =>
+      import('@/ditech/budgeting/BudgetsPage').then((m) => ({
+        default: m.BudgetsPage,
+      })),
+    ),
+    pageTitle: 'Budgets',
+    subscriptionActive: [SUBSCRIPTION_TYPE.MAIN],
+  },
   // Bank Rules
   {
     path: '/bank-rules',

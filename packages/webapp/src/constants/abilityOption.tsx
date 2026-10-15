@@ -23,6 +23,7 @@ export const AbilitySubject = {
   BankRule: 'BankRule',
   AuditLog: 'AuditLog',
   Project: 'Project',
+  Budget: 'Budget',
 } as const;
 
 export const ItemAction = {
@@ -195,6 +196,20 @@ export const ProjectAction = {
   Create: 'Create',
   Edit: 'Edit',
   Delete: 'Delete',
+} as const;
+
+export const BudgetAction = {
+  View: 'View',
+  Create: 'Create',
+  EditDraft: 'EditDraft',
+  Delete: 'Delete',
+  Submit: 'Submit',
+  Approve: 'Approve',
+  Revise: 'Revise',
+  Lock: 'Lock',
+  ImportExport: 'ImportExport',
+  ViewAudit: 'ViewAudit',
+  ConfigurePolicy: 'ConfigurePolicy',
 } as const;
 
 export const BankRuleAction = {

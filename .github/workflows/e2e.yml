@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - 'ditech/**'
     paths:
       - '**.ts'
       - '**.tsx'
@@ -123,6 +124,9 @@ jobs:
           MAIL_PORT=1025
           MAIL_FROM_NAME=Bigcapital
           MAIL_FROM_ADDRESS=test@bigcapital.app
+
+          # 103 DiTech: no tenant gateway in CI (requests come straight to the server)
+          DITECH_ENFORCE_GATEWAY=false
           EOF
 
       - name: Grant tenant database privileges

@@ -7698,6 +7698,742 @@
         ]
       }
     },
+    "/api/budgets": {
+      "get": {
+        "operationId": "BudgetingController_getBudgets",
+        "summary": "Lists budgets (paginated) with their latest version.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fiscalYear",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "profit_loss",
+                "revenue",
+                "operating_expenses",
+                "operational",
+                "capex"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by name or reference",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 50,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Budgets"
+        ]
+      },
+      "post": {
+        "operationId": "BudgetingController_createBudget",
+        "summary": "Creates a budget with its original (draft) version.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBudgetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Budgets"
+        ]
+      }
+    },
+    "/api/budgets/{id}": {
+      "get": {
+        "operationId": "BudgetingController_getBudget",
+        "summary": "Budget details, its months and versions with totals.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "The budget was not found."
+          }
+        },
+        "tags": [
+          "Budgets"
+        ]
+      },
+      "put": {
+        "operationId": "BudgetingController_editBudget",
+        "summary": "Edits the budget header (name, reference, owner, description, notes).",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditBudgetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Budgets"
+        ]
+      },
+      "delete": {
+        "operationId": "BudgetingController_deleteBudget",
+        "summary": "Deletes a budget whose versions are all draft, rejected or cancelled.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Budgets"
+        ]
+      }
+    },
+    "/api/budgets/{id}/versions/{versionNo}": {
+      "get": {
+        "operationId": "BudgetingController_getVersion",
+        "summary": "A version with its lines, monthly/quarterly/total amounts and group totals.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "versionNo",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Budgets"
+        ]
+      }
+    },
+    "/api/budgets/{id}/versions/{versionNo}/lines": {
+      "put": {
+        "operationId": "BudgetingController_saveLines",
+        "summary": "Adds/updates lines and monthly amounts of a draft version (only the months given change).",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "versionNo",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveBudgetLinesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "409": {
+            "description": "The version is not editable, or changed since it was read (lock_version)."
+          }
+        },
+        "tags": [
+          "Budgets"
+        ]
+      }
+    },
+    "/api/budgets/{id}/allocate": {
+      "post": {
+        "operationId": "BudgetingController_allocate",
+        "summary": "Previews an allocation over the budget months (equal, percentage, seasonal, growth); saves nothing.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AllocateBudgetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Budgets"
+        ]
+      }
+    },
+    "/api/budgets/{id}/prefill": {
+      "post": {
+        "operationId": "BudgetingController_prefillPreview",
+        "summary": "Previews lines from posted actuals of an earlier period or another budget version (with growth); saves nothing.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrefillBudgetDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Budgets"
+        ]
+      }
+    },
+    "/api/budgets/{id}/versions/{versionNo}/export": {
+      "get": {
+        "operationId": "BudgetingController_exportVersion",
+        "summary": "Downloads a version as Excel or CSV (one row per line, one column per month).",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "versionNo",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "format",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "xlsx",
+                "csv"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Budgets"
+        ]
+      }
+    },
+    "/api/budgets/{id}/import-template": {
+      "get": {
+        "operationId": "BudgetingController_importTemplate",
+        "summary": "Downloads an empty import template with the budget months and allowed accounts.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "format",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "xlsx",
+                "csv"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Budgets"
+        ]
+      }
+    },
+    "/api/budgets/{id}/versions/{versionNo}/import/preview": {
+      "post": {
+        "operationId": "BudgetingController_importPreview",
+        "summary": "Checks an Excel/CSV file and reports each row; saves nothing.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "versionNo",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Budgets"
+        ]
+      }
+    },
+    "/api/budgets/{id}/versions/{versionNo}/import": {
+      "post": {
+        "operationId": "BudgetingController_importCommit",
+        "summary": "Imports an Excel/CSV file into a draft version: all rows or none (committed=false with the errors).",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "versionNo",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "lock_version": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Budgets"
+        ]
+      }
+    },
     "/api/warehouse-transfers": {
       "post": {
         "operationId": "WarehouseTransfersController_createWarehouseTransfer",
@@ -31388,6 +32124,258 @@
         },
         "required": [
           "name"
+        ]
+      },
+      "CreateBudgetDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Operating budget 2027"
+          },
+          "reference": {
+            "type": "string",
+            "description": "Unique reference; generated (BUD-2027-001) when left out",
+            "example": "BUD-2027-001"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "profit_loss",
+              "revenue",
+              "operating_expenses",
+              "operational",
+              "capex"
+            ]
+          },
+          "fiscalYear": {
+            "type": "number",
+            "description": "Fiscal year (the calendar year it starts in)",
+            "example": 2027
+          },
+          "startDate": {
+            "type": "string",
+            "description": "Defaults to the start of the fiscal year",
+            "example": "2027-01-01"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "Defaults to the end of the fiscal year",
+            "example": "2027-12-31"
+          },
+          "branchId": {
+            "type": "number",
+            "description": "Branch the whole budget is for"
+          },
+          "projectId": {
+            "type": "number",
+            "description": "Project the whole budget is for"
+          },
+          "ownerUserId": {
+            "type": "number",
+            "description": "User responsible for the budget"
+          },
+          "description": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "fiscalYear"
+        ]
+      },
+      "EditBudgetDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "ownerUserId": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "BudgetMonthAmountDto": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "description": "YYYY-MM or YYYY-MM-01",
+            "example": "2027-01"
+          },
+          "amount": {
+            "type": "object",
+            "description": "Amount; null removes the month",
+            "example": 1250.5,
+            "nullable": true
+          }
+        },
+        "required": [
+          "month"
+        ]
+      },
+      "SaveBudgetLineDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "number"
+          },
+          "branchId": {
+            "type": "number"
+          },
+          "projectId": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string",
+            "description": "null clears the note"
+          },
+          "assumption": {
+            "type": "string",
+            "description": "null clears the assumption"
+          },
+          "amounts": {
+            "description": "Only the months given change; an amount of null removes that month.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BudgetMonthAmountDto"
+            }
+          }
+        },
+        "required": [
+          "accountId"
+        ]
+      },
+      "SaveBudgetLinesDto": {
+        "type": "object",
+        "properties": {
+          "lockVersion": {
+            "type": "number",
+            "description": "The version's lock_version as last read; refused (409) if it changed since"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaveBudgetLineDto"
+            }
+          },
+          "removeLineIds": {
+            "description": "Lines to delete",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "lockVersion",
+          "lines"
+        ]
+      },
+      "AllocateBudgetDto": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "equal",
+              "percentage",
+              "seasonal",
+              "growth"
+            ]
+          },
+          "amount": {
+            "type": "object",
+            "description": "Amount to spread (equal, percentage, seasonal)"
+          },
+          "values": {
+            "description": "One per month: percentages (must add up to 100) or seasonal weights",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "baseAmounts": {
+            "description": "growth: the monthly amounts to grow",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BudgetMonthAmountDto"
+            }
+          },
+          "growthPercent": {
+            "type": "number",
+            "description": "growth: percentage, e.g. 5 or -10"
+          }
+        },
+        "required": [
+          "method"
+        ]
+      },
+      "PrefillBudgetDto": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "actuals",
+              "budget"
+            ],
+            "description": "Posted actuals of an earlier period, or another budget version"
+          },
+          "yearsBack": {
+            "type": "number",
+            "description": "actuals: how many years back (1 = the same months last year)",
+            "default": 1
+          },
+          "splitBy": {
+            "type": "string",
+            "enum": [
+              "none",
+              "branch",
+              "project"
+            ],
+            "description": "actuals: keep branches or projects on separate lines",
+            "default": "none"
+          },
+          "sourceBudgetId": {
+            "type": "number",
+            "description": "budget: the budget to copy from"
+          },
+          "sourceVersionNo": {
+            "type": "number",
+            "description": "budget: its version (default: the latest)"
+          },
+          "growthPercent": {
+            "type": "number",
+            "description": "Growth (or reduction, negative) applied to every month",
+            "example": 5
+          },
+          "accountIds": {
+            "description": "Only these accounts (default: every account the budget type allows)",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "source"
         ]
       },
       "WarehouseTransferEntryResponseDto": {
