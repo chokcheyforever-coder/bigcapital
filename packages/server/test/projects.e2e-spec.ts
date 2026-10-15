@@ -38,8 +38,8 @@ describe('Projects (e2e)', () => {
     const res = await http()
       .get('/reports/profit-loss-sheet')
       .query({ ...PERIOD, projectsIds: [projectId] })
-      .set(authHeaders())
-      .expect(200);
+      .set(authHeaders());
+    if (res.status !== 200) throw new Error(`P&L ${res.status}: ${JSON.stringify(res.body)}`);
     return Number(findNode(res.body.data, 'NET_INCOME')?.total?.amount ?? 0);
   };
 
@@ -184,8 +184,8 @@ describe('Projects (e2e)', () => {
       const gl = await http()
         .get('/reports/general-ledger')
         .query({ ...PERIOD, projectsIds: [projectId] })
-        .set(authHeaders())
-        .expect(200);
+        .set(authHeaders());
+      if (gl.status !== 200) throw new Error(`GL ${gl.status}: ${JSON.stringify(gl.body)}`);
       const glRows = (gl.body.data ?? []).flatMap((account) => account.transactions ?? []);
       expect(glRows.length).toBeGreaterThan(0);
       expect(
