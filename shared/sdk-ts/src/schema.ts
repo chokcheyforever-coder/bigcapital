@@ -1911,6 +1911,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieves the projects. */
+        get: operations["ProjectsController_getProjects"];
+        put?: never;
+        /** Creates a project. */
+        post: operations["ProjectsController_createProject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieves the project details. */
+        get: operations["ProjectsController_getProject"];
+        /** Edits the project (also closes or reopens it through `status`). */
+        put: operations["ProjectsController_editProject"];
+        post?: never;
+        /** Deletes a project that no transaction uses. */
+        delete: operations["ProjectsController_deleteProject"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/audit-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List financial audit log entries for the tenant. */
+        get: operations["AuditLogsController_getAuditLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/warehouse-transfers": {
         parameters: {
             query?: never;
@@ -5001,23 +5055,6 @@ export interface paths {
         };
         /** Distinct subject and action values for audit log filters. */
         get: operations["AuditLogsController_getAuditLogFilterOptions"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/audit-logs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List financial audit log entries for the tenant. */
-        get: operations["AuditLogsController_getAuditLogs"];
         put?: never;
         post?: never;
         delete?: never;
@@ -9237,6 +9274,88 @@ export interface components {
              */
             attachments: string[];
         };
+        ProjectResponseDto: {
+            id: number;
+            name: string;
+            code?: string;
+            description?: string;
+            contactId?: number;
+            customerName?: string;
+            startDate?: string;
+            deadline?: string;
+            /** @enum {string} */
+            status: "active" | "closed";
+            /** Format: date-time */
+            createdAt: string;
+        };
+        CreateProjectDto: {
+            /**
+             * @description Project name
+             * @example Phnom Penh office fit-out
+             */
+            name: string;
+            /**
+             * @description Unique project code
+             * @example PRJ-001
+             */
+            code?: string;
+            /** @description Description */
+            description?: string;
+            /**
+             * @description Customer the project is for
+             * @example 1
+             */
+            contactId?: number;
+            /**
+             * @description Start date
+             * @example 2026-01-01
+             */
+            startDate?: string;
+            /**
+             * @description End date (deadline)
+             * @example 2026-12-31
+             */
+            deadline?: string;
+            /**
+             * @default active
+             * @enum {string}
+             */
+            status: "active" | "closed";
+        };
+        EditProjectDto: {
+            /**
+             * @description Project name
+             * @example Phnom Penh office fit-out
+             */
+            name: string;
+            /**
+             * @description Unique project code
+             * @example PRJ-001
+             */
+            code?: string;
+            /** @description Description */
+            description?: string;
+            /**
+             * @description Customer the project is for
+             * @example 1
+             */
+            contactId?: number;
+            /**
+             * @description Start date
+             * @example 2026-01-01
+             */
+            startDate?: string;
+            /**
+             * @description End date (deadline)
+             * @example 2026-12-31
+             */
+            deadline?: string;
+            /**
+             * @default active
+             * @enum {string}
+             */
+            status: "active" | "closed";
+        };
         WarehouseTransferEntryResponseDto: {
             /**
              * @description The ID of the warehouse transfer entry
@@ -10746,6 +10865,11 @@ export interface components {
              */
             branchId: number;
             /**
+             * @description The project ID
+             * @example 1
+             */
+            projectId?: number;
+            /**
              * @description The entries of the sale receipt
              * @example [
              *       {
@@ -10841,6 +10965,11 @@ export interface components {
              * @example 1
              */
             branchId: number;
+            /**
+             * @description The project ID
+             * @example 1
+             */
+            projectId?: number;
             /**
              * @description The entries of the sale receipt
              * @example [
@@ -12066,6 +12195,11 @@ export interface components {
              */
             branchId: number;
             /**
+             * @description The project ID
+             * @example 1
+             */
+            projectId?: number;
+            /**
              * @description The credit note entries
              * @example [
              *       {
@@ -12153,6 +12287,11 @@ export interface components {
              * @example 1
              */
             branchId: number;
+            /**
+             * @description The project ID
+             * @example 1
+             */
+            projectId?: number;
             /**
              * @description The credit note entries
              * @example [
@@ -12618,6 +12757,11 @@ export interface components {
              */
             branchId: number;
             /**
+             * @description The project ID
+             * @example 1
+             */
+            projectId?: number;
+            /**
              * @description The entries of the vendor credit
              * @example [
              *       {
@@ -12703,6 +12847,11 @@ export interface components {
              * @example 1
              */
             branchId: number;
+            /**
+             * @description The project ID
+             * @example 1
+             */
+            projectId?: number;
             /**
              * @description The entries of the vendor credit
              * @example [
@@ -21695,6 +21844,184 @@ export interface operations {
             };
         };
     };
+    ProjectsController_getProjects: {
+        parameters: {
+            query?: {
+                /** @description Search by name or code */
+                search?: string;
+                status?: "active" | "closed" | "all";
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectResponseDto"][];
+                };
+            };
+        };
+    };
+    ProjectsController_createProject: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProjectDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectResponseDto"];
+                };
+            };
+        };
+    };
+    ProjectsController_getProject: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectResponseDto"];
+                };
+            };
+            /** @description The project was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProjectsController_editProject: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditProjectDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectResponseDto"];
+                };
+            };
+        };
+    };
+    ProjectsController_deleteProject: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuditLogsController_getAuditLogs: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                subject?: Record<string, never>[][];
+                action?: Record<string, never>[][];
+                /** @description System user id */
+                userId?: number;
+                /** @description ISO date (inclusive), start of day */
+                from?: string;
+                /** @description ISO date (inclusive), end of day */
+                to?: string;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetAuditLogsResponseDto"];
+                };
+            };
+        };
+    };
     WarehouseTransfersController_getWarehousesTransfers: {
         parameters: {
             query?: never;
@@ -27834,6 +28161,8 @@ export interface operations {
             query?: {
                 /** @description Filter out branches (if multiple branches feature is enabled) */
                 branchesIds?: number[];
+                /** @description Filter by projects (only ledger rows tagged with one of them) */
+                projectsIds?: number[];
                 /** @description Accounting basis for the report (e.g., cash, accrual) */
                 basis?: string;
                 /** @description Whether to exclude transactions from the report */
@@ -29039,6 +29368,8 @@ export interface operations {
             query?: {
                 /** @description Filter out branches (if multiple branches feature is enabled) */
                 branchesIds?: number[];
+                /** @description Filter by projects (only ledger rows tagged with one of them) */
+                projectsIds?: number[];
                 /** @description Start date for the trial balance sheet */
                 fromDate?: string;
                 /** @description End date for the trial balance sheet */
@@ -30737,6 +31068,8 @@ export interface operations {
             query: {
                 /** @description Filter out branches (if multiple branches feature is enabled) */
                 branchesIds?: number[];
+                /** @description Filter by projects (only ledger rows tagged with one of them) */
+                projectsIds?: number[];
                 /** @description The basis for the profit and loss sheet */
                 basis: string;
                 /** @description Whether to exclude zero values */
@@ -32895,41 +33228,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GetAuditLogFilterOptionsResponseDto"];
-                };
-            };
-        };
-    };
-    AuditLogsController_getAuditLogs: {
-        parameters: {
-            query?: {
-                page?: number;
-                pageSize?: number;
-                subject?: Record<string, never>[][];
-                action?: Record<string, never>[][];
-                /** @description System user id */
-                userId?: number;
-                /** @description ISO date (inclusive), start of day */
-                from?: string;
-                /** @description ISO date (inclusive), end of day */
-                to?: string;
-            };
-            header: {
-                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
-                Authorization: string;
-                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
-                "organization-id": string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GetAuditLogsResponseDto"];
                 };
             };
         };

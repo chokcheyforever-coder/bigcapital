@@ -7310,6 +7310,394 @@
         ]
       }
     },
+    "/api/projects": {
+      "get": {
+        "operationId": "ProjectsController_getProjects",
+        "summary": "Retrieves the projects.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by name or code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "all",
+              "enum": [
+                "active",
+                "closed",
+                "all"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Projects"
+        ]
+      },
+      "post": {
+        "operationId": "ProjectsController_createProject",
+        "summary": "Creates a project.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/api/projects/{id}": {
+      "get": {
+        "operationId": "ProjectsController_getProject",
+        "summary": "Retrieves the project details.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The project was not found."
+          }
+        },
+        "tags": [
+          "Projects"
+        ]
+      },
+      "put": {
+        "operationId": "ProjectsController_editProject",
+        "summary": "Edits the project (also closes or reopens it through `status`).",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditProjectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Projects"
+        ]
+      },
+      "delete": {
+        "operationId": "ProjectsController_deleteProject",
+        "summary": "Deletes a project that no transaction uses.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/api/audit-logs": {
+      "get": {
+        "operationId": "AuditLogsController_getAuditLogs",
+        "summary": "List financial audit log entries for the tenant.",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "Bearer bc_1234567890abcdef"
+            }
+          },
+          {
+            "name": "organization-id",
+            "in": "header",
+            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "subject",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "a"
+                }
+              }
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "a"
+                }
+              }
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "description": "System user id",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "ISO date (inclusive), start of day",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "ISO date (inclusive), end of day",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAuditLogsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Audit logs"
+        ]
+      }
+    },
     "/api/warehouse-transfers": {
       "post": {
         "operationId": "WarehouseTransfersController_createWarehouseTransfer",
@@ -17628,6 +18016,18 @@
             }
           },
           {
+            "name": "projectsIds",
+            "required": false,
+            "in": "query",
+            "description": "Filter by projects (only ledger rows tagged with one of them)",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          {
             "name": "basis",
             "required": false,
             "in": "query",
@@ -18899,6 +19299,18 @@
             "required": false,
             "in": "query",
             "description": "Filter out branches (if multiple branches feature is enabled)",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          {
+            "name": "projectsIds",
+            "required": false,
+            "in": "query",
+            "description": "Filter by projects (only ledger rows tagged with one of them)",
             "schema": {
               "type": "array",
               "items": {
@@ -21309,6 +21721,18 @@
             "required": false,
             "in": "query",
             "description": "Filter out branches (if multiple branches feature is enabled)",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          {
+            "name": "projectsIds",
+            "required": false,
+            "in": "query",
+            "description": "Filter by projects (only ledger rows tagged with one of them)",
             "schema": {
               "type": "array",
               "items": {
@@ -24505,124 +24929,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetAuditLogFilterOptionsResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Audit logs"
-        ]
-      }
-    },
-    "/api/audit-logs": {
-      "get": {
-        "operationId": "AuditLogsController_getAuditLogs",
-        "summary": "List financial audit log entries for the tenant.",
-        "parameters": [
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "example": "Bearer bc_1234567890abcdef"
-            }
-          },
-          {
-            "name": "organization-id",
-            "in": "header",
-            "description": "Required if Authorization is a JWT token. The organization ID to operate within.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "pageSize",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "default": 20,
-              "type": "number"
-            }
-          },
-          {
-            "name": "subject",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "array",
-                "items": {
-                  "type": "a"
-                }
-              }
-            }
-          },
-          {
-            "name": "action",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "array",
-                "items": {
-                  "type": "a"
-                }
-              }
-            }
-          },
-          {
-            "name": "userId",
-            "required": false,
-            "in": "query",
-            "description": "System user id",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "from",
-            "required": false,
-            "in": "query",
-            "description": "ISO date (inclusive), start of day",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "to",
-            "required": false,
-            "in": "query",
-            "description": "ISO date (inclusive), end of day",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetAuditLogsResponseDto"
                 }
               }
             }
@@ -30948,6 +31254,142 @@
           "attachments"
         ]
       },
+      "ProjectResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "contactId": {
+            "type": "number"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "deadline": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "closed"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "createdAt"
+        ]
+      },
+      "CreateProjectDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Project name",
+            "example": "Phnom Penh office fit-out"
+          },
+          "code": {
+            "type": "string",
+            "description": "Unique project code",
+            "example": "PRJ-001"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description"
+          },
+          "contactId": {
+            "type": "number",
+            "description": "Customer the project is for",
+            "example": 1
+          },
+          "startDate": {
+            "type": "string",
+            "description": "Start date",
+            "example": "2026-01-01"
+          },
+          "deadline": {
+            "type": "string",
+            "description": "End date (deadline)",
+            "example": "2026-12-31"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "closed"
+            ],
+            "default": "active"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "EditProjectDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Project name",
+            "example": "Phnom Penh office fit-out"
+          },
+          "code": {
+            "type": "string",
+            "description": "Unique project code",
+            "example": "PRJ-001"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description"
+          },
+          "contactId": {
+            "type": "number",
+            "description": "Customer the project is for",
+            "example": 1
+          },
+          "startDate": {
+            "type": "string",
+            "description": "Start date",
+            "example": "2026-01-01"
+          },
+          "deadline": {
+            "type": "string",
+            "description": "End date (deadline)",
+            "example": "2026-12-31"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "closed"
+            ],
+            "default": "active"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
       "WarehouseTransferEntryResponseDto": {
         "type": "object",
         "properties": {
@@ -33323,6 +33765,11 @@
             "description": "The id of the branch",
             "example": 1
           },
+          "projectId": {
+            "type": "number",
+            "description": "The project ID",
+            "example": 1
+          },
           "entries": {
             "description": "The entries of the sale receipt",
             "example": [
@@ -33445,6 +33892,11 @@
           "branchId": {
             "type": "number",
             "description": "The id of the branch",
+            "example": 1
+          },
+          "projectId": {
+            "type": "number",
+            "description": "The project ID",
             "example": 1
           },
           "entries": {
@@ -35169,6 +35621,11 @@
             "example": 1,
             "description": "The branch ID"
           },
+          "projectId": {
+            "type": "number",
+            "description": "The project ID",
+            "example": 1
+          },
           "entries": {
             "example": [
               {
@@ -35287,6 +35744,11 @@
             "type": "number",
             "example": 1,
             "description": "The branch ID"
+          },
+          "projectId": {
+            "type": "number",
+            "description": "The project ID",
+            "example": 1
           },
           "entries": {
             "example": [
@@ -35985,6 +36447,11 @@
             "description": "The branch id of the vendor credit",
             "example": 1
           },
+          "projectId": {
+            "type": "number",
+            "description": "The project ID",
+            "example": 1
+          },
           "entries": {
             "description": "The entries of the vendor credit",
             "example": [
@@ -36094,6 +36561,11 @@
           "branchId": {
             "type": "number",
             "description": "The branch id of the vendor credit",
+            "example": 1
+          },
+          "projectId": {
+            "type": "number",
+            "description": "The project ID",
             "example": 1
           },
           "entries": {
