@@ -254,3 +254,49 @@ export class AllocateBudgetDto {
   @IsNumber()
   growthPercent?: number;
 }
+
+export const PREFILL_SOURCES = ['actuals', 'budget'] as const;
+
+export class PrefillBudgetDto {
+  @ApiProperty({ enum: PREFILL_SOURCES, description: 'Posted actuals of an earlier period, or another budget version' })
+  @IsIn(PREFILL_SOURCES as unknown as string[])
+  source: (typeof PREFILL_SOURCES)[number];
+
+  @ApiPropertyOptional({ description: 'actuals: how many years back (1 = the same months last year)', default: 1 })
+  @IsOptional()
+  @ToNumber()
+  @IsInt()
+  @Min(1)
+  @Max(10)
+  yearsBack?: number;
+
+  @ApiPropertyOptional({ enum: ['none', 'branch', 'project'], description: 'actuals: keep branches or projects on separate lines', default: 'none' })
+  @IsOptional()
+  @IsIn(['none', 'branch', 'project'])
+  splitBy?: 'none' | 'branch' | 'project';
+
+  @ApiPropertyOptional({ description: 'budget: the budget to copy from' })
+  @IsOptional()
+  @ToNumber()
+  @IsInt()
+  sourceBudgetId?: number;
+
+  @ApiPropertyOptional({ description: 'budget: its version (default: the latest)' })
+  @IsOptional()
+  @ToNumber()
+  @IsInt()
+  sourceVersionNo?: number;
+
+  @ApiPropertyOptional({ description: 'Growth (or reduction, negative) applied to every month', example: 5 })
+  @IsOptional()
+  @IsNumber()
+  @Min(-100)
+  @Max(1000)
+  growthPercent?: number;
+
+  @ApiPropertyOptional({ type: [Number], description: 'Only these accounts (default: every account the budget type allows)' })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  accountIds?: number[];
+}

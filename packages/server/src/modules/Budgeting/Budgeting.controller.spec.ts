@@ -20,6 +20,12 @@ describe('BudgetingController permissions', () => {
     saveLines: BudgetAction.EditDraft,
     allocate: BudgetAction.EditDraft,
     deleteBudget: BudgetAction.Delete,
+    prefillPreview: BudgetAction.EditDraft,
+    exportVersion: BudgetAction.ImportExport,
+    importTemplate: BudgetAction.ImportExport,
+    importPreview: BudgetAction.ImportExport,
+    // Also checks ImportExport inside the handler.
+    importCommit: BudgetAction.EditDraft,
   };
 
   it('guards the controller', () => {

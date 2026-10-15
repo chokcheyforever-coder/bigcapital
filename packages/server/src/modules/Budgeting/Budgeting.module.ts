@@ -8,12 +8,24 @@ import { BudgetingController } from './Budgeting.controller';
 import { BudgetCommandsService } from './commands/BudgetCommands.service';
 import { BudgetValidator } from './commands/BudgetValidator.service';
 import { BudgetQueriesService } from './queries/BudgetQueries.service';
+import { BudgetActualsService } from './queries/BudgetActuals.service';
+import { BudgetPrefillService } from './queries/BudgetPrefill.service';
+import { BudgetSheetService } from './commands/BudgetSheet.service';
 
 /** Budget planning & control (DiTech, docs/ditech/budgeting). */
 @Module({
   imports: [TenancyModule, TenancyDatabaseModule, AuditLogsModule],
   controllers: [BudgetingController],
-  providers: [BudgetCommandsService, BudgetValidator, BudgetQueriesService, AuthorizationGuard, PermissionGuard],
-  exports: [BudgetQueriesService],
+  providers: [
+    BudgetCommandsService,
+    BudgetValidator,
+    BudgetQueriesService,
+    BudgetActualsService,
+    BudgetPrefillService,
+    BudgetSheetService,
+    AuthorizationGuard,
+    PermissionGuard,
+  ],
+  exports: [BudgetQueriesService, BudgetActualsService],
 })
 export class BudgetingModule {}
