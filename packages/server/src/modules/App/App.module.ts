@@ -39,6 +39,7 @@ import { TaxRatesModule } from '../TaxRates/TaxRate.module';
 import { PdfTemplatesModule } from '../PdfTemplate/PdfTemplates.module';
 import { BranchesModule } from '../Branches/Branches.module';
 import { ProjectsModule } from '../Projects/Projects.module';
+import { BudgetingModule } from '../Budgeting/Budgeting.module';
 import { WarehousesModule } from '../Warehouses/Warehouses.module';
 import { SerializeInterceptor } from '@/common/interceptors/serialize.interceptor';
 import { ToJsonInterceptor } from '@/common/interceptors/to-json.interceptor';
@@ -208,6 +209,7 @@ import { AppThrottleModule } from './AppThrottle.module';
     PdfTemplatesModule,
     BranchesModule,
     ProjectsModule,
+    BudgetingModule,
     WarehousesModule,
     WarehousesTransfersModule,
     CustomersModule,

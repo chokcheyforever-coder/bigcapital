@@ -546,6 +546,18 @@ export function formatMetadataSummary(
       }
       return t('audit_log.metadata.plaid_webhook_plain');
     },
+    // 103 DiTech
+    Project: (m) => {
+      const p = (m.after ?? m.before ?? {}) as Record<string, unknown>;
+      return [p.code, p.name].filter(Boolean).join(' ');
+    },
+    Budget: (m, action) => {
+      if (action === 'lines_saved') {
+        return `Version ${m.versionNo}: ${m.added ?? 0} lines added, ${m.updated ?? 0} updated, ${m.removed ?? 0} removed`;
+      }
+      const b = (m.after ?? m.before ?? {}) as Record<string, unknown>;
+      return [b.reference, b.name].filter(Boolean).join(' ');
+    },
   };
 
   const formatter = formatters[subject];

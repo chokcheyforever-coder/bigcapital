@@ -14,6 +14,10 @@ import { Warehouse } from '@/modules/Warehouses/models/Warehouse.model';
 import { ItemWarehouseQuantity } from '@/modules/Warehouses/models/ItemWarehouseQuantity';
 import { Branch } from '@/modules/Branches/models/Branch.model';
 import { Project } from '@/modules/Projects/models/Project.model';
+import { Budget } from '@/modules/Budgeting/models/Budget.model';
+import { BudgetVersion } from '@/modules/Budgeting/models/BudgetVersion.model';
+import { BudgetLine } from '@/modules/Budgeting/models/BudgetLine.model';
+import { BudgetLineAmount } from '@/modules/Budgeting/models/BudgetLineAmount.model';
 import { SaleEstimate } from '@/modules/SaleEstimates/models/SaleEstimate';
 import { Customer } from '@/modules/Customers/models/Customer';
 import { Contact } from '@/modules/Contacts/models/Contact';
@@ -54,6 +58,10 @@ const models = [
   ItemWarehouseQuantity,
   Branch,
   Project,
+  Budget,
+  BudgetVersion,
+  BudgetLine,
+  BudgetLineAmount,
   SaleEstimate,
   Customer,
   Contact,

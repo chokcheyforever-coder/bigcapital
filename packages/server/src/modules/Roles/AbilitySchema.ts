@@ -1,4 +1,5 @@
 import { ProjectAction } from '@/modules/Projects/Projects.types';
+import { BudgetAction } from '@/modules/Budgeting/Budgeting.types';
 import { ItemAction } from '@/interfaces/Item';
 import { ReportsAction } from '../FinancialStatements/types/Report.types';
 import { InventoryAdjustmentAction } from '../InventoryAdjutments/types/InventoryAdjustments.types';
@@ -387,6 +388,25 @@ export const AbilitySchema: ISubjectAbilitiesSchema[] = [
       { key: ProjectAction.Create, label: 'ability.create', default: true },
       { key: ProjectAction.Edit, label: 'ability.edit', default: true },
       { key: ProjectAction.Delete, label: 'ability.delete', default: true },
+    ],
+  },
+  {
+    subject: AbilitySubject.Budget,
+    subjectLabel: 'ability.budgets',
+    abilities: [
+      { key: BudgetAction.View, label: 'ability.view', default: true },
+      { key: BudgetAction.Create, label: 'ability.create', default: true },
+      { key: BudgetAction.EditDraft, label: 'ability.edit_draft_budgets', default: true },
+      { key: BudgetAction.Delete, label: 'ability.delete', default: false },
+    ],
+    extraAbilities: [
+      { key: BudgetAction.Submit, label: 'ability.submit_budgets' },
+      { key: BudgetAction.Approve, label: 'ability.approve_budgets' },
+      { key: BudgetAction.Revise, label: 'ability.revise_budgets' },
+      { key: BudgetAction.Lock, label: 'ability.lock_budgets' },
+      { key: BudgetAction.ImportExport, label: 'ability.import_export_budgets' },
+      { key: BudgetAction.ViewAudit, label: 'ability.budget_audit_history' },
+      { key: BudgetAction.ConfigurePolicy, label: 'ability.configure_budget_policies' },
     ],
   },
 ];

@@ -80,6 +80,9 @@ jobs:
       - name: Build shared packages and server
         run: pnpm build:server
 
+      - name: Unit tests (DiTech modules)
+        run: pnpm --filter @bigcapital/server test -- --testPathPattern 'modules/(Budgeting|Projects)/'
+
       - name: Create server .env file
         run: |
           cat > packages/server/.env << EOF
