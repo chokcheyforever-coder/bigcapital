@@ -18,6 +18,7 @@ export function getDefaultTrialBalanceQuery(): TrialBalanceQuery {
     basis: 'accrual',
     filterByOption: 'with-transactions',
     branchesIds: [] as number[],
+    projectsIds: [] as number[],
     numberFormat: {},
   };
 }
@@ -37,6 +38,7 @@ const parseTrialBalanceSheetQuery = (
     ...transformed,
     // Ensures the branches ids is always array.
     branchesIds: castArray(transformed.branchesIds).map((id) => Number(id)),
+    projectsIds: castArray(transformed.projectsIds).map((id) => Number(id)),
   };
 };
 

@@ -3,12 +3,16 @@ import { FinancialHeaderLoadingSkeleton } from '../FinancialHeaderLoadingSkeleto
 import { Features } from '@/constants';
 import { useBranches } from '@/hooks/query';
 import { useFeatureCan } from '@/hooks/state';
+import { useProjects } from '@/hooks/query/projects';
+import { useProjectsEnabled } from '@/ditech/projects/hooks';
 
 type UseBranchesResult = ReturnType<typeof useBranches>;
 
 type ProfitLossSheetHeaderDimensionsPanelContextValue = {
   branches: UseBranchesResult['data'];
   isBranchesLoading: boolean;
+  projects: ReturnType<typeof useProjects>['data'];
+  isProjectsEnabled: boolean;
 };
 
 type ProfitLossSheetHeaderDimensionsProviderProps = {
@@ -32,12 +36,20 @@ function ProfitLossSheetHeaderDimensionsProvider({
     placeholderData: (prev) => prev,
   });
 
+  const isProjectsEnabled = useProjectsEnabled();
+  const { isLoading: isProjectsLoading, data: projects } = useProjects(
+    { status: 'all' },
+    { enabled: isProjectsEnabled },
+  );
+
   const provider: ProfitLossSheetHeaderDimensionsPanelContextValue = {
     branches,
     isBranchesLoading,
+    projects,
+    isProjectsEnabled,
   };
 
-  return isBranchesLoading ? (
+  return isBranchesLoading || (isProjectsEnabled && isProjectsLoading) ? (
     <FinancialHeaderLoadingSkeleton />
   ) : (
     <ProfitLossSheetHeaderDimensionsPanelContext.Provider

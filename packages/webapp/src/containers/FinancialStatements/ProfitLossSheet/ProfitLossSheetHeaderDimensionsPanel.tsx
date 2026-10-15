@@ -8,6 +8,7 @@ import {
 import { BranchMultiSelect, Row, Col } from '@/components';
 import { Features } from '@/constants';
 import { useFeatureCan } from '@/hooks/state';
+import { ProjectMultiSelect } from '@/ditech/projects/ProjectSelect';
 
 /**
  * profit loss Sheet Header dimensions panel.
@@ -26,7 +27,8 @@ export function ProfitLossSheetHeaderDimensionsPanel() {
  * @returns {JSX.Element}
  */
 function ProfitLossSheetHeaderDimensionsPanelContent() {
-  const { branches } = useProfitLossSheetPanelContext();
+  const { branches, projects, isProjectsEnabled } =
+    useProfitLossSheetPanelContext();
   const { featureCan } = useFeatureCan();
 
   const isBranchesFeatureCan = featureCan(Features.Branches);
@@ -40,6 +42,11 @@ function ProfitLossSheetHeaderDimensionsPanelContent() {
             className={Classes.FILL}
           >
             <BranchMultiSelect name={'branchesIds'} branches={branches} />
+          </FormGroup>
+        )}
+        {isProjectsEnabled && (
+          <FormGroup label={'Projects'} className={Classes.FILL}>
+            <ProjectMultiSelect name={'projectsIds'} projects={projects ?? []} />
           </FormGroup>
         )}
       </Col>

@@ -22,6 +22,7 @@ export const AbilitySubject = {
   TaxRate: 'TaxRate',
   BankRule: 'BankRule',
   AuditLog: 'AuditLog',
+  Project: 'Project',
 } as const;
 
 export const ItemAction = {
@@ -183,6 +184,13 @@ export const SubscriptionBillingAbility = {
 } as const;
 
 export const TaxRateAction = {
+  View: 'View',
+  Create: 'Create',
+  Edit: 'Edit',
+  Delete: 'Delete',
+} as const;
+
+export const ProjectAction = {
   View: 'View',
   Create: 'Create',
   Edit: 'Edit',

@@ -3,10 +3,14 @@ import { FinancialHeaderLoadingSkeleton } from '../FinancialHeaderLoadingSkeleto
 import { Features } from '@/constants';
 import { useBranches } from '@/hooks/query';
 import { useFeatureCan } from '@/hooks/state';
+import { useProjects } from '@/hooks/query/projects';
+import { useProjectsEnabled } from '@/ditech/projects/hooks';
 
 type TrialBLSheetHeaderDimensionsContextValue = {
   branches: ReturnType<typeof useBranches>['data'];
   isBranchesLoading: boolean;
+  projects: ReturnType<typeof useProjects>['data'];
+  isProjectsEnabled: boolean;
 };
 
 interface TrialBLHeaderDimensionsPanelProviderProps {
@@ -36,13 +40,22 @@ function TrialBLHeaderDimensionsPanelProvider({
     placeholderData: (prev) => prev,
   });
 
+  // Projects (103 DiTech plan feature).
+  const isProjectsEnabled = useProjectsEnabled();
+  const { isLoading: isProjectsLoading, data: projects } = useProjects(
+    { status: 'all' },
+    { enabled: isProjectsEnabled },
+  );
+
   // Provider
   const provider: TrialBLSheetHeaderDimensionsContextValue = {
     branches,
     isBranchesLoading,
+    projects,
+    isProjectsEnabled,
   };
 
-  return isBranchesLoading ? (
+  return isBranchesLoading || (isProjectsEnabled && isProjectsLoading) ? (
     <FinancialHeaderLoadingSkeleton />
   ) : (
     <TrialBLSheetHeaderDimensionsContext.Provider value={provider} {...props} />

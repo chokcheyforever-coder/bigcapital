@@ -16,6 +16,7 @@ import {
   VendorAction,
   AccountAction,
   ManualJournalAction,
+  ProjectAction,
   ExpenseAction,
   CashflowAction,
   PreferencesAbility,
@@ -418,6 +419,15 @@ export const SidebarMenu: SidebarMenuItem[] = [
                 permission: {
                   subject: AbilitySubject.ManualJournal,
                   ability: ManualJournalAction.View,
+                },
+              },
+              {
+                text: 'Projects',
+                href: '/projects',
+                type: ISidebarMenuItemType.Link,
+                permission: {
+                  subject: AbilitySubject.Project,
+                  ability: ProjectAction.View,
                 },
               },
               {

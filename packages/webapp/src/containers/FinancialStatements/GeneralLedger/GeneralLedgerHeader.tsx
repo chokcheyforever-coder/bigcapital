@@ -19,6 +19,7 @@ import type { FormikHelpers } from 'formik';
 import { FormattedMessage as T } from '@/components';
 import { Features } from '@/constants';
 import { useFeatureCan } from '@/hooks/state';
+import { useProjectsEnabled } from '@/ditech/projects/hooks';
 import { transformToForm } from '@/utils';
 
 type GeneralLedgerFormValues = Omit<
@@ -90,6 +91,7 @@ function GeneralLedgerHeaderInner({
 
   // Detarmine if the feature is enabled.
   const isBranchesFeatureCan = featureCan(Features.Branches);
+  const isProjectsEnabled = useProjectsEnabled();
 
   return (
     <GeneralLedgerDrawerHeader
@@ -108,7 +110,7 @@ function GeneralLedgerHeaderInner({
               title={<T id={'general'} />}
               panel={<GeneralLedgerHeaderGeneralPane />}
             />
-            {isBranchesFeatureCan && (
+            {(isBranchesFeatureCan || isProjectsEnabled) && (
               <Tab
                 id="dimensions"
                 title={<T id={'dimensions'} />}

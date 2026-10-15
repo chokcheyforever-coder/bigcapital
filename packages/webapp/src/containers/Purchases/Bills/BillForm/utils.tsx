@@ -60,6 +60,7 @@ export type BillFormValues = {
   note: string;
   open: boolean | '';
   branchId: string | number;
+  projectId?: number | null;
   warehouseId: string | number;
   exchangeRate: string | number;
   currencyCode: string;
@@ -96,6 +97,7 @@ export const defaultBill: BillFormValues = {
   note: '',
   open: '',
   branchId: '',
+  projectId: null,
   warehouseId: '',
   exchangeRate: 1,
   currencyCode: '',

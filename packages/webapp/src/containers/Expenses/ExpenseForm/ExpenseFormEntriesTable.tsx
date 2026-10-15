@@ -11,6 +11,7 @@ import {
   updateAutoAddNewLine,
   updateRemoveLineByIndex,
 } from '@/utils';
+import { useProjectOptions } from '@/ditech/projects/hooks';
 
 type ExpenseFormEntriesTableProps = {
   entries: ExpenseEntry[];
@@ -35,6 +36,7 @@ export function ExpenseFormEntriesTable({
   minLines = 1,
 }: ExpenseFormEntriesTableProps) {
   const { accounts } = useExpenseFormContext();
+  const { projects } = useProjectOptions(entries.map((e) => e.projectId));
 
   const columns = useExpenseFormTableColumns({ landedCost });
 
@@ -72,6 +74,7 @@ export function ExpenseFormEntriesTable({
       sticky={true}
       payload={{
         accounts: accounts,
+        projects,
         errors: error,
         updateData: handleUpdateData,
         removeRow: handleRemoveRow,

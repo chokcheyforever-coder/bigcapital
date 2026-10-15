@@ -46,6 +46,7 @@ export type VendorCreditFormValues = {
   referenceNo: string;
   note: string;
   branchId: string | number;
+  projectId?: number | null;
   warehouseId: string | number;
   exchangeRate: string | number;
   currencyCode: string;
@@ -77,6 +78,7 @@ export const defaultVendorCredit: VendorCreditFormValues = {
   referenceNo: '',
   note: '',
   branchId: '',
+  projectId: null,
   warehouseId: '',
   exchangeRate: 1,
   currencyCode: '',

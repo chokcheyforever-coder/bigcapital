@@ -12,6 +12,7 @@ export type ExpenseEntry = {
   expenseAccountId: string | number;
   description: string;
   landedCost: boolean | number;
+  projectId?: number | null;
 };
 
 export type ExpenseFormValues = {

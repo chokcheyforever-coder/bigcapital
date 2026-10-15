@@ -22,6 +22,8 @@ import { CellType, Features, Align } from '@/constants';
 import { useUpdateEffect } from '@/hooks';
 import { useCurrentOrganizationBaseCurrency } from '@/hooks/query';
 import { useFeatureCan } from '@/hooks/state';
+import { ProjectsListFieldCell } from '@/ditech/projects/ProjectsListFieldCell';
+import { useProjectsEnabled } from '@/ditech/projects/hooks';
 import { transactionNumber } from '@/utils';
 
 type JournalExchangeRateInputFieldRootProps = Omit<
@@ -110,6 +112,7 @@ ActionsCellRenderer.cellType = CellType.Button;
  */
 export const useJournalTableEntriesColumns = () => {
   const { featureCan } = useFeatureCan();
+  const isProjectsEnabled = useProjectsEnabled();
 
   return React.useMemo(
     () => [
@@ -159,6 +162,18 @@ export const useJournalTableEntriesColumns = () => {
             },
           ]
         : []),
+      ...(isProjectsEnabled
+        ? [
+            {
+              Header: 'Project',
+              id: 'projectId',
+              accessor: 'projectId',
+              Cell: ProjectsListFieldCell,
+              disableSortBy: true,
+              width: 120,
+            },
+          ]
+        : []),
       {
         Header: intl.get('note'),
         accessor: 'note',
@@ -176,7 +191,7 @@ export const useJournalTableEntriesColumns = () => {
         align: Align.Center,
       },
     ],
-    [],
+    [isProjectsEnabled],
   );
 };
 

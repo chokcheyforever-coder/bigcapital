@@ -48,6 +48,7 @@ export type ReceiptFormValues = {
   termsConditions: string;
   closed: boolean | '';
   branchId: string | number;
+  projectId?: number | null;
   warehouseId: string | number;
   exchangeRate: number;
   currencyCode: string;
@@ -89,6 +90,7 @@ export const defaultReceipt: ReceiptFormValues = {
   termsConditions: '',
   closed: '',
   branchId: '',
+  projectId: null,
   warehouseId: '',
   exchangeRate: 1,
   currencyCode: '',
@@ -431,6 +433,7 @@ export const resetFormState = ({
       ...initialValues,
       warehouseId: values.warehouseId,
       branchId: values.branchId,
+      projectId: values.projectId || null,
     },
   });
 };

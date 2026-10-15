@@ -32,6 +32,7 @@ export const getDefaultProfitLossQuery = () => ({
   percentageExpense: false,
 
   branchesIds: [],
+  projectsIds: [],
   numberFormat: {},
 });
 
@@ -46,6 +47,7 @@ const parseProfitLossQuery = (locationQuery: Record<string, unknown>) => {
   return {
     ...transformed,
     branchesIds: castArray(transformed.branchesIds),
+    projectsIds: castArray(transformed.projectsIds),
   };
 };
 

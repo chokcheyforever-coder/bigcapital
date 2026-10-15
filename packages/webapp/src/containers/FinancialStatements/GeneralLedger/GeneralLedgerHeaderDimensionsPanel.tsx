@@ -8,6 +8,7 @@ import {
 import { BranchMultiSelect, Row, Col } from '@/components';
 import { Features } from '@/constants';
 import { useFeatureCan } from '@/hooks/state';
+import { ProjectMultiSelect } from '@/ditech/projects/ProjectSelect';
 
 /**
  * Gereral ledger sheet header dismension panel.
@@ -26,7 +27,7 @@ export function GeneralLedgerHeaderDimensionsPanel() {
  * @returns
  */
 function GeneralLedgerHeaderDimensionsPanelContent() {
-  const { branches } = useGeneralLedgerHeaderDimensionsContext();
+  const { branches, projects, isProjectsEnabled } = useGeneralLedgerHeaderDimensionsContext();
 
   // Detarmines the feature whether is enabled.
   const { featureCan } = useFeatureCan();
@@ -42,6 +43,11 @@ function GeneralLedgerHeaderDimensionsPanelContent() {
             className={Classes.FILL}
           >
             <BranchMultiSelect name={'branchesIds'} branches={branches} />
+          </FormGroup>
+        )}
+        {isProjectsEnabled && (
+          <FormGroup label={'Projects'} className={Classes.FILL}>
+            <ProjectMultiSelect name={'projectsIds'} projects={projects ?? []} />
           </FormGroup>
         )}
       </Col>

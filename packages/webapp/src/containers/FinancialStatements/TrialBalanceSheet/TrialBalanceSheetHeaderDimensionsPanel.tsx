@@ -8,6 +8,7 @@ import {
 import { BranchMultiSelect, Row, Col } from '@/components';
 import { Features } from '@/constants';
 import { useFeatureCan } from '@/hooks/state';
+import { ProjectMultiSelect } from '@/ditech/projects/ProjectSelect';
 
 /**
  * Trial balance sheet header dimension panel.
@@ -26,7 +27,7 @@ export function TrialBalanceSheetHeaderDimensionsPanel() {
  * @returns {JSX.Element}
  */
 function TrialBLSheetHeaderDimensionsPanelContent() {
-  const { branches } = useTrialBalanceSheetPanelContext();
+  const { branches, projects, isProjectsEnabled } = useTrialBalanceSheetPanelContext();
   const { featureCan } = useFeatureCan();
 
   const isBranchesFeatureCan = featureCan(Features.Branches);
@@ -40,6 +41,11 @@ function TrialBLSheetHeaderDimensionsPanelContent() {
             className={Classes.FILL}
           >
             <BranchMultiSelect name={'branchesIds'} branches={branches} />
+          </FormGroup>
+        )}
+        {isProjectsEnabled && (
+          <FormGroup label={'Projects'} className={Classes.FILL}>
+            <ProjectMultiSelect name={'projectsIds'} projects={projects ?? []} />
           </FormGroup>
         )}
       </Col>

@@ -21,6 +21,8 @@ import {
 } from '@/components';
 import { Features } from '@/constants';
 import { useFeatureCan } from '@/hooks/state';
+import { DocumentProjectSelect } from '@/ditech/projects/DocumentProjectSelect';
+import { useProjectsEnabled } from '@/ditech/projects/hooks';
 
 /**
  * Vendor Credit note form topbar.
@@ -36,7 +38,13 @@ export function VendorCreditNoteFormTopBar() {
   useSetPrimaryBranchToForm();
 
   // Can't display the navigation bar if warehouses or branches feature is not enabled.
-  if (!featureCan(Features.Warehouses) && !featureCan(Features.Branches)) {
+  const isProjectsEnabled = useProjectsEnabled();
+
+  if (
+    !featureCan(Features.Warehouses) &&
+    !featureCan(Features.Branches) &&
+    !isProjectsEnabled
+  ) {
     return null;
   }
 
@@ -52,6 +60,11 @@ export function VendorCreditNoteFormTopBar() {
         <FeatureCan feature={Features.Warehouses}>
           <VendorCreditFormSelectWarehouse />
         </FeatureCan>
+        <DocumentProjectSelect
+          divider={
+            featureCan(Features.Warehouses) || featureCan(Features.Branches)
+          }
+        />
       </NavbarGroup>
     </FormTopbar>
   );

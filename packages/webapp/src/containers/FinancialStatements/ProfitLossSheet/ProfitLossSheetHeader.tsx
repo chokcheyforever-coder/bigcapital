@@ -20,6 +20,7 @@ import type { FormikHelpers } from 'formik';
 import { FormattedMessage as T } from '@/components';
 import { Features } from '@/constants';
 import { useFeatureCan } from '@/hooks/state';
+import { useProjectsEnabled } from '@/ditech/projects/hooks';
 
 type ProfitLossFormValues = ReturnType<typeof getDefaultProfitLossQuery>;
 
@@ -65,6 +66,7 @@ function ProfitLossSheetHeaderInner({
 
   const { featureCan } = useFeatureCan();
   const isBranchesFeatureCan = featureCan(Features.Branches);
+  const isProjectsEnabled = useProjectsEnabled();
 
   return (
     <ProfitLossSheetHeaderStyled
@@ -88,7 +90,7 @@ function ProfitLossSheetHeaderInner({
               title={<T id={'profit_loss_sheet.comparisons'} />}
               panel={<ProfitLossSheetHeaderComparisonPanel />}
             />
-            {isBranchesFeatureCan && (
+            {(isBranchesFeatureCan || isProjectsEnabled) && (
               <Tab
                 id="dimensions"
                 title={<T id={'profit_loss_sheet.dimensions'} />}

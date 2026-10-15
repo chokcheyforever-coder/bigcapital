@@ -17,12 +17,14 @@ import {
 import { FormattedMessage as T } from '@/components';
 import { Features } from '@/constants';
 import { useFeatureCan } from '@/hooks/state';
+import { useProjectsEnabled } from '@/ditech/projects/hooks';
 import { transformToForm } from '@/utils';
 
 interface TrialBalanceFormValues {
   fromDate: Date;
   toDate: Date;
   branchesIds: string[];
+  projectsIds?: string[];
   filterByOption: string;
   [key: string]: unknown;
 }
@@ -62,12 +64,14 @@ function TrialBalanceSheetHeaderInner({
   const { featureCan } = useFeatureCan();
 
   const isBranchesFeatureCan = featureCan(Features.Branches);
+  const isProjectsEnabled = useProjectsEnabled();
 
   // Default values.
   const defaultValues: TrialBalanceFormValues = {
     fromDate: moment().toDate(),
     toDate: moment().toDate(),
     branchesIds: [],
+    projectsIds: [],
     filterByOption: 'with-transactions',
   };
 
@@ -116,7 +120,7 @@ function TrialBalanceSheetHeaderInner({
               title={<T id={'general'} />}
               panel={<TrialBalanceSheetHeaderGeneralPanel />}
             />
-            {isBranchesFeatureCan && (
+            {(isBranchesFeatureCan || isProjectsEnabled) && (
               <Tab
                 id="dimensions"
                 title={<T id={'dimensions'} />}

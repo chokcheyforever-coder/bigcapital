@@ -19,6 +19,8 @@ import {
 } from '@/components/DataTableCells';
 import { CellType, Align } from '@/constants';
 import { useCurrentOrganizationBaseCurrency } from '@/hooks/query';
+import { ProjectsListFieldCell } from '@/ditech/projects/ProjectsListFieldCell';
+import { useProjectsEnabled } from '@/ditech/projects/hooks';
 
 type ActionsCellRendererProps = {
   row: { index: number };
@@ -105,6 +107,8 @@ export function useExpenseFormTableColumns({
 }: {
   landedCost: boolean;
 }) {
+  const isProjectsEnabled = useProjectsEnabled();
+
   return React.useMemo(
     () => [
       {
@@ -134,6 +138,18 @@ export function useExpenseFormTableColumns({
         disableSortBy: true,
         width: 100,
       },
+      ...(isProjectsEnabled
+        ? [
+            {
+              Header: 'Project',
+              id: 'projectId',
+              accessor: 'projectId',
+              Cell: ProjectsListFieldCell,
+              disableSortBy: true,
+              width: 60,
+            },
+          ]
+        : []),
       ...(landedCost
         ? [
             {
@@ -157,7 +173,7 @@ export function useExpenseFormTableColumns({
         align: Align.Center,
       },
     ],
-    [],
+    [isProjectsEnabled, landedCost],
   );
 }
 /**

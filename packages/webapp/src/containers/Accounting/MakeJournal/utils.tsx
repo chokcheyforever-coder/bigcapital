@@ -48,6 +48,7 @@ export type MakeJournalEntry = {
   debit: string | number;
   contactId: string | number;
   branchId: string | number;
+  projectId?: number | null;
   note: string;
 };
 
@@ -78,6 +79,7 @@ export const defaultEntry: MakeJournalEntry = {
   debit: '',
   contactId: '',
   branchId: '',
+  projectId: null,
   note: '',
 };
 

@@ -4,6 +4,7 @@ import { useJournalTableEntriesColumns } from './components';
 import { useMakeJournalFormContext } from './MakeJournalProvider';
 import { updateAdjustEntries, type MakeJournalEntry } from './utils';
 import { DataTableEditable } from '@/components';
+import { useProjectOptions } from '@/ditech/projects/hooks';
 import {
   saveInvoke,
   updateMinEntriesLines,
@@ -35,6 +36,7 @@ export function MakeJournalEntriesTable({
   currencyCode,
 }: MakeJournalEntriesTableProps) {
   const { accounts, contacts, branches } = useMakeJournalFormContext();
+  const { projects } = useProjectOptions(entries.map((e) => e.projectId));
 
   // Memorized data table columns.
   const columns = useJournalTableEntriesColumns();
@@ -79,6 +81,7 @@ export function MakeJournalEntriesTable({
         removeRow: handleRemoveRow,
         contacts,
         branches,
+        projects,
         autoFocus: ['accountId', 0],
         currencyCode,
       }}

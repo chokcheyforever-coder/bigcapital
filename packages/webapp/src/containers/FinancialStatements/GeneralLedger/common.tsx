@@ -31,6 +31,7 @@ export const getDefaultGeneralLedgerQuery = () => ({
   basis: 'accrual',
   filterByOption: 'with-transactions',
   branchesIds: [] as string[],
+  projectsIds: [] as string[],
   accountsIds: [] as string[],
 });
 
@@ -61,6 +62,7 @@ const parseGeneralLedgerQuery = (locationQuery: Record<string, unknown>) => {
 
     // Ensures the branches, accounts ids is always array.
     branchesIds: castArray(transformed.branchesIds),
+    projectsIds: castArray(transformed.projectsIds),
     accountsIds: castArray(transformed.accountsIds),
   };
 };

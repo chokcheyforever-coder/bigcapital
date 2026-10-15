@@ -1304,6 +1304,17 @@ export const getDashboardRoutes = () => [
     feature: Features.SalesTax,
     subscriptionActive: [SUBSCRIPTION_TYPE.MAIN],
   },
+  // 103 DiTech: projects (accounting dimension).
+  {
+    path: '/projects',
+    component: lazy(() =>
+      import('@/ditech/projects/ProjectsPage').then((m) => ({
+        default: m.ProjectsPage,
+      })),
+    ),
+    pageTitle: 'Projects',
+    subscriptionActive: [SUBSCRIPTION_TYPE.MAIN],
+  },
   // Bank Rules
   {
     path: '/bank-rules',

@@ -47,6 +47,7 @@ export type CreditNoteFormValues = {
   note: string;
   termsConditions: string;
   branchId: string | number;
+  projectId?: number | null;
   warehouseId: string | number;
   exchangeRate: string | number;
   currencyCode: string;
@@ -80,6 +81,7 @@ export const defaultCreditNote: CreditNoteFormValues = {
   note: '',
   termsConditions: '',
   branchId: '',
+  projectId: null,
   warehouseId: '',
   exchangeRate: 1,
   currencyCode: '',
