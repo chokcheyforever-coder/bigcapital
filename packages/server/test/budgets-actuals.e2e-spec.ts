@@ -38,7 +38,9 @@ describe('Budget vs actual (e2e)', () => {
   const plNet = async (fromDate: string, toDate: string, branchesIds?: number[]) => {
     const res = await http()
       .get('/reports/profit-loss-sheet')
-      .query({ fromDate, toDate, ...(branchesIds ? { branchesIds } : {}) })
+      .query({ fromDate, toDate })
+      // The P&L query DTO only takes an array (branchesIds[0]=1), not a single value.
+      .query((branchesIds ?? []).map((id, i) => `branchesIds[${i}]=${id}`).join('&'))
       .set(authHeaders());
     if (res.status !== 200) throw new Error(`P&L ${res.status}: ${JSON.stringify(res.body)}`);
     return Number(findNode(res.body.data, 'NET_INCOME')?.total?.amount ?? 0);
@@ -92,8 +94,9 @@ describe('Budget vs actual (e2e)', () => {
       .send({
         date: '2034-03-05', journalNumber: `BVA-${Date.now()}`, reference: faker.string.uuid(), publish: true, branchId: 1,
         entries: [
-          { index: 1, accountId: EXPENSE, debit: 70, credit: 0 },
-          { index: 2, accountId: CASH, debit: 0, credit: 70 },
+          // The ledger takes the branch of each entry, not of the journal.
+          { index: 1, accountId: EXPENSE, debit: 70, credit: 0, branchId: 1 },
+          { index: 2, accountId: CASH, debit: 0, credit: 70, branchId: 1 },
         ],
       })
       .expect(201);
