@@ -197,3 +197,15 @@ The fork is AGPL-3.0 and public. The portal footer already links to our modified
 2. **Commitments:** draft bills and draft expenses on budgeted accounts, computed live.
 3. **Release 1 types:** P&L, Revenue, OpEx, Operational, CAPEX. Balance Sheet and Cash Flow come in Phase 6.
 4. **Plans:** `budgeting` (and `projects`) on Business and above. Starter shows them locked with "Upgrade plan".
+
+## 11. Phase 4 decisions (budget vs actual, 2026-10-16)
+
+- **Endpoints:** `GET /api/budgets/reports/:report?budgetId=…` and `…/:report/export?format=xlsx|csv`, reports `budget-vs-actual`, `monthly-variance`, `branch`, `project`, `revenue-achievement`, `expense-utilization`, `capex`, `exceptions`. Permission: Budget `View` (reading a report, including its export). Query: `versionNo` (default: active version, else latest approved/locked, else latest), `fromMonth`/`toMonth` (inside the budget period), `branchesIds`, `projectsIds`, `columns` (`total`/`quarter`/`month`), `thresholdPercent` (exceptions, default 10), `nearPercent` (utilization, default 90), `includeUnbudgeted` (default true).
+- **Each ledger amount counts once.** Actuals are grouped by account, month, branch and project in one query, then given to the *most specific* budget line of the account that matches (branch + project > branch > project > neither). Amounts no line matches form an **unbudgeted** row per account. With unbudgeted rows included, report actuals equal the P&L for the same period and branches (e2e `budgets-actuals.e2e-spec.ts`, by year, by month and by branch).
+- **Branch and project reports:** budget by the line's branch/project (or the budget's); actuals by the branch/project they were **posted** to. A company-wide line's actuals appear under the branches that spent them, without a budget there.
+- **Branch/project filter:** keeps lines of that branch/project (or company-wide lines only when the budget itself is for it). Spending of the branch on accounts budgeted only company-wide shows as unbudgeted; the page says so.
+- **CAPEX:** actual = debits to the asset accounts (additions); credits are reported as **disposals**, not netted. The CAPEX report needs a CAPEX budget (`BUDGET_REPORT_NOT_FOR_TYPE`).
+- **Percentages** round to 2 decimals and are `null` (shown "n/a") when the budget is 0. Utilization status: `over` (actual > budget), `near` (≥ `nearPercent`), `on_track`, `unbudgeted`, `no_activity`.
+- **Drill-down** gives General Ledger filters (`fromDate`, `toDate`, `accountsIds`, `branchesIds`, `projectsIds`). `exact: false` when the GL view also includes rows that belong to another line of the account (the GL has no "not these branches" filter) or rows without a branch/project.
+- **Commitments** (draft bills/expenses) are not in Phase 4 reports; "Available = Budget − Actual − Commitments" comes with Phase 5.
+- Ledger fact noted while testing: a manual journal's branch is taken from **each entry**, not the journal header.
