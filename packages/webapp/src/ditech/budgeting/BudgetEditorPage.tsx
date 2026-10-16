@@ -193,6 +193,8 @@ export function BudgetEditorPage() {
               <NavbarDivider />
             </>
           )}
+          <Button className={Classes.MINIMAL} icon="comparison" text="Budget vs actual" onClick={() => history.push(`/budgets/${budgetId}/reports`)} data-testid="open-reports" />
+          <NavbarDivider />
           <ButtonGroup minimal>
             {(['months', 'quarters', 'year'] as GridView[]).map((v) => (
               <Button key={v} active={view === v} text={v === 'months' ? 'Months' : v === 'quarters' ? 'Quarters' : 'Year'} onClick={() => setView(v)} />

@@ -1317,6 +1317,17 @@ export const getDashboardRoutes = () => [
   },
   // 103 DiTech: budgeting.
   {
+    path: '/budgets/:id/reports',
+    component: lazy(() =>
+      import('@/ditech/budgeting/BudgetReportsPage').then((m) => ({
+        default: m.BudgetReportsPage,
+      })),
+    ),
+    pageTitle: 'Budget vs Actual',
+    sidebarExpand: false,
+    subscriptionActive: [SUBSCRIPTION_TYPE.MAIN],
+  },
+  {
     path: '/budgets/:id',
     component: lazy(() =>
       import('@/ditech/budgeting/BudgetEditorPage').then((m) => ({

@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { faker } from '@faker-js/faker';
-import { readApiAuth } from './_api';
+import { createExpenseViaApi, fetchAccounts, readApiAuth } from './_api';
 
 /**
  * 103 DiTech budgeting (Phase 3 acceptance, docs/ditech/budgeting/phase-1-design.md §8):
@@ -15,6 +15,17 @@ async function api(path: string) {
     headers: { authorization: `Bearer ${auth.accessToken}`, 'organization-id': auth.organizationId },
   });
   if (!res.ok) throw new Error(`${path}: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+async function apiSend(path: string, method: string, body: unknown) {
+  const auth = readApiAuth();
+  const res = await fetch(`${API_BASE}/api${path}`, {
+    method,
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${auth.accessToken}`, 'organization-id': auth.organizationId },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${method} ${path}: ${res.status} ${await res.text()}`);
   return res.json();
 }
 
@@ -111,5 +122,48 @@ test.describe('Budgets', () => {
 
     const detail = await api(`/budgets/${budgetId}/versions/1`);
     expect(detail.lines).toEqual([]);
+  });
+
+  test('budget vs actual: a posted expense against its budget, exceptions, drill-down and export', async ({ page }) => {
+    const auth = readApiAuth();
+    const rent = (await fetchAccounts(API_BASE, auth)).find((a) => a.name === 'Rent');
+    if (!rent) throw new Error('No Rent account in the seeded chart.');
+    await createExpenseViaApi(API_BASE, auth, { referenceNo: `BVA-${faker.string.alphanumeric(6)}`, amount: 450, paymentDate: '2036-03-15' });
+    const name = `BvA ${faker.string.alphanumeric(6)}`;
+    const budget = await apiSend('/budgets', 'POST', { name, type: 'profit_loss', fiscalYear: 2036, startDate: '2036-01-01', endDate: '2036-12-31' });
+    await apiSend(`/budgets/${budget.id}/versions/1/lines`, 'PUT', { lockVersion: 0, lines: [{ accountId: rent.id, amounts: [{ month: '2036-03', amount: 300 }] }] });
+
+    // From the editor.
+    await page.goto(`/budgets/${budget.id}`);
+    await page.getByTestId('open-reports').click();
+    await expect(page).toHaveURL(new RegExp(`/budgets/${budget.id}/reports`));
+    const rentRow = page.getByTestId('report-row').filter({ hasText: 'Rent' }).first();
+    await expect(rentRow).toContainText('300.00', { timeout: 30_000 });
+    await expect(rentRow).toContainText('450.00');
+    await expect(rentRow).toContainText('150.00'); // variance
+    await expect(rentRow).toContainText('50%');
+    await expect(page.locator('tfoot')).toContainText('Net income');
+
+    // Expense utilization marks it over budget; exceptions lists it.
+    await page.getByTestId('report-select').selectOption('expense-utilization');
+    await expect(page.getByTestId('report-row').filter({ hasText: 'Rent' }).first()).toContainText('Over budget', { timeout: 30_000 });
+    await page.getByTestId('report-select').selectOption('exceptions');
+    await expect(page.getByTestId('report-row').filter({ hasText: 'Rent' }).first()).toBeVisible({ timeout: 30_000 });
+
+    // Monthly view keeps the filters in the URL.
+    await page.getByTestId('report-select').selectOption('monthly-variance');
+    await expect(page).toHaveURL(/report=monthly-variance/);
+    await expect(page.locator('th.period').first()).toHaveText('Jan 2036', { timeout: 30_000 });
+
+    // Export downloads a file.
+    await page.getByRole('button', { name: 'Export' }).click();
+    const [download] = await Promise.all([page.waitForEvent('download'), page.getByText('Excel (.xlsx)').click()]);
+    expect(download.suggestedFilename()).toMatch(/monthly-variance\.xlsx$/);
+
+    // Drill-down opens the General Ledger for the account and period.
+    await page.getByTestId('report-select').selectOption('budget-vs-actual');
+    await page.getByRole('link', { name: 'General Ledger for Rent' }).first().click();
+    await expect(page).toHaveURL(new RegExp(`/financial-reports/general-ledger\\?.*accountsIds=${rent.id}`));
+    await expect(page).toHaveURL(/fromDate=2036-01-01/);
   });
 });

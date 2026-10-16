@@ -10,6 +10,7 @@ export const BUDGETS_ROUTES = {
   LINES: '/api/budgets/{id}/versions/{versionNo}/lines',
   ALLOCATE: '/api/budgets/{id}/allocate',
   PREFILL: '/api/budgets/{id}/prefill',
+  REPORT: '/api/budgets/reports/{report}',
 } as const satisfies Record<string, keyof paths>;
 
 export type GetBudgetsQuery = OpQueryParams<OpForPath<typeof BUDGETS_ROUTES.LIST, 'get'>>;
@@ -18,6 +19,7 @@ export type EditBudgetBody = OpRequestBody<OpForPath<typeof BUDGETS_ROUTES.BY_ID
 export type SaveBudgetLinesBody = OpRequestBody<OpForPath<typeof BUDGETS_ROUTES.LINES, 'put'>>;
 export type AllocateBudgetBody = OpRequestBody<OpForPath<typeof BUDGETS_ROUTES.ALLOCATE, 'post'>>;
 export type PrefillBudgetBody = OpRequestBody<OpForPath<typeof BUDGETS_ROUTES.PREFILL, 'post'>>;
+export type BudgetReportQuery = OpQueryParams<OpForPath<typeof BUDGETS_ROUTES.REPORT, 'get'>>;
 
 // Responses (camelCased by the fetcher). Month keys are "YYYY-MM-01".
 export type BudgetType = 'profit_loss' | 'revenue' | 'operating_expenses' | 'operational' | 'capex';
@@ -172,4 +174,83 @@ export async function prefillBudget(fetcher: ApiFetcher, id: number | string, va
   const post = fetcher.path(BUDGETS_ROUTES.PREFILL).method('post').create();
   const { data } = await post({ id: Number(id), ...values } as never);
   return data as unknown as BudgetPrefillResult;
+}
+
+// ---------------------------------------------------------------- budget vs actual (Phase 4)
+
+export type BudgetReportName =
+  | 'budget-vs-actual'
+  | 'monthly-variance'
+  | 'branch'
+  | 'project'
+  | 'revenue-achievement'
+  | 'expense-utilization'
+  | 'capex'
+  | 'exceptions';
+
+export interface BudgetReportFigures {
+  budget: number;
+  actual: number;
+  variance: number;
+  /** null when the budget is 0 (n/a). */
+  variancePercent: number | null;
+  /** Achievement (income) or utilization (spend); null when the budget is 0. */
+  usedPercent: number | null;
+  favorable: boolean;
+  unbudgeted: boolean;
+  /** CAPEX only. */
+  disposals?: number;
+}
+
+export interface BudgetReportTotals {
+  columns: Array<BudgetReportFigures & { key: string }>;
+  total: BudgetReportFigures;
+}
+
+export interface BudgetReportRow extends BudgetReportTotals {
+  key: string;
+  lineId: number | null;
+  account: { id: number; code: string | null; name: string; accountType: string; rootType: string; normal: string };
+  branch: { id: number; name: string } | null;
+  project: { id: number; name: string } | null;
+  note: string | null;
+  unbudgeted: boolean;
+  direction: 'income' | 'spend';
+  status: 'unbudgeted' | 'over' | 'near' | 'on_track' | 'no_activity' | null;
+  exception: boolean;
+  drilldown: { fromDate: string; toDate: string; accountsIds: number[]; branchesIds: number[]; projectsIds: number[]; exact: boolean };
+}
+
+export interface BudgetReport {
+  report: BudgetReportName;
+  budget: Budget;
+  version: BudgetVersion;
+  currencyCode: string;
+  period: { fromMonth: string; toMonth: string; fromDate: string; toDate: string; months: string[] };
+  filter: {
+    branchesIds: number[];
+    projectsIds: number[];
+    columns: 'total' | 'quarter' | 'month';
+    thresholdPercent: number;
+    nearPercent: number;
+    includeUnbudgeted: boolean;
+  };
+  columns: Array<{ key: string; label: string; months: string[] }>;
+  rows: BudgetReportRow[];
+  groups: Array<BudgetReportTotals & { key: string; rootType: string }>;
+  /** Branch and project reports: totals per branch or project. */
+  dimensions?: Array<{
+    key: string;
+    branch?: { id: number; name: string } | null;
+    project?: { id: number; name: string } | null;
+    groups: Array<BudgetReportTotals & { rootType: string }>;
+    netIncome: BudgetReportTotals | null;
+  }>;
+  netIncome: BudgetReportTotals | null;
+}
+
+export async function fetchBudgetReport(fetcher: ApiFetcher, report: BudgetReportName, query: BudgetReportQuery): Promise<BudgetReport> {
+  const get = fetcher.path(BUDGETS_ROUTES.REPORT).method('get').create();
+  const { data } = await get({ report, ...query } as never);
+  return data as unknown as BudgetReport;
 }
