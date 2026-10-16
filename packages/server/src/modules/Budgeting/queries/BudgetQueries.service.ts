@@ -51,7 +51,7 @@ export const toBudgetDto = (b: Budget) => ({
   updatedAt: b.updatedAt,
 });
 
-const toVersionDto = (v: BudgetVersion) => ({
+export const toVersionDto = (v: BudgetVersion) => ({
   id: v.id,
   versionNo: v.versionNo,
   kind: v.kind,

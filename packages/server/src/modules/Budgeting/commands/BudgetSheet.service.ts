@@ -69,6 +69,22 @@ export function cellAmount(cell: unknown): number | string | null {
   return /^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(text) ? text.replace(/,/g, '') : text;
 }
 
+/** An array of rows as a CSV or single-sheet XLSX file. */
+export function writeSheet(aoa: unknown[][], format: SheetFormat, baseName: string, sheetName: string) {
+  const sheet = XLSX.utils.aoa_to_sheet(aoa);
+  if (format === 'csv') {
+    return { body: Buffer.from(XLSX.utils.sheet_to_csv(sheet), 'utf8'), filename: `${baseName}.csv`, contentType: 'text/csv; charset=utf-8' };
+  }
+  const book = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book, sheet, sheetName);
+  const body: Buffer = XLSX.write(book, { type: 'buffer', bookType: 'xlsx' });
+  return {
+    body,
+    filename: `${baseName}.xlsx`,
+    contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  };
+}
+
 /**
  * Budget sheets (DiTech Phase 3): export a version, a blank template, and
  * import with a preview. An import is all-or-nothing: any invalid row means
@@ -121,18 +137,7 @@ export class BudgetSheetService {
   }
 
   private write(aoa: unknown[][], format: SheetFormat, baseName: string, sheetName: string) {
-    const sheet = XLSX.utils.aoa_to_sheet(aoa);
-    if (format === 'csv') {
-      return { body: Buffer.from(XLSX.utils.sheet_to_csv(sheet), 'utf8'), filename: `${baseName}.csv`, contentType: 'text/csv; charset=utf-8' };
-    }
-    const book = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(book, sheet, sheetName);
-    const body: Buffer = XLSX.write(book, { type: 'buffer', bookType: 'xlsx' });
-    return {
-      body,
-      filename: `${baseName}.xlsx`,
-      contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    };
+    return writeSheet(aoa, format, baseName, sheetName);
   }
 
   // ------------------------------------------------------------ import
