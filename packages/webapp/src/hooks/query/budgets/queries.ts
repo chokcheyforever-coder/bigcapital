@@ -4,6 +4,7 @@ import {
   deleteBudget,
   editBudget,
   fetchBudget,
+  fetchBudgetReport,
   fetchBudgets,
   fetchBudgetVersion,
   prefillBudget,
@@ -12,6 +13,9 @@ import {
 import type {
   AllocateBudgetBody,
   BudgetDetail,
+  BudgetReport,
+  BudgetReportName,
+  BudgetReportQuery,
   BudgetsListResponse,
   BudgetVersionDetail,
   CreateBudgetBody,
@@ -111,5 +115,19 @@ export function usePrefillBudget() {
   const fetcher = useApiFetcher({ enableCamelCaseTransform: true });
   return useMutation({
     mutationFn: ([id, values]: [number, PrefillBudgetBody]) => prefillBudget(fetcher, id, values),
+  });
+}
+
+export function useBudgetReport(
+  report: BudgetReportName,
+  query: BudgetReportQuery | null,
+  props?: Omit<UseQueryOptions<BudgetReport>, 'queryKey' | 'queryFn'>,
+) {
+  const fetcher = useApiFetcher({ enableCamelCaseTransform: true });
+  return useQuery({
+    enabled: !!query,
+    ...props,
+    queryKey: budgetsKeys.report(report, query as Record<string, unknown>),
+    queryFn: () => fetchBudgetReport(fetcher, report, query as BudgetReportQuery),
   });
 }

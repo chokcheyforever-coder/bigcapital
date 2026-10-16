@@ -1965,6 +1965,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/budgets/reports/{report}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Budget vs actual report: budget, posted actuals (P&L rules), variance, variance %, used % per line and period, with group totals, net income and a General Ledger drill-down per row. */
+        get: operations["BudgetReportsController_getReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/reports/{report}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Downloads a budget report as Excel or CSV. */
+        get: operations["BudgetReportsController_exportReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/budgets": {
         parameters: {
             query?: never;
@@ -22304,6 +22338,98 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["GetAuditLogsResponseDto"];
                 };
+            };
+        };
+    };
+    BudgetReportsController_getReport: {
+        parameters: {
+            query: {
+                /** @description Budget to compare with the ledger */
+                budgetId: number;
+                /** @description Version number; defaults to the active version, else the latest approved or locked, else the latest */
+                versionNo?: number;
+                /** @description First month (YYYY-MM); defaults to the budget start */
+                fromMonth?: string;
+                /** @description Last month (YYYY-MM); defaults to the budget end */
+                toMonth?: string;
+                /** @description Only ledger rows and budget lines of these branches */
+                branchesIds?: number[];
+                /** @description Only ledger rows and budget lines of these projects */
+                projectsIds?: number[];
+                /** @description Period columns (monthly-variance is always by month) */
+                columns?: "total" | "quarter" | "month";
+                /** @description Exceptions: unfavorable variance of at least this % of budget */
+                thresholdPercent?: number;
+                /** @description Expense utilization: "near" from this % of budget */
+                nearPercent?: number;
+                /** @description Include accounts with actuals but no budget line */
+                includeUnbudgeted?: boolean;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                report: "budget-vs-actual" | "monthly-variance" | "branch" | "project" | "revenue-achievement" | "expense-utilization" | "capex" | "exceptions";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unknown report, budget or version. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetReportsController_exportReport: {
+        parameters: {
+            query: {
+                /** @description Budget to compare with the ledger */
+                budgetId: number;
+                /** @description Version number; defaults to the active version, else the latest approved or locked, else the latest */
+                versionNo?: number;
+                /** @description First month (YYYY-MM); defaults to the budget start */
+                fromMonth?: string;
+                /** @description Last month (YYYY-MM); defaults to the budget end */
+                toMonth?: string;
+                /** @description Only ledger rows and budget lines of these branches */
+                branchesIds?: number[];
+                /** @description Only ledger rows and budget lines of these projects */
+                projectsIds?: number[];
+                /** @description Period columns (monthly-variance is always by month) */
+                columns?: "total" | "quarter" | "month";
+                /** @description Exceptions: unfavorable variance of at least this % of budget */
+                thresholdPercent?: number;
+                /** @description Expense utilization: "near" from this % of budget */
+                nearPercent?: number;
+                /** @description Include accounts with actuals but no budget line */
+                includeUnbudgeted?: boolean;
+                format?: "xlsx" | "csv";
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                report: "budget-vs-actual" | "monthly-variance" | "branch" | "project" | "revenue-achievement" | "expense-utilization" | "capex" | "exceptions";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
