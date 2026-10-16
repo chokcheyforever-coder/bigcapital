@@ -77,4 +77,44 @@ export class BudgetActualsService {
     }
     return [...series.values()];
   }
+
+  /**
+   * Debit and credit totals by account, month, branch and project, in one
+   * grouped query (same rows and filters as `byMonth`). Budget vs actual
+   * assigns each group to its budget line.
+   */
+  async byDimensions(q: Omit<ActualsQuery, 'splitBy'>): Promise<LedgerCell[]> {
+    if (q.accountIds.length === 0) return [];
+    const rows = await this.transactionModel()
+      .query()
+      .onBuild((query) => {
+        query.whereIn('accountId', q.accountIds);
+        query.modify('filterDateRange', q.fromDate, q.toDate);
+        query.modify('groupByDateFormat', 'month');
+        query.sum('credit as credit');
+        query.sum('debit as debit');
+        query.select('accountId', 'branchId', 'projectId');
+        query.groupBy('accountId', 'branchId', 'projectId');
+        if (!isEmpty(q.branchIds)) query.modify('filterByBranches', q.branchIds);
+        if (!isEmpty(q.projectIds)) query.modify('filterByProjects', q.projectIds);
+      });
+    return (rows as any[]).map((r) => ({
+      accountId: r.accountId,
+      branchId: r.branchId ?? null,
+      projectId: r.projectId ?? null,
+      month: `${r.date}-01`,
+      debit: toMilli(Number(r.debit ?? 0).toFixed(3)),
+      credit: toMilli(Number(r.credit ?? 0).toFixed(3)),
+    }));
+  }
+}
+
+export interface LedgerCell {
+  accountId: number;
+  branchId: number | null;
+  projectId: number | null;
+  /** YYYY-MM-01 */
+  month: string;
+  debit: Milli;
+  credit: Milli;
 }

@@ -4,6 +4,7 @@ import { AuthorizationGuard } from '@/modules/Roles/Authorization.guard';
 import { PermissionGuard } from '@/modules/Roles/Permission.guard';
 import { AbilitySubject } from '@/modules/Roles/Roles.types';
 import { BudgetingController } from './Budgeting.controller';
+import { BudgetReportsController } from './BudgetReports.controller';
 import { BudgetAction } from './Budgeting.types';
 
 /**
@@ -39,6 +40,20 @@ describe('BudgetingController permissions', () => {
     for (const route of routes) {
       const permission = Reflect.getMetadata(REQUIRED_PERMISSION_KEY, BudgetingController.prototype[route]);
       expect({ route, permission }).toEqual({ route, permission: { ability: expected[route], subject: AbilitySubject.Budget } });
+    }
+  });
+});
+
+describe('BudgetReportsController permissions', () => {
+  it('guards the controller and needs Budget View on every route', () => {
+    expect(Reflect.getMetadata(GUARDS_METADATA, BudgetReportsController)).toEqual([AuthorizationGuard, PermissionGuard]);
+    const routes = Object.getOwnPropertyNames(BudgetReportsController.prototype).filter((n) => n !== 'constructor');
+    expect(routes.sort()).toEqual(['exportReport', 'getReport']);
+    for (const route of routes) {
+      expect(Reflect.getMetadata(REQUIRED_PERMISSION_KEY, BudgetReportsController.prototype[route])).toEqual({
+        ability: BudgetAction.View,
+        subject: AbilitySubject.Budget,
+      });
     }
   });
 });

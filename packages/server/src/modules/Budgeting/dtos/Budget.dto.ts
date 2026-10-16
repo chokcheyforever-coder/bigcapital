@@ -1,14 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+import { castArray } from 'lodash';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsIn,
   IsInt,
   IsNotEmpty,
   IsNumber,
   IsString,
+  Matches,
   Max,
   MaxLength,
   Min,
@@ -299,4 +302,89 @@ export class PrefillBudgetDto {
   @IsArray()
   @IsInt({ each: true })
   accountIds?: number[];
+}
+
+// ---------------------------------------------------------------- reports (Phase 4)
+
+export const BUDGET_REPORTS = [
+  'budget-vs-actual',
+  'monthly-variance',
+  'branch',
+  'project',
+  'revenue-achievement',
+  'expense-utilization',
+  'capex',
+  'exceptions',
+] as const;
+export type BudgetReportName = (typeof BUDGET_REPORTS)[number];
+
+// A single id arrives as a plain string (`branchesIds=5`), several as an array.
+const toIdList = ({ value }: { value: unknown }) =>
+  value === undefined || value === null || value === ''
+    ? undefined
+    : castArray(value).filter((v) => v !== '').map(Number);
+
+export class BudgetReportQueryDto {
+  @ApiProperty({ description: 'Budget to compare with the ledger' })
+  @ToNumber()
+  @IsInt()
+  budgetId: number;
+
+  @ApiPropertyOptional({ description: 'Version number; defaults to the active version, else the latest approved or locked, else the latest' })
+  @IsOptional()
+  @ToNumber()
+  @IsInt()
+  @Min(1)
+  versionNo?: number;
+
+  @ApiPropertyOptional({ description: 'First month (YYYY-MM); defaults to the budget start', example: '2027-01' })
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}(-01)?$/)
+  fromMonth?: string;
+
+  @ApiPropertyOptional({ description: 'Last month (YYYY-MM); defaults to the budget end', example: '2027-06' })
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}(-01)?$/)
+  toMonth?: string;
+
+  @ApiPropertyOptional({ type: [Number], description: 'Only ledger rows and budget lines of these branches' })
+  @IsOptional()
+  @Transform(toIdList)
+  @IsArray()
+  @IsInt({ each: true })
+  branchesIds?: number[];
+
+  @ApiPropertyOptional({ type: [Number], description: 'Only ledger rows and budget lines of these projects' })
+  @IsOptional()
+  @Transform(toIdList)
+  @IsArray()
+  @IsInt({ each: true })
+  projectsIds?: number[];
+
+  @ApiPropertyOptional({ enum: ['total', 'quarter', 'month'], default: 'total', description: 'Period columns (monthly-variance is always by month)' })
+  @IsOptional()
+  @IsIn(['total', 'quarter', 'month'])
+  columns?: 'total' | 'quarter' | 'month';
+
+  @ApiPropertyOptional({ default: 10, description: 'Exceptions: unfavorable variance of at least this % of budget' })
+  @IsOptional()
+  @ToNumber()
+  @IsNumber()
+  @Min(0)
+  @Max(1000)
+  thresholdPercent?: number;
+
+  @ApiPropertyOptional({ default: 90, description: 'Expense utilization: "near" from this % of budget' })
+  @IsOptional()
+  @ToNumber()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  nearPercent?: number;
+
+  @ApiPropertyOptional({ default: true, description: 'Include accounts with actuals but no budget line' })
+  @IsOptional()
+  @Transform(({ value }) => (value === undefined ? undefined : value === true || value === 'true' || value === '1'))
+  @IsBoolean()
+  includeUnbudgeted?: boolean;
 }
