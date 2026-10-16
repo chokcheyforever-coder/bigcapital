@@ -7,9 +7,13 @@ import { findNode } from './_utils/balance-sheet';
 
 /**
  * Budget vs actual (DiTech Phase 4). Real invoices, bills, expenses and
- * journals in 2034 on two branches, plus a deleted invoice and draft
+ * journals in 2034 on two projects, plus a deleted invoice and draft
  * documents; the report's actuals must equal the Profit & Loss month by month
- * and by branch, and every ledger amount must land on exactly one line.
+ * and by project, and every ledger amount must land on exactly one line.
+ *
+ * The dimension used here is the project: the e2e tenant does not have
+ * multi-branch active, so documents' branches never reach the ledger there.
+ * Branches go through the same matching code (calc/variance.spec.ts).
  */
 describe('Budget vs actual (e2e)', () => {
   const http = () => request(app.getHttpServer());
@@ -24,10 +28,11 @@ describe('Budget vs actual (e2e)', () => {
   const EXPENSE = 1021;
   const CASH = 1000;
 
-  let branch2: number;
+  let projectA: number;
+  let projectB: number;
   let budget: any;
   let incomeLine: any;
-  let expenseBranch1Line: any;
+  let expenseProjectLine: any;
   let expenseLine: any;
 
   const report = async (name: string, query: Record<string, unknown> = {}, status = 200) => {
@@ -35,17 +40,18 @@ describe('Budget vs actual (e2e)', () => {
     if (res.status !== status) throw new Error(`${name} ${res.status}: ${JSON.stringify(res.body)}`);
     return res.body;
   };
-  const plNet = async (fromDate: string, toDate: string, branchesIds?: number[]) => {
+  const plNet = async (fromDate: string, toDate: string, projectsIds?: number[]) => {
     const res = await http()
       .get('/reports/profit-loss-sheet')
       .query({ fromDate, toDate })
-      // The P&L query DTO only takes an array (branchesIds[0]=1), not a single value.
-      .query((branchesIds ?? []).map((id, i) => `branchesIds[${i}]=${id}`).join('&'))
+      .query((projectsIds ?? []).map((id, i) => `projectsIds[${i}]=${id}`).join('&'))
       .set(authHeaders());
     if (res.status !== 200) throw new Error(`P&L ${res.status}: ${JSON.stringify(res.body)}`);
     return Number(findNode(res.body.data, 'NET_INCOME')?.total?.amount ?? 0);
   };
   const row = (r: any, predicate: (row: any) => boolean) => r.rows.find(predicate);
+  const createProject = async () =>
+    (await http().post('/projects').set(authHeaders()).send({ name: `BvA ${faker.string.alphanumeric(8)}` }).expect(201)).body.id;
 
   beforeAll(async () => {
     await cancelTransactionsLock();
@@ -53,59 +59,59 @@ describe('Budget vs actual (e2e)', () => {
     const customerId = await createCustomer(currency);
     const vendorId = await createVendor(currency);
     const itemId = await createServiceItem();
-    branch2 = (await http().post('/branches').set(authHeaders()).send({ name: `BvA ${faker.string.alphanumeric(5)}`, code: faker.string.alpha(4) }).expect(201)).body.id;
+    projectA = await createProject();
+    projectB = await createProject();
 
-    const invoice = (date: string, branchId: number, rate: number) =>
+    const invoice = (date: string, projectId: number, rate: number) =>
       http()
         .post('/sale-invoices')
         .set(authHeaders())
         .send({
           customerId, invoiceDate: date, dueDate: date, invoiceNo: faker.string.uuid(), delivered: true,
-          branchId, warehouseId: 1, entries: [{ index: 1, itemId, quantity: 1, rate }],
+          branchId: 1, warehouseId: 1, projectId, entries: [{ index: 1, itemId, quantity: 1, rate }],
         })
         .expect(201);
-    const bill = (date: string, branchId: number, rate: number, open = true) =>
+    const bill = (date: string, projectId: number, rate: number, open = true) =>
       http()
         .post('/bills')
         .set(authHeaders())
         .send({
           vendorId, billDate: date, dueDate: date, billNumber: faker.string.alphanumeric(10), open,
-          branchId, warehouseId: 1, entries: [{ index: 1, itemId, quantity: 1, rate }],
+          branchId: 1, warehouseId: 1, projectId, entries: [{ index: 1, itemId, quantity: 1, rate }],
         })
         .expect(201);
-    const expense = (date: string, branchId: number, amount: number, publish = true) =>
+    const expense = (date: string, projectId: number, amount: number, publish = true) =>
       http()
         .post('/expenses')
         .set(authHeaders())
         .send({
           exchangeRate: 1, paymentAccountId: CASH, referenceNo: faker.string.alphanumeric(10), publish,
-          paymentDate: date, branchId, categories: [{ index: 1, expenseAccountId: EXPENSE, amount }],
+          paymentDate: date, branchId: 1, categories: [{ index: 1, expenseAccountId: EXPENSE, amount, projectId }],
         })
         .expect(201);
 
-    // Posted: Jan income 1000 (branch 1) + 500 (branch 2); Feb bill 400 (b1), expense 150 (b2); Mar journal 70 (b1).
-    await invoice('2034-01-15', 1, 1000);
-    await invoice('2034-01-20', branch2, 500);
-    await bill('2034-02-10', 1, 400);
-    await expense('2034-02-11', branch2, 150);
+    // Posted: Jan income 1000 (A) + 500 (B); Feb bill 400 (A), expense 150 (B); Mar journal 70 (A).
+    await invoice('2034-01-15', projectA, 1000);
+    await invoice('2034-01-20', projectB, 500);
+    await bill('2034-02-10', projectA, 400);
+    await expense('2034-02-11', projectB, 150);
     await http()
       .post('/manual-journals')
       .set(authHeaders())
       .send({
         date: '2034-03-05', journalNumber: `BVA-${Date.now()}`, reference: faker.string.uuid(), publish: true, branchId: 1,
         entries: [
-          // The ledger takes the branch of each entry, not of the journal.
-          { index: 1, accountId: EXPENSE, debit: 70, credit: 0, branchId: 1 },
-          { index: 2, accountId: CASH, debit: 0, credit: 70, branchId: 1 },
+          { index: 1, accountId: EXPENSE, debit: 70, credit: 0, projectId: projectA },
+          { index: 2, accountId: CASH, debit: 0, credit: 70 },
         ],
       })
       .expect(201);
 
     // Not actuals: a deleted invoice, a draft bill and a draft expense.
-    const deleted = await invoice('2034-01-25', 1, 9999);
+    const deleted = await invoice('2034-01-25', projectA, 9999);
     await http().delete(`/sale-invoices/${deleted.body.id}`).set(authHeaders()).expect(200);
-    await bill('2034-02-12', 1, 888, false);
-    await expense('2034-02-13', 1, 777, false);
+    await bill('2034-02-12', projectA, 888, false);
+    await expense('2034-02-13', projectA, 777, false);
 
     const created = await http()
       .post('/budgets')
@@ -120,14 +126,14 @@ describe('Budget vs actual (e2e)', () => {
         lockVersion: 0,
         lines: [
           { accountId: INCOME, amounts: am({ '2034-01': 1200 }) },
-          { accountId: EXPENSE, branchId: 1, amounts: am({ '2034-03': 100 }) },
+          { accountId: EXPENSE, projectId: projectA, amounts: am({ '2034-03': 100 }) },
           { accountId: EXPENSE, amounts: am({ '2034-02': 200 }) },
         ],
       });
     if (version.status !== 200) throw new Error(`lines ${version.status}: ${JSON.stringify(version.body)}`);
     incomeLine = version.body.lines.find((l) => l.account_id === INCOME);
-    expenseBranch1Line = version.body.lines.find((l) => l.account_id === EXPENSE && l.branch_id === 1);
-    expenseLine = version.body.lines.find((l) => l.account_id === EXPENSE && l.branch_id === null);
+    expenseProjectLine = version.body.lines.find((l) => l.account_id === EXPENSE && l.project_id === projectA);
+    expenseLine = version.body.lines.find((l) => l.account_id === EXPENSE && l.project_id === null);
   });
 
   describe('reconciles with the Profit & Loss', () => {
@@ -140,22 +146,29 @@ describe('Budget vs actual (e2e)', () => {
       }
     });
 
-    it('equals the P&L for each branch', async () => {
-      for (const branchId of [1, branch2]) {
-        const r = await report('budget-vs-actual', { branchesIds: [branchId] });
-        expect({ branchId, actual: r.net_income.total.actual }).toEqual({
-          branchId,
-          actual: expect.closeTo(await plNet(YEAR.fromDate, YEAR.toDate, [branchId]), 2),
-        });
+    it('equals the P&L for each project', async () => {
+      for (const projectId of [projectA, projectB]) {
+        const r = await report('budget-vs-actual', { projectsIds: [projectId] });
+        const expected = await plNet(YEAR.fromDate, YEAR.toDate, [projectId]);
+        expect({ projectId, actual: r.net_income.total.actual }).toEqual({ projectId, actual: expect.closeTo(expected, 2) });
       }
+      // A: 1000 − 400 − 70; B: 500 − 150.
+      expect(await plNet(YEAR.fromDate, YEAR.toDate, [projectA])).toBeCloseTo(530, 2);
+      expect(await plNet(YEAR.fromDate, YEAR.toDate, [projectB])).toBeCloseTo(350, 2);
     });
 
-    it('the branch report splits actuals by ledger branch, adding up to the P&L', async () => {
-      const r = await report('branch');
-      for (const branchId of [1, branch2]) {
-        const dim = r.dimensions.find((d) => d.branch?.id === branchId);
-        expect(dim.net_income.total.actual).toBeCloseTo(await plNet(YEAR.fromDate, YEAR.toDate, [branchId]), 2);
+    it('the project report splits actuals by posted project, adding up to the P&L', async () => {
+      const r = await report('project');
+      for (const projectId of [projectA, projectB]) {
+        const dim = r.dimensions.find((d) => d.project?.id === projectId);
+        expect(dim.net_income.total.actual).toBeCloseTo(await plNet(YEAR.fromDate, YEAR.toDate, [projectId]), 2);
       }
+      const sum = r.dimensions.reduce((a, d) => a + (d.net_income?.total.actual ?? 0), 0);
+      expect(sum).toBeCloseTo(r.net_income.total.actual, 2);
+    });
+
+    it('the branch report adds up to the total too', async () => {
+      const r = await report('branch');
       const sum = r.dimensions.reduce((a, d) => a + (d.net_income?.total.actual ?? 0), 0);
       expect(sum).toBeCloseTo(r.net_income.total.actual, 2);
     });
@@ -167,14 +180,20 @@ describe('Budget vs actual (e2e)', () => {
       const income = row(r, (x) => x.line_id === incomeLine.id);
       expect(income.total).toMatchObject({ budget: 1200, actual: 1500, variance: 300, variance_percent: 25, used_percent: 125, favorable: true });
 
-      // Branch 1 expense (journal 70) → the branch line; branch 2 expense (150) → the line without branch.
-      expect(row(r, (x) => x.line_id === expenseBranch1Line.id).total).toMatchObject({ budget: 100, actual: 70, variance: -30, favorable: true });
+      // Project A expense (journal 70) → the project line; project B expense (150) → the line without project.
+      expect(row(r, (x) => x.line_id === expenseProjectLine.id).total).toMatchObject({ budget: 100, actual: 70, variance: -30, favorable: true });
       expect(row(r, (x) => x.line_id === expenseLine.id).total).toMatchObject({ budget: 200, actual: 150, variance: -50, favorable: true });
 
       // The bill's cost account has no line: an unbudgeted row.
       const cost = row(r, (x) => x.account.id === COST && x.line_id === null);
       expect(cost).toMatchObject({ unbudgeted: true, status: 'unbudgeted' });
       expect(cost.total).toMatchObject({ budget: 0, actual: 400, variance_percent: null, used_percent: null, unbudgeted: true });
+    });
+
+    it('a project filter keeps that project\'s lines; its other spending shows as unbudgeted', async () => {
+      const r = await report('budget-vs-actual', { projectsIds: [projectB] });
+      expect(r.rows.some((x) => x.line_id === expenseProjectLine.id)).toBe(false);
+      expect(row(r, (x) => x.account.id === EXPENSE && x.line_id === null).total).toMatchObject({ budget: 0, actual: 150 });
     });
 
     it('includeUnbudgeted=false leaves out accounts without a line', async () => {
@@ -194,9 +213,9 @@ describe('Budget vs actual (e2e)', () => {
       const r = await report('budget-vs-actual');
       const income = row(r, (x) => x.line_id === incomeLine.id);
       expect(income.drilldown).toMatchObject({ from_date: '2034-01-01', to_date: '2034-12-31', accounts_ids: [INCOME], exact: true });
-      // Expense has two lines, so the line without branch is not an exact GL filter.
+      // Expense has two lines, so the line without project is not an exact GL filter.
       expect(row(r, (x) => x.line_id === expenseLine.id).drilldown.exact).toBe(false);
-      expect(row(r, (x) => x.line_id === expenseBranch1Line.id).drilldown.branches_ids).toEqual([1]);
+      expect(row(r, (x) => x.line_id === expenseProjectLine.id).drilldown.projects_ids).toEqual([projectA]);
     });
   });
 
@@ -209,7 +228,7 @@ describe('Budget vs actual (e2e)', () => {
 
       const expense = await report('expense-utilization', { nearPercent: 70 });
       expect(expense.rows.every((x) => x.account.root_type === 'expense')).toBe(true);
-      expect(row(expense, (x) => x.line_id === expenseBranch1Line.id).status).toBe('near'); // 70 %
+      expect(row(expense, (x) => x.line_id === expenseProjectLine.id).status).toBe('near'); // 70 %
       expect(row(expense, (x) => x.line_id === expenseLine.id).status).toBe('near'); // 75 %
     });
 

@@ -363,7 +363,8 @@ export class BudgetReportsService {
       ...sumRows(rows.filter((r) => r.account.rootType === rootType), SPEND_ROOTS.includes(rootType) ? 'spend' : 'income'),
     }));
 
-    const hasPl = rows.some((r) => r.account.rootType === 'income' || r.account.rootType === 'expense');
+    // P&L-style budgets always have a net income line (zeros when a filter leaves no rows).
+    const hasPl = !isCapex || rows.some((r) => r.account.rootType === 'income' || r.account.rootType === 'expense');
     const plRows = rows.filter((r) => r.account.rootType === 'income' || r.account.rootType === 'expense');
     const netOf = (list: typeof rows) => sumRows(list, 'income', (r) => (r.account.rootType === 'income' ? 1 : -1));
     const netIncome = hasPl && name !== 'revenue-achievement' && name !== 'expense-utilization' && name !== 'exceptions' ? netOf(plRows) : null;
