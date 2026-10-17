@@ -61,9 +61,13 @@ export const toVersionDto = (v: BudgetVersion) => ({
   sourceVersionId: v.sourceVersionId,
   revisionReason: v.revisionReason,
   lockVersion: v.lockVersion,
+  submissionNo: v.submissionNo ?? 0,
   submittedAt: v.submittedAt,
+  submittedBy: v.submittedBy,
   approvedAt: v.approvedAt,
+  approvedBy: v.approvedBy,
   lockedAt: v.lockedAt,
+  lockedBy: v.lockedBy,
   createdAt: v.createdAt,
   updatedAt: v.updatedAt,
 });

@@ -33,6 +33,7 @@ import { lineKey, useBudgetGrid } from './gridState';
 import { STATUS_INTENT, statusLabel } from './BudgetsPage';
 import { useBudgetFiles } from './files';
 import { useBudgetingEnabled } from './hooks';
+import { VersionWorkflowBar } from './BudgetWorkflow';
 
 const EDITABLE = ['draft', 'rejected'];
 const errorOf = (e) => e?.data?.errors?.[0] ?? null;
@@ -244,9 +245,23 @@ export function BudgetEditorPage() {
             <Tag intent={STATUS_INTENT[status]}>{statusLabel(status)}</Tag>
           </div>
 
+          <VersionWorkflowBar
+            budget={budget}
+            detail={detail}
+            isDirty={grid.isDirty}
+            onVersionCreated={(n) => {
+              setVersionNo(n);
+              setSelected(new Set());
+            }}
+          />
+
           {!editable && (
             <Callout intent={Intent.PRIMARY} icon="lock" style={{ marginBottom: 10 }}>
-              {!canEdit ? 'You can view this budget but not change it.' : `This version is ${statusLabel(status).toLowerCase()} and cannot be changed. Create a revision to change it.`}
+              {!canEdit
+                ? 'You can view this budget but not change it.'
+                : ['submitted', 'under_review'].includes(status)
+                  ? 'This version is in review and cannot be changed. Withdraw it to edit it again.'
+                  : `This version is ${statusLabel(status).toLowerCase()} and cannot be changed. Create a revision to change it.`}
             </Callout>
           )}
           {grid.draft && editable && (

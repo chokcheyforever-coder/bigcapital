@@ -32,6 +32,18 @@ export class BillGLEntries {
     billId: number,
     trx?: Knex.Transaction,
   ) => {
+    const billLedger = await this.getBillLedger(billId, trx);
+
+    // Commit the GL enties on the storage.
+    await this.ledgerStorage.commit(billLedger, trx);
+  };
+
+  /**
+   * Builds the bill ledger without writing it (also used by budget control).
+   * @param {number} billId - Bill id.
+   * @param {Knex.Transaction} trx - Knex transaction.
+   */
+  public getBillLedger = async (billId: number, trx?: Knex.Transaction) => {
     // Retrieves bill with associated entries.
     const bill = await this.billModel()
       .query(trx)
@@ -76,8 +88,7 @@ export class BillGLEntries {
       .setOtherExpensesAccountId(otherExpensesAccount.id)
       .getBillLedger();
 
-    // Commit the GL enties on the storage.
-    await this.ledgerStorage.commit(billLedger, trx);
+    return billLedger;
   };
 
   /**

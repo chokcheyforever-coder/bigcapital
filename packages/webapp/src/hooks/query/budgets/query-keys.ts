@@ -11,3 +11,19 @@ export const budgetsKeys = {
     [BUDGET_VERSION, id, versionNo] as const,
   report: (report: string, query?: Record<string, unknown>) => [BUDGET_REPORT, report, query] as const,
 };
+
+// Phase 5: approvals and spending control. Every budget mutation invalidates the BUDGET_WORKFLOW prefix.
+export const BUDGET_WORKFLOW = 'BUDGET_WORKFLOW';
+export const budgetWorkflowKeys = {
+  all: () => [BUDGET_WORKFLOW] as const,
+  approvals: (query?: Record<string, unknown>) => [BUDGET_WORKFLOW, 'approvals', query] as const,
+  rules: () => [BUDGET_WORKFLOW, 'rules'] as const,
+  versionApprovals: (id: number | string, versionNo: number | string) => [BUDGET_WORKFLOW, 'version', id, versionNo] as const,
+  compare: (id: number | string, query?: Record<string, unknown>) => [BUDGET_WORKFLOW, 'compare', id, query] as const,
+  audit: (id: number | string, query?: Record<string, unknown>) => [BUDGET_WORKFLOW, 'audit', id, query] as const,
+  policies: () => [BUDGET_WORKFLOW, 'policies'] as const,
+  overrides: (query?: Record<string, unknown>) => [BUDGET_WORKFLOW, 'overrides', query] as const,
+  drafts: () => [BUDGET_WORKFLOW, 'drafts'] as const,
+  alerts: (query?: Record<string, unknown>) => [BUDGET_WORKFLOW, 'alerts', query] as const,
+  availability: (id: number | string, query?: Record<string, unknown>) => [BUDGET_WORKFLOW, 'availability', id, query] as const,
+};
