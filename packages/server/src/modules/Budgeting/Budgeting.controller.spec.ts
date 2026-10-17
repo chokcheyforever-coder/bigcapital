@@ -99,6 +99,7 @@ describe('BudgetControlController permissions', () => {
     // Whoever enters bills may ask; deciding needs Approve.
     requestOverride: BudgetAction.View,
     getOverrides: BudgetAction.View,
+    getOverrideDrafts: BudgetAction.View,
     approveOverride: BudgetAction.Approve,
     rejectOverride: BudgetAction.Approve,
     getAlerts: BudgetAction.View,

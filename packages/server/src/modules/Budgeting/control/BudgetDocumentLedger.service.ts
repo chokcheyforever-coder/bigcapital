@@ -71,6 +71,21 @@ export class BudgetDocumentLedgerService {
     return legs;
   }
 
+  /** Latest draft bills, expenses and manual journals, to pick one for an override request. */
+  async recentDrafts(limit = 100) {
+    const [bills, expenses, journals] = await Promise.all([
+      this.billModel().query().whereNull('openedAt').withGraphFetched('vendor').orderBy('id', 'desc').limit(limit),
+      this.expenseModel().query().whereNull('publishedAt').orderBy('id', 'desc').limit(limit),
+      this.journalModel().query().whereNull('publishedAt').orderBy('id', 'desc').limit(limit),
+    ]);
+    const day = (d: unknown) => moment(d as moment.MomentInput).format('YYYY-MM-DD');
+    return [
+      ...bills.map((b) => ({ type: 'bill' as ControlledType, id: b.id, number: b.billNumber, date: day(b.billDate), amount: Number(b.amount ?? 0), contact: (b as any).vendor?.displayName ?? null })),
+      ...expenses.map((e) => ({ type: 'expense' as ControlledType, id: e.id, number: e.referenceNo, date: day(e.paymentDate), amount: Number(e.totalAmount ?? 0), contact: null })),
+      ...journals.map((j) => ({ type: 'manual_journal' as ControlledType, id: j.id, number: j.journalNumber, date: day(j.date), amount: Number(j.amount ?? 0), contact: null })),
+    ];
+  }
+
   private async ledger(type: ControlledType, id: number, trx?: Knex.Transaction): Promise<ILedger> {
     if (type === 'bill') return this.billGL.getBillLedger(id, trx);
     if (type === 'expense') return this.expenseGL.getExpenseLedgerById(id, trx);

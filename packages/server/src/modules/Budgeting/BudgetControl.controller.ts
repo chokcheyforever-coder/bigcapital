@@ -8,6 +8,7 @@ import { AbilitySubject } from '@/modules/Roles/Roles.types';
 import { BudgetAction } from './Budgeting.types';
 import { BudgetControlService } from './control/BudgetControl.service';
 import { BudgetControlAdminService } from './control/BudgetControlAdmin.service';
+import { BudgetDocumentLedgerService } from './control/BudgetDocumentLedger.service';
 import {
   AvailabilityQueryDto,
   DecideOverrideDto,
@@ -29,6 +30,7 @@ export class BudgetControlController {
   constructor(
     private readonly control: BudgetControlService,
     private readonly admin: BudgetControlAdminService,
+    private readonly documents: BudgetDocumentLedgerService,
   ) {}
 
   @Get('settings/policies')
@@ -59,6 +61,13 @@ export class BudgetControlController {
   @ApiOperation({ summary: 'Requests approval to post a draft bill, expense or journal over its budget.' })
   requestOverride(@Body() dto: RequestOverrideDto) {
     return this.admin.requestOverride(dto);
+  }
+
+  @Get('overrides/drafts')
+  @RequirePermission(BudgetAction.View, AbilitySubject.Budget)
+  @ApiOperation({ summary: 'Latest draft bills, expenses and manual journals, to request an override for.' })
+  async getOverrideDrafts() {
+    return { data: await this.documents.recentDrafts() };
   }
 
   @Get('overrides')
