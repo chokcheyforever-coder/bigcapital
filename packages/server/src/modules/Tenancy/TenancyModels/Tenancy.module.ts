@@ -18,6 +18,8 @@ import { Budget } from '@/modules/Budgeting/models/Budget.model';
 import { BudgetVersion } from '@/modules/Budgeting/models/BudgetVersion.model';
 import { BudgetLine } from '@/modules/Budgeting/models/BudgetLine.model';
 import { BudgetLineAmount } from '@/modules/Budgeting/models/BudgetLineAmount.model';
+import { BudgetApprovalRule } from '@/modules/Budgeting/models/BudgetApprovalRule.model';
+import { BudgetApprovalStep } from '@/modules/Budgeting/models/BudgetApprovalStep.model';
 import { SaleEstimate } from '@/modules/SaleEstimates/models/SaleEstimate';
 import { Customer } from '@/modules/Customers/models/Customer';
 import { Contact } from '@/modules/Contacts/models/Contact';
@@ -62,6 +64,8 @@ const models = [
   BudgetVersion,
   BudgetLine,
   BudgetLineAmount,
+  BudgetApprovalRule,
+  BudgetApprovalStep,
   SaleEstimate,
   Customer,
   Contact,

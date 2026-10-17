@@ -6,6 +6,9 @@ import { AuthorizationGuard } from '../Roles/Authorization.guard';
 import { PermissionGuard } from '../Roles/Permission.guard';
 import { BudgetingController } from './Budgeting.controller';
 import { BudgetReportsController } from './BudgetReports.controller';
+import { BudgetWorkflowController } from './BudgetWorkflow.controller';
+import { BudgetWorkflowService } from './commands/BudgetWorkflow.service';
+import { BudgetWorkflowQueriesService } from './queries/BudgetWorkflowQueries.service';
 import { BudgetReportsService } from './queries/BudgetReports.service';
 import { BudgetCommandsService } from './commands/BudgetCommands.service';
 import { BudgetValidator } from './commands/BudgetValidator.service';
@@ -17,8 +20,8 @@ import { BudgetSheetService } from './commands/BudgetSheet.service';
 /** Budget planning & control (DiTech, docs/ditech/budgeting). */
 @Module({
   imports: [TenancyModule, TenancyDatabaseModule, AuditLogsModule],
-  // Reports first: `budgets/reports/...` must not reach the `:id` routes.
-  controllers: [BudgetReportsController, BudgetingController],
+  // Reports and workflow first: `budgets/reports/...` and `budgets/approvals` must not reach the `:id` routes.
+  controllers: [BudgetReportsController, BudgetWorkflowController, BudgetingController],
   providers: [
     BudgetCommandsService,
     BudgetValidator,
@@ -27,6 +30,8 @@ import { BudgetSheetService } from './commands/BudgetSheet.service';
     BudgetPrefillService,
     BudgetSheetService,
     BudgetReportsService,
+    BudgetWorkflowService,
+    BudgetWorkflowQueriesService,
     AuthorizationGuard,
     PermissionGuard,
   ],

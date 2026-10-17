@@ -5,6 +5,7 @@ import { PermissionGuard } from '@/modules/Roles/Permission.guard';
 import { AbilitySubject } from '@/modules/Roles/Roles.types';
 import { BudgetingController } from './Budgeting.controller';
 import { BudgetReportsController } from './BudgetReports.controller';
+import { BudgetWorkflowController } from './BudgetWorkflow.controller';
 import { BudgetAction } from './Budgeting.types';
 
 /**
@@ -54,6 +55,37 @@ describe('BudgetReportsController permissions', () => {
         ability: BudgetAction.View,
         subject: AbilitySubject.Budget,
       });
+    }
+  });
+});
+
+describe('BudgetWorkflowController permissions', () => {
+  const expected: Record<string, BudgetAction> = {
+    getApprovals: BudgetAction.View,
+    getApprovalRules: BudgetAction.View,
+    saveApprovalRules: BudgetAction.ConfigurePolicy,
+    getVersionApprovals: BudgetAction.View,
+    submit: BudgetAction.Submit,
+    withdraw: BudgetAction.Submit,
+    approve: BudgetAction.Approve,
+    reject: BudgetAction.Approve,
+    delegate: BudgetAction.Approve,
+    cancel: BudgetAction.Revise,
+    createRevision: BudgetAction.Revise,
+    createScenario: BudgetAction.Revise,
+    lock: BudgetAction.Lock,
+    unlock: BudgetAction.Lock,
+    compareVersions: BudgetAction.View,
+    getAudit: BudgetAction.ViewAudit,
+  };
+
+  it('guards the controller and declares the right permission on every route', () => {
+    expect(Reflect.getMetadata(GUARDS_METADATA, BudgetWorkflowController)).toEqual([AuthorizationGuard, PermissionGuard]);
+    const routes = Object.getOwnPropertyNames(BudgetWorkflowController.prototype).filter((n) => n !== 'constructor');
+    expect(routes.sort()).toEqual(Object.keys(expected).sort());
+    for (const route of routes) {
+      const permission = Reflect.getMetadata(REQUIRED_PERMISSION_KEY, BudgetWorkflowController.prototype[route]);
+      expect({ route, permission }).toEqual({ route, permission: { ability: expected[route], subject: AbilitySubject.Budget } });
     }
   });
 });
