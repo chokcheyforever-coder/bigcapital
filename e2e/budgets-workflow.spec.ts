@@ -50,7 +50,7 @@ test.describe('Budget approvals', () => {
 
     const expense = (await fetchAccounts(API_BASE, readApiAuth())).find((a) => a.name === 'Rent')!;
     const name = `Approval flow ${faker.string.alphanumeric(6)}`;
-    const budget = await apiSend('/budgets', 'POST', { name, type: 'operating_expenses', fiscalYear: 2038 });
+    const budget = await apiSend('/budgets', 'POST', { name, type: 'operating_expenses', fiscalYear: 2038, startDate: '2038-01-01', endDate: '2038-12-31' });
     await apiSend(`/budgets/${budget.id}/versions/1/lines`, 'PUT', {
       lockVersion: 0,
       lines: [{ accountId: expense.id, amounts: Array.from({ length: 12 }, (_, i) => ({ month: `2038-${String(i + 1).padStart(2, '0')}`, amount: 100 })) }],

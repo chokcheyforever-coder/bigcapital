@@ -72,7 +72,7 @@ describe('Budget spending control (e2e)', () => {
     const created = await http()
       .post('/budgets')
       .set(authHeaders())
-      .send({ name: `Control ${faker.string.alphanumeric(6)}`, type, fiscalYear: 2036 })
+      .send({ name: `Control ${faker.string.alphanumeric(6)}`, type, fiscalYear: 2036, startDate: '2036-01-01', endDate: '2036-12-31' })
       .expect(201);
     await http()
       .put(`/budgets/${created.body.id}/versions/1/lines`)
@@ -184,7 +184,7 @@ describe('Budget spending control (e2e)', () => {
       const draftBudget = await http()
         .post('/budgets')
         .set(authHeaders())
-        .send({ name: `Draft ${faker.string.alphanumeric(6)}`, type: 'profit_loss', fiscalYear: 2036 })
+        .send({ name: `Draft ${faker.string.alphanumeric(6)}`, type: 'profit_loss', fiscalYear: 2036, startDate: '2036-01-01', endDate: '2036-12-31' })
         .expect(201);
       await http()
         .put(`/budgets/${draftBudget.body.id}/versions/1/lines`)
