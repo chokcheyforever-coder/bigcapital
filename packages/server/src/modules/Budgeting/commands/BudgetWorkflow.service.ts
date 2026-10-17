@@ -438,8 +438,8 @@ export class BudgetWorkflowService {
     return version;
   }
 
-  private currentSteps(version: BudgetVersion, trx: Knex.Transaction): Promise<BudgetApprovalStep[]> {
-    return this.stepModel()
+  private async currentSteps(version: BudgetVersion, trx: Knex.Transaction): Promise<BudgetApprovalStep[]> {
+    return await this.stepModel()
       .query(trx)
       .where({ versionId: version.id, submissionNo: version.submissionNo })
       .orderBy('stepOrder')
