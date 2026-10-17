@@ -28,7 +28,7 @@ jobs:
   test_e2e:
     runs-on: ubuntu-latest
     name: Playwright tests
-    timeout-minutes: 20
+    timeout-minutes: 35 # DiTech: the suite (incl. budgeting specs) runs ~16 min plus ~5 min setup
 
     services:
       mysql:
