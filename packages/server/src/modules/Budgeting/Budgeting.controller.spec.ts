@@ -6,6 +6,7 @@ import { AbilitySubject } from '@/modules/Roles/Roles.types';
 import { BudgetingController } from './Budgeting.controller';
 import { BudgetReportsController } from './BudgetReports.controller';
 import { BudgetWorkflowController } from './BudgetWorkflow.controller';
+import { BudgetControlController } from './BudgetControl.controller';
 import { BudgetAction } from './Budgeting.types';
 
 /**
@@ -85,6 +86,31 @@ describe('BudgetWorkflowController permissions', () => {
     expect(routes.sort()).toEqual(Object.keys(expected).sort());
     for (const route of routes) {
       const permission = Reflect.getMetadata(REQUIRED_PERMISSION_KEY, BudgetWorkflowController.prototype[route]);
+      expect({ route, permission }).toEqual({ route, permission: { ability: expected[route], subject: AbilitySubject.Budget } });
+    }
+  });
+});
+
+describe('BudgetControlController permissions', () => {
+  const expected: Record<string, BudgetAction> = {
+    getPolicies: BudgetAction.View,
+    savePolicy: BudgetAction.ConfigurePolicy,
+    deletePolicy: BudgetAction.ConfigurePolicy,
+    // Whoever enters bills may ask; deciding needs Approve.
+    requestOverride: BudgetAction.View,
+    getOverrides: BudgetAction.View,
+    approveOverride: BudgetAction.Approve,
+    rejectOverride: BudgetAction.Approve,
+    getAlerts: BudgetAction.View,
+    getAvailability: BudgetAction.View,
+  };
+
+  it('guards the controller and declares the right permission on every route', () => {
+    expect(Reflect.getMetadata(GUARDS_METADATA, BudgetControlController)).toEqual([AuthorizationGuard, PermissionGuard]);
+    const routes = Object.getOwnPropertyNames(BudgetControlController.prototype).filter((n) => n !== 'constructor');
+    expect(routes.sort()).toEqual(Object.keys(expected).sort());
+    for (const route of routes) {
+      const permission = Reflect.getMetadata(REQUIRED_PERMISSION_KEY, BudgetControlController.prototype[route]);
       expect({ route, permission }).toEqual({ route, permission: { ability: expected[route], subject: AbilitySubject.Budget } });
     }
   });
