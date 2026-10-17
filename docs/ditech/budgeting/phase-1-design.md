@@ -234,3 +234,11 @@ The fork is AGPL-3.0 and public. The portal footer already links to our modified
 - **Overrides:** save the document as a draft, then `POST /api/budgets/overrides` (any user with Budget `View`); the server computes the excess per line and creates pending requests (replacing older pending ones for that document). Approving or rejecting needs Budget `Approve`; self-approval follows the approval rule for the override amount (§12).
 - **Availability:** `GET /api/budgets/:id/availability?month=&basis=` gives budget, actual, open commitments and available (= budget − actual − commitments) per line of the active version.
 - Not in 5b: a pre-save check endpoint for the forms (the webapp shows the error and availability instead), purchase orders, and email notifications (Phase 6). If a company's plan loses `budgeting`, existing policies keep working until removed.
+
+## 14. Phase 5c (webapp, 2026-10-17)
+
+- **Budget editor:** a workflow bar under the header shows the approval steps (or the rejection reason, or who approved and whether the version is active) with Submit / Approve / Reject, and a **Version** menu: delegate, withdraw, lock/unlock, new revision, new scenario, cancel version, compare versions, available to spend, spending control (per-budget policy), approval history and audit history.
+- **Budgets › Approvals** (`/budgets/approvals`): Waiting for me, Approval status (in review or every submitted version), Override requests (request one for a draft document; approve/reject) and Alerts.
+- **Budgets › Settings** (`/budgets/settings`): approval rules editor and the company default spending policy.
+- Spending control refusals from bills, expenses and manual journals are shown once for every form by the shared API error handler (`useApiFetcherOnError` → `ditech/budgeting/controlErrors.tsx`), with a link to the override requests or the budget's report.
+- Playwright: `e2e/budgets-workflow.spec.ts` (two-step approval, approvals list, revision, comparison, availability).
