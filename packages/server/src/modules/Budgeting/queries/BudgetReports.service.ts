@@ -12,7 +12,7 @@ import { BudgetLine } from '../models/BudgetLine.model';
 import { BudgetReportName, BudgetReportQueryDto } from '../dtos/Budget.dto';
 import { BudgetValidator } from '../commands/BudgetValidator.service';
 import { dateOnly, normalizeMonth } from '../commands/BudgetCommands.service';
-import { BUDGET_TYPE_ACCOUNT_TYPES, BudgetType, BudgetVersionStatus, ERRORS, isBalanceBudget, PL_BUDGET_TYPES } from '../Budgeting.types';
+import { BUDGET_TYPE_ACCOUNT_TYPES, BudgetType, BudgetVersionKind, BudgetVersionStatus, ERRORS, isBalanceBudget, PL_BUDGET_TYPES } from '../Budgeting.types';
 import { fromMilli, Milli, periodMonths, toMilli } from '../calc/budget-calc';
 import { Direction, isException, matchLine, utilizationStatus, variance, VarianceFigures } from '../calc/variance';
 import { BudgetActualsService } from './BudgetActuals.service';
@@ -525,7 +525,10 @@ export class BudgetReportsService {
   /** Active version; else the latest approved or locked; else the latest. */
   private async pickVersion(budget: Budget, versionNo?: number): Promise<BudgetVersion> {
     if (versionNo) return this.validator.getVersionOrThrow(budget.id, versionNo);
-    const versions = await this.versionModel().query().where('budgetId', budget.id).orderBy('versionNo', 'desc');
+    // Forecasts are never the budget (design §15): the fallback is the latest plan.
+    const versions = (await this.versionModel().query().where('budgetId', budget.id).orderBy('versionNo', 'desc')).filter(
+      (v) => v.kind !== BudgetVersionKind.Forecast && v.status !== BudgetVersionStatus.Cancelled,
+    );
     const pick =
       versions.find((v) => v.id === budget.activeVersionId) ??
       versions.find((v) => v.status === BudgetVersionStatus.Approved || v.status === BudgetVersionStatus.Locked) ??
