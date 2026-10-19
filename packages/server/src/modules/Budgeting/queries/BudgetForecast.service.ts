@@ -127,7 +127,8 @@ export class BudgetForecastService {
       const base = versions.find((v) => v.versionNo === stored.baseVersionNo && NOT_CANCELLED(v)) ?? this.baseVersion(budget, versions);
       const settings = this.settings(budget, {
         method: dto.method ?? (version.forecastMethod as ForecastMethod),
-        asOfMonth: dto.asOfMonth,
+        // Keeps its as-of month unless a new one is given; refreshing brings in actuals posted since.
+        asOfMonth: dto.asOfMonth ?? (version.forecastAsOf ? dateOnly(version.forecastAsOf).slice(0, 7) : undefined),
         runRateMonths: dto.runRateMonths ?? stored.runRateMonths,
         growthPercent: dto.growthPercent ?? stored.growthPercent,
       });

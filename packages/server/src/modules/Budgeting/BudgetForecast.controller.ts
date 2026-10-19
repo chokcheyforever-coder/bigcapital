@@ -84,7 +84,7 @@ export class BudgetForecastController {
   @Post(':id/versions/:versionNo/forecast/refresh')
   @HttpCode(200)
   @RequirePermission(BudgetAction.EditDraft, AbilitySubject.Budget)
-  @ApiOperation({ summary: 'Recomputes a draft forecast with current actuals (and optionally new settings). Replaces its amounts.' })
+  @ApiOperation({ summary: 'Recomputes a draft forecast with current actuals, keeping its settings unless new ones are given. Replaces its amounts.' })
   async refreshForecast(@Param('id', ParseIntPipe) id: number, @Param('versionNo', ParseIntPipe) versionNo: number, @Body() dto: RefreshForecastDto) {
     await this.forecasts.refreshForecast(id, versionNo, dto);
     return this.queries.getVersion(id, versionNo);
