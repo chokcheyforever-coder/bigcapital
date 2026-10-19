@@ -26,4 +26,10 @@ export const budgetWorkflowKeys = {
   drafts: () => [BUDGET_WORKFLOW, 'drafts'] as const,
   alerts: (query?: Record<string, unknown>) => [BUDGET_WORKFLOW, 'alerts', query] as const,
   availability: (id: number | string, query?: Record<string, unknown>) => [BUDGET_WORKFLOW, 'availability', id, query] as const,
+  // Phase 6: forecasts, dashboard and notifications (same prefix, so budget changes refresh them).
+  forecastVsBudget: (id: number | string, query?: Record<string, unknown>) => [BUDGET_WORKFLOW, 'forecast-vs-budget', id, query] as const,
+  rolling: (id: number | string, query?: Record<string, unknown>) => [BUDGET_WORKFLOW, 'rolling', id, query] as const,
+  dashboard: (query?: Record<string, unknown>) => [BUDGET_WORKFLOW, 'dashboard', query] as const,
+  notifications: (query?: Record<string, unknown>) => [BUDGET_WORKFLOW, 'notifications', query] as const,
+  notificationSettings: () => [BUDGET_WORKFLOW, 'notification-settings'] as const,
 };

@@ -88,25 +88,30 @@ export interface PeriodTotals {
   total: Milli;
 }
 
-/** Monthly, quarterly and total figures; months without an amount count as 0. */
-export function periodTotals(amounts: Record<string, Milli>, months: string[]): PeriodTotals {
+/**
+ * Monthly, quarterly and total figures; months without an amount count as 0.
+ * With `closing` (balance sheet budgets, design §15) amounts are month-end
+ * balances, so a quarter and the total are their last month, not a sum.
+ */
+export function periodTotals(amounts: Record<string, Milli>, months: string[], closing = false): PeriodTotals {
   const byMonth: Record<string, Milli> = {};
   const quarters: Milli[] = [];
   let total = 0;
   months.forEach((month, i) => {
     const v = amounts[month] ?? 0;
+    const q = Math.floor(i / 3);
     byMonth[month] = v;
-    quarters[Math.floor(i / 3)] = (quarters[Math.floor(i / 3)] ?? 0) + v;
-    total += v;
+    quarters[q] = closing ? v : (quarters[q] ?? 0) + v;
+    total = closing ? v : total + v;
   });
   return { months: byMonth, quarters, total };
 }
 
 /** Adds several PeriodTotals (for group and grand totals). */
-export function sumTotals(list: PeriodTotals[], months: string[]): PeriodTotals {
+export function sumTotals(list: PeriodTotals[], months: string[], closing = false): PeriodTotals {
   const amounts: Record<string, Milli> = {};
   for (const t of list) for (const m of months) amounts[m] = (amounts[m] ?? 0) + (t.months[m] ?? 0);
-  return periodTotals(amounts, months);
+  return periodTotals(amounts, months, closing);
 }
 
 // ---------------------------------------------------------------- allocation

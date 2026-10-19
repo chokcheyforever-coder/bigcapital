@@ -17,8 +17,18 @@ import { CompareVersionsQueryDto, GetApprovalsQueryDto, GetBudgetAuditQueryDto }
 import { fromMilli, Milli, periodMonths, periodTotals, sumTotals, toMilli } from '../calc/budget-calc';
 import { ApprovalError, currentStep, ensureCanDecide, IN_REVIEW_STATUSES } from '../workflow/approval';
 import { toBudgetDto, toVersionDto } from './BudgetQueries.service';
+import { isBalanceBudget } from '../Budgeting.types';
 
 const pct = (base: Milli, value: Milli) => (base === 0 ? null : Math.round(((value - base) / Math.abs(base)) * 10_000) / 100);
+
+/** Closing month (YYYY-MM-01) of each balance sheet version: its gross amount counts that month only. */
+export const closingMonths = (versions: BudgetVersion[], budgets: Budget[]) =>
+  new Map(
+    versions.flatMap((v) => {
+      const b = budgets.find((x) => x.id === v.budgetId);
+      return b && isBalanceBudget(b.type) ? [[v.id, `${dateOnly(b.endDate).slice(0, 7)}-01`] as [number, string]] : [];
+    }),
+  );
 
 const toStepDto = (s: BudgetApprovalStep, names: Map<number, string>) => ({
   id: s.id,
@@ -115,7 +125,10 @@ export class BudgetWorkflowQueriesService {
 
     const budgets = await this.budgetModel().query().whereIn('id', [...new Set(versions.map((v) => v.budgetId))]);
     const steps = await this.stepModel().query().whereIn('versionId', versions.map((v) => v.id));
-    const totals = await this.versionGross(versions.map((v) => v.id));
+    const totals = await this.versionGross(
+      versions.map((v) => v.id),
+      closingMonths(versions, budgets),
+    );
     const actor = await this.workflow.getActor();
     const names = await this.userNames([...versions.map((v) => v.submittedBy), ...steps.map((s) => s.assignedUserId)]);
 
@@ -160,6 +173,7 @@ export class BudgetWorkflowQueriesService {
     const base = await this.validator.getVersionOrThrow(budgetId, baseNo);
     const compare = await this.validator.getVersionOrThrow(budgetId, compareNo);
     const months = periodMonths(dateOnly(budget.startDate), dateOnly(budget.endDate));
+    const closing = isBalanceBudget(budget.type);
 
     const load = async (version: BudgetVersion) => {
       const lines = await this.lineModel().query().where('versionId', version.id).withGraphFetched('amounts');
@@ -167,7 +181,7 @@ export class BudgetWorkflowQueriesService {
         lines.map((line) => {
           const amounts: Record<string, Milli> = {};
           for (const a of (line as any).amounts ?? []) amounts[dateOnly(a.month)] = toMilli(String(a.amount));
-          return [lineKey(line.accountId, line.branchId, line.projectId), { line, totals: periodTotals(amounts, months) }];
+          return [lineKey(line.accountId, line.branchId, line.projectId), { line, totals: periodTotals(amounts, months, closing) }];
         }),
       );
     };
@@ -199,10 +213,11 @@ export class BudgetWorkflowQueriesService {
       })
       .sort((x, y) => String(x.account.code ?? '').localeCompare(String(y.account.code ?? '')));
 
-    const baseTotal = sumTotals([...baseLines.values()].map((l) => l.totals), months).total;
-    const compareTotal = sumTotals([...compareLines.values()].map((l) => l.totals), months).total;
+    const baseTotal = sumTotals([...baseLines.values()].map((l) => l.totals), months, closing).total;
+    const compareTotal = sumTotals([...compareLines.values()].map((l) => l.totals), months, closing).total;
     return {
       budget: toBudgetDto(budget),
+      closing,
       base: toVersionDto(base),
       compare: toVersionDto(compare),
       months,
@@ -240,14 +255,21 @@ export class BudgetWorkflowQueriesService {
     };
   }
 
-  private async versionGross(versionIds: number[]): Promise<Map<number, Milli>> {
+  /** Gross amount of each version (design §12); balance sheet versions count their closing month only (§15). */
+  private async versionGross(versionIds: number[], closing: Map<number, string>): Promise<Map<number, Milli>> {
     if (versionIds.length === 0) return new Map();
     const rows = await this.lineModel()
       .query()
       .join('budget_line_amounts', 'budget_line_amounts.lineId', 'budget_lines.id')
       .whereIn('budget_lines.versionId', versionIds)
-      .groupBy('budget_lines.versionId')
-      .select('budget_lines.versionId', this.lineModel().knex().raw('SUM(ABS(??)) AS ??', ['budget_line_amounts.amount', 'total']));
-    return new Map(rows.map((r: any) => [r.versionId, toMilli(Number(r.total).toFixed(3))]));
+      .groupBy('budget_lines.versionId', 'budget_line_amounts.month')
+      .select('budget_lines.versionId', 'budget_line_amounts.month', this.lineModel().knex().raw('SUM(ABS(??)) AS ??', ['budget_line_amounts.amount', 'total']));
+    const totals = new Map<number, Milli>();
+    for (const r of rows as any[]) {
+      const only = closing.get(r.versionId);
+      if (only && dateOnly(r.month) !== only) continue;
+      totals.set(r.versionId, (totals.get(r.versionId) ?? 0) + toMilli(Number(r.total).toFixed(3)));
+    }
+    return totals;
   }
 }

@@ -8,7 +8,7 @@ import { BudgetLine } from '../models/BudgetLine.model';
 import { AllocateBudgetDto, GetBudgetsQueryDto } from '../dtos/Budget.dto';
 import { BudgetValidator } from '../commands/BudgetValidator.service';
 import { currencyDecimals, dateOnly, normalizeMonth } from '../commands/BudgetCommands.service';
-import { ERRORS } from '../Budgeting.types';
+import { ERRORS, isBalanceBudget, PL_BUDGET_TYPES } from '../Budgeting.types';
 import {
   allocateByPercentages,
   allocateByWeights,
@@ -68,6 +68,10 @@ export const toVersionDto = (v: BudgetVersion) => ({
   approvedBy: v.approvedBy,
   lockedAt: v.lockedAt,
   lockedBy: v.lockedBy,
+  /** How a forecast version was made (design §15); null for other versions. */
+  forecast: v.forecastMethod
+    ? { method: v.forecastMethod, asOfMonth: v.forecastAsOf ? dateOnly(v.forecastAsOf) : null, ...JSON.parse(v.forecastParams || '{}') }
+    : null,
   createdAt: v.createdAt,
   updatedAt: v.updatedAt,
 });
@@ -112,7 +116,7 @@ export class BudgetQueriesService {
   async getBudget(budgetId: number) {
     const budget = await this.validator.getBudgetOrThrow(budgetId);
     const versions = await this.versionModel().query().where('budgetId', budgetId).orderBy('versionNo');
-    const totals = await this.versionTotals(versions.map((v) => v.id));
+    const totals = await this.versionTotals(versions.map((v) => v.id), isBalanceBudget(budget.type) ? dateOnly(budget.endDate).slice(0, 8) + '01' : null);
     return {
       ...toBudgetDto(budget),
       months: periodMonths(dateOnly(budget.startDate), dateOnly(budget.endDate)),
@@ -125,6 +129,7 @@ export class BudgetQueriesService {
     const budget = await this.validator.getBudgetOrThrow(budgetId);
     const version = await this.validator.getVersionOrThrow(budgetId, versionNo);
     const months = periodMonths(dateOnly(budget.startDate), dateOnly(budget.endDate));
+    const closing = isBalanceBudget(budget.type);
 
     const lines = await this.lineModel().query().where('versionId', version.id).withGraphFetched('[amounts, account]');
     const rows = lines.map((line) => {
@@ -132,13 +137,13 @@ export class BudgetQueriesService {
       for (const a of (line as any).amounts ?? []) amounts[dateOnly(a.month)] = toMilli(String(a.amount));
       const account = (line as any).account;
       const rootType = AccountTypesUtils.getType(account.accountType, 'rootType');
-      return { line, account, rootType, totals: periodTotals(amounts, months) };
+      return { line, account, rootType, totals: periodTotals(amounts, months, closing) };
     });
     rows.sort((a, b) => String(a.account.code ?? '').localeCompare(String(b.account.code ?? '')) || a.line.id - b.line.id);
 
     const byRoot = new Map<string, PeriodTotals[]>();
     for (const r of rows) byRoot.set(r.rootType, [...(byRoot.get(r.rootType) ?? []), r.totals]);
-    const groups = [...byRoot.entries()].map(([rootType, list]) => ({ rootType, ...money(sumTotals(list, months)) }));
+    const groups = [...byRoot.entries()].map(([rootType, list]) => ({ rootType, ...money(sumTotals(list, months, closing)) }));
 
     // Net income for P&L-style budgets: income − expense, both entered on their natural side.
     const income = sumTotals(byRoot.get('income') ?? [], months);
@@ -150,6 +155,8 @@ export class BudgetQueriesService {
       budget: toBudgetDto(budget),
       version: toVersionDto(version),
       months,
+      /** Balance sheet: amounts are month-end balances; quarters and totals show the last month. */
+      closing,
       quarters: [0, 1, 2, 3, 4, 5, 6, 7].slice(0, Math.ceil(months.length / 3)).map((q) => ({
         label: `Q${q + 1}`,
         months: months.slice(q * 3, q * 3 + 3),
@@ -173,8 +180,8 @@ export class BudgetQueriesService {
       })),
       totals: {
         groups,
-        netIncome: money(periodTotals(net, months)),
-        grand: money(sumTotals(rows.map((r) => r.totals), months)),
+        netIncome: PL_BUDGET_TYPES.includes(budget.type) ? money(periodTotals(net, months)) : null,
+        grand: money(sumTotals(rows.map((r) => r.totals), months, closing)),
       },
     };
   }
@@ -220,12 +227,14 @@ export class BudgetQueriesService {
     }
   }
 
-  private async versionTotals(versionIds: number[]): Promise<Map<number, Milli>> {
+  /** Sum of each version's amounts; for a balance sheet budget, of its closing month only. */
+  private async versionTotals(versionIds: number[], closingMonth: string | null = null): Promise<Map<number, Milli>> {
     if (versionIds.length === 0) return new Map();
     const rows = await this.lineModel()
       .query()
       .join('budget_line_amounts', 'budget_line_amounts.lineId', 'budget_lines.id')
       .whereIn('budget_lines.versionId', versionIds)
+      .modify((q) => (closingMonth ? q.where('budget_line_amounts.month', closingMonth) : q))
       .groupBy('budget_lines.versionId')
       .select('budget_lines.versionId')
       .sum('budget_line_amounts.amount as total');

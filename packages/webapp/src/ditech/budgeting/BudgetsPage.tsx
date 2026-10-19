@@ -4,7 +4,7 @@ import { useHistory } from 'react-router-dom';
 import { Button, Classes, HTMLSelect, InputGroup, Intent, NavbarDivider, NavbarGroup, Tag } from '@blueprintjs/core';
 import { Can, DashboardActionsBar, DashboardContentTable, DashboardPageContent, DataTable, EmptyStatus, Icon, TableSkeletonHeader, TableSkeletonRows } from '@/components';
 import { AbilitySubject, BudgetAction } from '@/constants/abilityOption';
-import { useBudgets } from '@/hooks/query/budgets';
+import { useBudgetNotifications, useBudgets } from '@/hooks/query/budgets';
 import { portalUrl } from '@/ditech/plan';
 import { BUDGET_TYPES, BUDGET_TYPE_LABEL, CreateBudgetDialog } from './BudgetDialogs';
 import { useBudgetingEnabled } from './hooks';
@@ -45,6 +45,8 @@ export function BudgetsPage() {
   const { data, isLoading, isFetching } = useBudgets(query, { enabled });
   const budgets = data?.data ?? [];
   const thisYear = new Date().getFullYear();
+  const { data: inbox } = useBudgetNotifications({ unread: true, pageSize: 1 }, { enabled, refetchInterval: 60_000 });
+  const unread = inbox?.unread ?? 0;
 
   if (!enabled) {
     return (
@@ -76,7 +78,15 @@ export function BudgetsPage() {
           <HTMLSelect value={type} onChange={(e) => setType(e.target.value)} options={[{ value: '', label: 'All types' }, ...BUDGET_TYPES.map(({ value, label }) => ({ value, label }))]} style={{ marginLeft: 8 }} />
         </NavbarGroup>
         <NavbarGroup align="right">
-          <Button className={Classes.MINIMAL} icon="endorsed" text="Approvals" onClick={() => history.push('/budgets/approvals')} data-testid="open-approvals" />
+          <Button className={Classes.MINIMAL} icon="dashboard" text="Dashboard" onClick={() => history.push('/budgets/dashboard')} data-testid="open-dashboard" />
+          <Button className={Classes.MINIMAL} icon="endorsed" onClick={() => history.push(unread > 0 ? '/budgets/approvals?tab=notifications' : '/budgets/approvals')} data-testid="open-approvals">
+            Approvals
+            {unread > 0 && (
+              <Tag round intent={Intent.DANGER} style={{ marginLeft: 6 }} data-testid="unread-count">
+                {unread}
+              </Tag>
+            )}
+          </Button>
           <Button className={Classes.MINIMAL} icon="cog" text="Settings" onClick={() => history.push('/budgets/settings')} />
         </NavbarGroup>
       </DashboardActionsBar>

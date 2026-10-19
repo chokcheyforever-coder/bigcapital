@@ -12,7 +12,7 @@ import { BudgetLine } from '../models/BudgetLine.model';
 import { BudgetReportName, BudgetReportQueryDto } from '../dtos/Budget.dto';
 import { BudgetValidator } from '../commands/BudgetValidator.service';
 import { dateOnly, normalizeMonth } from '../commands/BudgetCommands.service';
-import { BUDGET_TYPE_ACCOUNT_TYPES, BudgetType, BudgetVersionStatus, ERRORS } from '../Budgeting.types';
+import { BUDGET_TYPE_ACCOUNT_TYPES, BudgetType, BudgetVersionKind, BudgetVersionStatus, ERRORS, isBalanceBudget, PL_BUDGET_TYPES } from '../Budgeting.types';
 import { fromMilli, Milli, periodMonths, toMilli } from '../calc/budget-calc';
 import { Direction, isException, matchLine, utilizationStatus, variance, VarianceFigures } from '../calc/variance';
 import { BudgetActualsService } from './BudgetActuals.service';
@@ -31,6 +31,9 @@ interface Fact {
   actual: Milli;
   /** CAPEX only: credits to the asset account (disposals), kept apart from additions. */
   disposals: Milli;
+  /** Cash flow only: debits (money in) and credits (money out) of the cash account. */
+  inflow: Milli;
+  outflow: Milli;
 }
 
 interface RowMeta {
@@ -48,9 +51,20 @@ interface Column {
   months: string[];
 }
 
-type Cell = { budget: Milli; actual: Milli; disposals: Milli };
+type Cell = { budget: Milli; actual: Milli; disposals: Milli; inflow: Milli; outflow: Milli };
 
-const ZERO = (): Cell => ({ budget: 0, actual: 0, disposals: 0 });
+const ZERO = (): Cell => ({ budget: 0, actual: 0, disposals: 0, inflow: 0, outflow: 0 });
+const addCell = (acc: Cell, c: Cell, sign = 1) => {
+  acc.budget += sign * c.budget;
+  acc.actual += sign * c.actual;
+  acc.disposals += sign * c.disposals;
+  acc.inflow += sign * c.inflow;
+  acc.outflow += sign * c.outflow;
+  return acc;
+};
+/** Ledger rows before the report's first month: the opening balance of a balance sheet row. */
+const OPENING = 'opening';
+const LEDGER_START = '1970-01-01';
 const SPEND_ROOTS = ['expense', 'asset'];
 const DEFAULT_THRESHOLD = 10;
 const DEFAULT_NEAR = 90;
@@ -66,7 +80,9 @@ export const REPORT_TITLES: Record<BudgetReportName, string> = {
   exceptions: 'Budget Exceptions',
 };
 
-const figuresDto = (f: VarianceFigures, disposals?: Milli) => ({
+type Extras = { disposals?: Milli; inflow?: Milli; outflow?: Milli };
+
+const figuresDto = (f: VarianceFigures, extras: Extras = {}) => ({
   budget: fromMilli(f.budget),
   actual: fromMilli(f.actual),
   variance: fromMilli(f.variance),
@@ -74,7 +90,8 @@ const figuresDto = (f: VarianceFigures, disposals?: Milli) => ({
   usedPercent: f.usedPercent,
   favorable: f.favorable,
   unbudgeted: f.unbudgeted,
-  ...(disposals !== undefined ? { disposals: fromMilli(disposals) } : {}),
+  ...(extras.disposals !== undefined ? { disposals: fromMilli(extras.disposals) } : {}),
+  ...(extras.inflow !== undefined ? { inflows: fromMilli(extras.inflow), outflows: fromMilli(extras.outflow ?? 0) } : {}),
 });
 
 /**
@@ -107,6 +124,13 @@ export class BudgetReportsService {
     const version = await this.pickVersion(budget, q.versionNo);
     const months = this.selectMonths(budget, q);
     const isCapex = budget.type === BudgetType.Capex;
+    const isCash = budget.type === BudgetType.CashFlow;
+    // Balance sheet: budget amounts and actuals are month-end balances (design §15).
+    const balance = isBalanceBudget(budget.type);
+    const extrasOf = (c: Cell): Extras =>
+      isCapex ? { disposals: c.disposals } : isCash ? { inflow: c.inflow, outflow: c.outflow } : {};
+    // A balance is read at the end of a column; movements add up over it.
+    const span = (ms: string[]) => (balance ? ms.slice(-1) : ms);
     const branchFilter = q.branchesIds?.length ? q.branchesIds : null;
     const projectFilter = q.projectsIds?.length ? q.projectsIds : null;
 
@@ -154,6 +178,8 @@ export class BudgetReportsService {
           budget: toMilli(String(a.amount)),
           actual: 0,
           disposals: 0,
+          inflow: 0,
+          outflow: 0,
         });
       }
     }
@@ -168,15 +194,22 @@ export class BudgetReportsService {
         ? []
         : await this.actuals.byDimensions({
             accountIds: [...accountsById.keys()],
-            fromDate: months[0],
+            // Balances and the cash position need everything posted before the period too.
+            fromDate: balance || isCash ? LEDGER_START : months[0],
             toDate: moment(months[months.length - 1]).endOf('month').format('YYYY-MM-DD'),
             branchIds: branchScope ?? undefined,
             projectIds: projectScope ?? undefined,
           });
 
+    // Cash flow: money in the cash accounts before the period (opening cash position).
+    let openingCash = 0;
     for (const c of cells) {
       const account = accountsById.get(c.accountId);
       if (!account) continue;
+      if (c.month < months[0] && !balance) {
+        openingCash += c.debit - c.credit;
+        continue;
+      }
       const line = matchLine(lines, c.accountId, c.branchId, c.projectId);
       const rowKey = line ? `L${line.id}` : `U${c.accountId}`;
       if (!line && !metas.has(rowKey)) {
@@ -188,11 +221,13 @@ export class BudgetReportsService {
         accountId: c.accountId,
         branchId: c.branchId,
         projectId: c.projectId,
-        month: c.month,
+        month: c.month < months[0] ? OPENING : c.month,
         // CAPEX: additions are the debits; disposals are shown on their own.
         budget: 0,
         actual: isCapex ? c.debit : natural,
         disposals: isCapex ? c.credit : 0,
+        inflow: isCash ? c.debit : 0,
+        outflow: isCash ? c.credit : 0,
       });
     }
 
@@ -214,8 +249,13 @@ export class BudgetReportsService {
         normal: a.accountNormal,
       };
     };
+    // Balance sheet and cash: more assets, equity and cash is favorable, more liabilities is not.
     const direction = (accountId: number): Direction =>
-      SPEND_ROOTS.includes(accountDto(accountId).rootType) ? 'spend' : 'income';
+      balance || isCash
+        ? accountDto(accountId).rootType === 'liability' ? 'spend' : 'income'
+        : SPEND_ROOTS.includes(accountDto(accountId).rootType) ? 'spend' : 'income';
+    const rootDirection = (rootType: string): Direction =>
+      balance || isCash ? (rootType === 'liability' ? 'spend' : 'income') : SPEND_ROOTS.includes(rootType) ? 'spend' : 'income';
     const dim = (id: number | null, names: Map<number, string>) => (id ? { id, name: names.get(id) ?? `#${id}` } : null);
 
     // Rows: by budget line (and unbudgeted account), or by branch/project and account.
@@ -248,23 +288,23 @@ export class BudgetReportsService {
 
     let rows = [...grouped.entries()].map(([key, g]) => {
       const byMonth = new Map<string, Cell>();
-      for (const f of g.facts) {
-        const c = byMonth.get(f.month) ?? ZERO();
-        c.budget += f.budget;
-        c.actual += f.actual;
-        c.disposals += f.disposals;
-        byMonth.set(f.month, c);
+      for (const f of g.facts) addCell((byMonth.get(f.month) ?? byMonth.set(f.month, ZERO()).get(f.month)), f);
+      if (balance) {
+        // Movements → month-end balances: opening plus everything up to the month.
+        let running = byMonth.get(OPENING)?.actual ?? 0;
+        byMonth.delete(OPENING);
+        for (const m of months) {
+          const c = byMonth.get(m) ?? ZERO();
+          running += c.actual;
+          c.actual = running;
+          byMonth.set(m, c);
+        }
       }
       const dir = direction(g.accountId);
       const sumOf = (ms: string[]) =>
-        ms.reduce((acc, m) => {
+        span(ms).reduce((acc, m) => {
           const c = byMonth.get(m);
-          if (c) {
-            acc.budget += c.budget;
-            acc.actual += c.actual;
-            acc.disposals += c.disposals;
-          }
-          return acc;
+          return c ? addCell(acc, c) : acc;
         }, ZERO());
       const totalCell = sumOf(months);
       const total = variance(totalCell.budget, totalCell.actual, dir);
@@ -294,10 +334,10 @@ export class BudgetReportsService {
         direction: dir,
         columns: columns.map((col) => {
           const c = sumOf(col.months);
-          return { key: col.key, ...figuresDto(variance(c.budget, c.actual, dir), isCapex ? c.disposals : undefined) };
+          return { key: col.key, ...figuresDto(variance(c.budget, c.actual, dir), extrasOf(c)) };
         }),
-        total: figuresDto(total, isCapex ? totalCell.disposals : undefined),
-        status: dir === 'spend' ? utilizationStatus(total, near) : null,
+        total: figuresDto(total, extrasOf(totalCell)),
+        status: dir === 'spend' && !balance && !isCash ? utilizationStatus(total, near) : null,
         exception: isException(total, threshold),
         drilldown: {
           fromDate: months[0],
@@ -313,7 +353,9 @@ export class BudgetReportsService {
     });
 
     // Rows with nothing in the period: keep budget lines, drop empty ledger groups.
-    rows = rows.filter((r) => r.lineId !== null || r._total.actual !== 0 || r._total.budget !== 0 || [...r._cells.values()].some((c) => c.disposals !== 0));
+    rows = rows.filter(
+      (r) => r.lineId !== null || r._total.actual !== 0 || r._total.budget !== 0 || [...r._cells.values()].some((c) => c.disposals !== 0 || c.inflow !== 0 || c.outflow !== 0),
+    );
     if (q.includeUnbudgeted === false) rows = rows.filter((r) => !r.unbudgeted);
 
     if (name === 'revenue-achievement') rows = rows.filter((r) => r.account.rootType === 'income');
@@ -336,12 +378,9 @@ export class BudgetReportsService {
     const sumRows = (list: typeof rows, dir: Direction, sign: (r: (typeof rows)[number]) => number = () => 1) => {
       const per = (ms: string[]) =>
         list.reduce((acc, r) => {
-          for (const m of ms) {
+          for (const m of span(ms)) {
             const c = r._cells.get(m);
-            if (!c) continue;
-            acc.budget += sign(r) * c.budget;
-            acc.actual += sign(r) * c.actual;
-            acc.disposals += sign(r) * c.disposals;
+            if (c) addCell(acc, c, sign(r));
           }
           return acc;
         }, ZERO());
@@ -349,22 +388,22 @@ export class BudgetReportsService {
       return {
         columns: columns.map((col) => {
           const c = per(col.months);
-          return { key: col.key, ...figuresDto(variance(c.budget, c.actual, dir), isCapex ? c.disposals : undefined) };
+          return { key: col.key, ...figuresDto(variance(c.budget, c.actual, dir), extrasOf(c)) };
         }),
-        total: figuresDto(variance(t.budget, t.actual, dir), isCapex ? t.disposals : undefined),
+        total: figuresDto(variance(t.budget, t.actual, dir), extrasOf(t)),
       };
     };
 
-    const ROOT_ORDER = ['income', 'expense', 'asset'];
+    const ROOT_ORDER = ['income', 'expense', 'asset', 'liability', 'equity'];
     const roots = [...new Set(rows.map((r) => r.account.rootType))].sort((a, b) => ROOT_ORDER.indexOf(a) - ROOT_ORDER.indexOf(b));
     const groups = roots.map((rootType) => ({
       key: rootType,
       rootType,
-      ...sumRows(rows.filter((r) => r.account.rootType === rootType), SPEND_ROOTS.includes(rootType) ? 'spend' : 'income'),
+      ...sumRows(rows.filter((r) => r.account.rootType === rootType), rootDirection(rootType)),
     }));
 
     // P&L-style budgets always have a net income line (zeros when a filter leaves no rows).
-    const hasPl = !isCapex || rows.some((r) => r.account.rootType === 'income' || r.account.rootType === 'expense');
+    const hasPl = PL_BUDGET_TYPES.includes(budget.type) || rows.some((r) => r.account.rootType === 'income' || r.account.rootType === 'expense');
     const plRows = rows.filter((r) => r.account.rootType === 'income' || r.account.rootType === 'expense');
     const netOf = (list: typeof rows) => sumRows(list, 'income', (r) => (r.account.rootType === 'income' ? 1 : -1));
     const netIncome = hasPl && name !== 'revenue-achievement' && name !== 'expense-utilization' && name !== 'exceptions' ? netOf(plRows) : null;
@@ -377,7 +416,7 @@ export class BudgetReportsService {
             [dimension]: id ? { id, name: (dimension === 'branch' ? branchName : projectName).get(id) ?? `#${id}` } : null,
             groups: [...new Set(list.map((r) => r.account.rootType))].map((rootType) => ({
               rootType,
-              ...sumRows(list.filter((r) => r.account.rootType === rootType), SPEND_ROOTS.includes(rootType) ? 'spend' : 'income'),
+              ...sumRows(list.filter((r) => r.account.rootType === rootType), rootDirection(rootType)),
             })),
             netIncome: list.some((r) => r.account.rootType === 'income' || r.account.rootType === 'expense')
               ? netOf(list.filter((r) => r.account.rootType === 'income' || r.account.rootType === 'expense'))
@@ -386,8 +425,33 @@ export class BudgetReportsService {
         })
       : undefined;
 
+    // Cash flow: cash at the start, and at the end of each column, actual and budgeted
+    // (budgeted = the actual opening plus the budgeted net movements).
+    let cashPosition = null;
+    if (isCash) {
+      const net = new Map<string, Cell>();
+      for (const f of facts) if (f.month !== OPENING) addCell(net.get(f.month) ?? net.set(f.month, ZERO()).get(f.month), f);
+      const closingAt = (last: string) => {
+        let budgetCash = openingCash;
+        let actualCash = openingCash;
+        for (const m of months) {
+          if (m > last) break;
+          budgetCash += net.get(m)?.budget ?? 0;
+          actualCash += net.get(m)?.actual ?? 0;
+        }
+        return { budget: fromMilli(budgetCash), actual: fromMilli(actualCash), variance: fromMilli(actualCash - budgetCash) };
+      };
+      cashPosition = {
+        opening: fromMilli(openingCash),
+        columns: columns.map((col) => ({ key: col.key, ...closingAt(col.months[col.months.length - 1]) })),
+        closing: closingAt(months[months.length - 1]),
+      };
+    }
+
     return {
       report: name,
+      closing: balance,
+      cashPosition,
       budget: toBudgetDto(budget),
       version: toVersionDto(version),
       currencyCode: budget.currencyCode,
@@ -412,10 +476,27 @@ export class BudgetReportsService {
   async exportReport(name: BudgetReportName, q: BudgetReportQueryDto, format: SheetFormat) {
     const r = await this.report(name, q);
     const isCapex = r.budget.type === BudgetType.Capex;
-    const cols = [...r.columns.map((c) => ({ key: c.key, label: c.label })), { key: 'total', label: 'Total' }];
-    const metrics = ['Budget', 'Actual', 'Variance', 'Variance %', name === 'revenue-achievement' ? 'Achievement %' : 'Used %', ...(isCapex ? ['Disposals'] : [])];
+    const isCash = r.budget.type === BudgetType.CashFlow;
+    const cols = [...r.columns.map((c) => ({ key: c.key, label: c.label })), { key: 'total', label: r.closing ? 'Closing' : 'Total' }];
+    const metrics = [
+      'Budget',
+      'Actual',
+      'Variance',
+      'Variance %',
+      name === 'revenue-achievement' ? 'Achievement %' : 'Used %',
+      ...(isCapex ? ['Disposals'] : []),
+      ...(isCash ? ['Inflows', 'Outflows'] : []),
+    ];
     const header = ['Account code', 'Account', 'Branch', 'Project', ...cols.flatMap((c) => metrics.map((m) => (cols.length > 1 ? `${c.label} ${m}` : m))), 'Status'];
-    const cellsOf = (f: any) => [f.budget, f.actual, f.variance, f.variancePercent ?? 'n/a', f.usedPercent ?? 'n/a', ...(isCapex ? [f.disposals ?? 0] : [])];
+    const cellsOf = (f: any) => [
+      f.budget,
+      f.actual,
+      f.variance,
+      f.variancePercent ?? 'n/a',
+      f.usedPercent ?? 'n/a',
+      ...(isCapex ? [f.disposals ?? 0] : []),
+      ...(isCash ? [f.inflows ?? 0, f.outflows ?? 0] : []),
+    ];
     const figuresOf = (x: { columns: any[]; total: any }) => [...x.columns.flatMap(cellsOf), ...cellsOf(x.total)];
     const statusOf = (row: (typeof r.rows)[number]) =>
       row.unbudgeted ? 'Unbudgeted' : row.status ? row.status.replace('_', ' ') : row.total.favorable ? 'Favorable' : 'Unfavorable';
@@ -429,6 +510,13 @@ export class BudgetReportsService {
       [],
       ...r.groups.map((g) => ['', `Total ${g.rootType}`, '', '', ...figuresOf(g), '']),
       ...(r.netIncome ? [['', 'Net income', '', '', ...figuresOf(r.netIncome), '']] : []),
+      ...(r.cashPosition
+        ? [
+            [],
+            ['', 'Opening cash', '', '', r.cashPosition.opening],
+            ['', 'Closing cash (budget / actual / variance)', '', '', r.cashPosition.closing.budget, r.cashPosition.closing.actual, r.cashPosition.closing.variance],
+          ]
+        : []),
     ];
     const base = `${r.budget.reference}-v${r.version.versionNo}-${name}`;
     return writeSheet(aoa, format, base, REPORT_TITLES[name].slice(0, 31));
@@ -437,7 +525,10 @@ export class BudgetReportsService {
   /** Active version; else the latest approved or locked; else the latest. */
   private async pickVersion(budget: Budget, versionNo?: number): Promise<BudgetVersion> {
     if (versionNo) return this.validator.getVersionOrThrow(budget.id, versionNo);
-    const versions = await this.versionModel().query().where('budgetId', budget.id).orderBy('versionNo', 'desc');
+    // Forecasts are never the budget (design §15): the fallback is the latest plan.
+    const versions = (await this.versionModel().query().where('budgetId', budget.id).orderBy('versionNo', 'desc')).filter(
+      (v) => v.kind !== BudgetVersionKind.Forecast && v.status !== BudgetVersionStatus.Cancelled,
+    );
     const pick =
       versions.find((v) => v.id === budget.activeVersionId) ??
       versions.find((v) => v.status === BudgetVersionStatus.Approved || v.status === BudgetVersionStatus.Locked) ??

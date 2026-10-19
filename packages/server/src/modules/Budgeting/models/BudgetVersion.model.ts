@@ -18,6 +18,9 @@ export class BudgetVersion extends BaseModel {
   lockedBy!: number | null;
   lockVersion!: number;
   submissionNo!: number;
+  forecastMethod!: string | null;
+  forecastAsOf!: Date | string | null;
+  forecastParams!: string | null;
   createdBy!: number | null;
   createdAt!: Date;
   updatedAt!: Date;

@@ -129,6 +129,9 @@ export function ensureSubmittable(version: { status: string; kind: string }, lin
   if (version.kind === BudgetVersionKind.Scenario) {
     throw new ApprovalError(APPROVAL_ERRORS.NOT_SUBMITTABLE, 'A scenario is a what-if copy; create a revision from it to submit it.');
   }
+  if (version.kind === BudgetVersionKind.Forecast) {
+    throw new ApprovalError(APPROVAL_ERRORS.NOT_SUBMITTABLE, 'A forecast is not approved; create a revision from it to submit it as the budget.');
+  }
   if (!SUBMITTABLE_STATUSES.includes(version.status)) throw invalidStatus('submitted', version.status);
   if (lineCount === 0) throw new ApprovalError(APPROVAL_ERRORS.EMPTY_VERSION, 'Add at least one line before submitting.');
 }
@@ -193,13 +196,13 @@ export function ensureCancellable(version: { status: string; kind: string }) {
 }
 
 /**
- * A revision starts from an approved or locked version (or from a scenario),
+ * A revision starts from an approved or locked version (or from a scenario or forecast),
  * and a budget has at most one revision in progress.
  */
 export function ensureCanRevise(source: { status: string; kind: string }, versions: Array<{ kind: string; status: string }>) {
-  const fromScenario = source.kind === BudgetVersionKind.Scenario;
+  const fromScenario = source.kind === BudgetVersionKind.Scenario || source.kind === BudgetVersionKind.Forecast;
   if (!fromScenario && !APPROVED_STATUSES.includes(source.status)) {
-    throw new ApprovalError(APPROVAL_ERRORS.INVALID_SOURCE, 'A revision starts from an approved or locked version, or from a scenario.');
+    throw new ApprovalError(APPROVAL_ERRORS.INVALID_SOURCE, 'A revision starts from an approved or locked version, a scenario or a forecast.');
   }
   if (!versions.some((v) => APPROVED_STATUSES.includes(v.status))) {
     throw new ApprovalError(APPROVAL_ERRORS.INVALID_SOURCE, 'Get the original version approved before revising it.');

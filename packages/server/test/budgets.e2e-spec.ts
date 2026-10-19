@@ -76,7 +76,7 @@ describe('Budgets (e2e)', () => {
       await createBudget({ reference });
       const dup = await http().post('/budgets').set(authHeaders()).send({ name: 'Dup', type: 'profit_loss', fiscalYear: 2031, reference });
       expect(errorType(dup)).toBe('BUDGET_REFERENCE_EXISTS');
-      await http().post('/budgets').set(authHeaders()).send({ name: 'X', type: 'balance_sheet', fiscalYear: 2031 }).expect(400);
+      await http().post('/budgets').set(authHeaders()).send({ name: 'X', type: 'headcount', fiscalYear: 2031 }).expect(400);
     });
 
     it('lists with search and pagination, edits the header, deletes a draft budget', async () => {

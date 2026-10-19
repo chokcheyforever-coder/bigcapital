@@ -23,6 +23,8 @@ import { BudgetApprovalStep } from '@/modules/Budgeting/models/BudgetApprovalSte
 import { BudgetControlPolicy } from '@/modules/Budgeting/models/BudgetControlPolicy.model';
 import { BudgetOverride } from '@/modules/Budgeting/models/BudgetOverride.model';
 import { BudgetControlEvent } from '@/modules/Budgeting/models/BudgetControlEvent.model';
+import { BudgetNotification } from '@/modules/Budgeting/models/BudgetNotification.model';
+import { BudgetSetting } from '@/modules/Budgeting/models/BudgetSetting.model';
 import { SaleEstimate } from '@/modules/SaleEstimates/models/SaleEstimate';
 import { Customer } from '@/modules/Customers/models/Customer';
 import { Contact } from '@/modules/Contacts/models/Contact';
@@ -72,6 +74,8 @@ const models = [
   BudgetControlPolicy,
   BudgetOverride,
   BudgetControlEvent,
+  BudgetNotification,
+  BudgetSetting,
   SaleEstimate,
   Customer,
   Contact,

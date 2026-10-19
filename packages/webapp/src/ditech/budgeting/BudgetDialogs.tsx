@@ -33,6 +33,8 @@ export const BUDGET_TYPES = [
   { value: 'operating_expenses', label: 'Operating expenses', hint: 'Expense accounts only' },
   { value: 'operational', label: 'Operational', hint: 'Income and expenses, by branch or project' },
   { value: 'capex', label: 'Capital expenditure (CAPEX)', hint: 'Fixed-asset accounts' },
+  { value: 'balance_sheet', label: 'Balance sheet', hint: 'Month-end balances of asset, liability and equity accounts' },
+  { value: 'cash_flow', label: 'Cash flow', hint: 'Net money in and out of cash and bank accounts each month' },
 ];
 export const BUDGET_TYPE_LABEL = Object.fromEntries(BUDGET_TYPES.map((t) => [t.value, t.label]));
 
@@ -43,7 +45,27 @@ export const ALLOWED_ACCOUNT_TYPES = {
   revenue: ['income', 'other-income'],
   operating_expenses: ['expense', 'other-expense'],
   capex: ['fixed-asset', 'non-current-asset'],
+  balance_sheet: [
+    'cash', 'bank', 'accounts-receivable', 'inventory', 'other-current-asset', 'fixed-asset', 'non-current-asset',
+    'accounts-payable', 'credit-card', 'tax-payable', 'other-current-liability', 'long-term-liability', 'non-current-liability', 'equity',
+  ],
+  cash_flow: ['cash', 'bank'],
 };
+
+/** Budget types under spending control and with forecasts (server: CONTROLLABLE / FORECASTABLE_BUDGET_TYPES). */
+export const CONTROLLABLE_TYPES = ['profit_loss', 'revenue', 'operating_expenses', 'operational', 'capex'];
+export const FORECASTABLE_TYPES = [...CONTROLLABLE_TYPES, 'cash_flow'];
+export const PL_TYPES = ['profit_loss', 'revenue', 'operating_expenses', 'operational'];
+
+const ROOT_OF = {
+  income: ['income', 'other-income'],
+  expense: ['cost-of-goods-sold', 'expense', 'other-expense'],
+  asset: ['cash', 'bank', 'accounts-receivable', 'inventory', 'other-current-asset', 'fixed-asset', 'non-current-asset'],
+  liability: ['accounts-payable', 'credit-card', 'tax-payable', 'other-current-liability', 'long-term-liability', 'non-current-liability'],
+  equity: ['equity'],
+};
+/** Root type (income, expense, asset, liability, equity) of an account type. */
+export const rootTypeOf = (accountType: string) => Object.keys(ROOT_OF).find((root) => ROOT_OF[root].includes(accountType)) ?? 'expense';
 
 const errorMessage = (error) => error?.data?.errors?.[0]?.message ?? error?.message ?? 'Something went wrong.';
 

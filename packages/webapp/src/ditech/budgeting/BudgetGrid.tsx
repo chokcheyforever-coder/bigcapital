@@ -83,6 +83,7 @@ export function BudgetGrid({
   decimals,
   readOnly,
   showNetIncome,
+  closing = false,
   selected,
   onToggleSelect,
   onToggleSelectAll,
@@ -99,6 +100,8 @@ export function BudgetGrid({
   decimals: number;
   readOnly: boolean;
   showNetIncome: boolean;
+  /** Balance sheet budgets: amounts are month-end balances, so a quarter or the year shows its last month. */
+  closing?: boolean;
   selected: Set<string>;
   onToggleSelect: (key: string) => void;
   onToggleSelectAll: (keys: string[], on: boolean) => void;
@@ -153,9 +156,10 @@ export function BudgetGrid({
         ? quarters.map((q) => ({ id: q.label, label: q.label, months: q.months }))
         : [];
 
-  const subtotal = (items: GridLine[], ms: string[]) => sum(items.map((l) => sum(ms.map((m) => l.values[m]))));
+  const span = (ms: string[]) => (closing ? ms.slice(-1) : ms);
+  const subtotal = (items: GridLine[], ms: string[]) => sum(items.map((l) => sum(span(ms).map((m) => l.values[m]))));
   const signed = (rootType: string) => (rootType === 'income' ? 1 : rootType === 'expense' ? -1 : 0);
-  const netOf = (ms: string[]) => sum(lines.map((l) => signed(l.account.rootType) * sum(ms.map((m) => l.values[m]))));
+  const netOf = (ms: string[]) => sum(lines.map((l) => signed(l.account.rootType) * sum(span(ms).map((m) => l.values[m]))));
   const allKeys = visible.map((l) => l.key);
   const allSelected = allKeys.length > 0 && allKeys.every((k) => selected.has(k));
 
@@ -181,7 +185,7 @@ export function BudgetGrid({
                 {c.label}
               </th>
             ))}
-            <th className="num total">{view === 'year' ? 'Year (type to spread)' : 'Total'}</th>
+            <th className="num total">{closing ? 'Closing' : view === 'year' ? 'Year (type to spread)' : 'Total'}</th>
           </tr>
         </thead>
         <tbody>
@@ -217,7 +221,7 @@ export function BudgetGrid({
                   g.items.map((line) => {
                     rowIndex += 1;
                     const row = rowIndex;
-                    const total = lineTotal(line, months);
+                    const total = lineTotal(line, span(months));
                     const dims = dimensionLabel(line);
                     return (
                       <tr key={line.key} className={selected.has(line.key) ? 'selected' : ''} data-testid="budget-line">
@@ -255,11 +259,11 @@ export function BudgetGrid({
                             ))
                           : columns.map((c) => (
                               <td key={c.id} className="num">
-                                {formatAmount(sum(c.months.map((m) => line.values[m])), decimals)}
+                                {formatAmount(sum(span(c.months).map((m) => line.values[m])), decimals)}
                               </td>
                             ))}
                         <td className="num total">
-                          {view === 'year' && !readOnly ? (
+                          {view === 'year' && !readOnly && !closing ? (
                             <AmountCell
                               value={total}
                               invalid={undefined}

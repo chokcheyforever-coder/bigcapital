@@ -242,3 +242,47 @@ The fork is AGPL-3.0 and public. The portal footer already links to our modified
 - **Budgets › Settings** (`/budgets/settings`): approval rules editor and the company default spending policy.
 - Spending control refusals from bills, expenses and manual journals are shown once for every form by the shared API error handler (`useApiFetcherOnError` → `ditech/budgeting/controlErrors.tsx`), with a link to the override requests or the budget's report.
 - Playwright: `e2e/budgets-workflow.spec.ts` (two-step approval, approvals list, revision, comparison, availability).
+
+## 15. Phase 6 decisions (forecasts, balance sheet and cash flow, dashboard, notifications, 2026-10-19)
+
+**Forecasts**
+
+- A forecast is a version of kind `forecast` (`POST /api/budgets/:id/forecasts`, Budget `Revise`). It starts from a base version (default: the active one, else the latest approved, else the latest plan) and stores how it was made: method, as-of month, run-rate window, growth and base version (`budget_versions.forecast_*`).
+- Every line keeps the **posted actuals up to the as-of month** (matched to lines exactly as in the reports, §11). The months after it come from one method (`calc/forecast.ts`):
+  - `budget`: the base version's amount for that month (budget remainder);
+  - `run_rate`: the average of the last *n* actual months (default 3; months without activity count as 0), every month;
+  - `growth`: the same month a year earlier × (1 + growth %);
+  - `seasonal`: run rate × remaining months, spread like the same months a year earlier (evenly when those are all zero or mix signs); the remainder goes to the last month, so the total is exact.
+- Accounts with actuals but no line get their own forecast line (unbudgeted spend is forecast too). Forecasts are **never submitted, approved or active** and never control spending; to adopt one, create a revision from it. A draft forecast can be edited in the grid, or refreshed (`POST …/versions/:v/forecast/refresh`, Budget `EditDraft`, `lockVersion` required), which recomputes and **replaces** its amounts with current actuals.
+- The as-of month defaults to last month and must lie between the month before the period and its last month. Balance sheet budgets have no forecasts (`BUDGET_NOT_FOR_TYPE`).
+- **Forecast vs budget** (`GET /api/budgets/:id/forecast-vs-budget`): per line, budget for the whole period, *live* actuals to the as-of month, the forecast of the months after it, projected = actual + forecast (design §5), variance and favorable as in §5. **Rolling forecast** (`GET …/rolling-forecast`): the 12 months after the as-of month from actuals only (run rate, growth or seasonal), across budget years; budget amounts are shown for months inside this budget's period.
+- Reports never fall back to a forecast or cancelled version when no version is chosen.
+
+**Fixture** (`calc/forecast.spec.ts`, and the same numbers posted for real in `test/budgets-forecast.e2e-spec.ts`): budget 110 a month; last year's actuals 100 a month except December 200; this year's actuals January 120, February 90, March 150; as of March; 2-decimal currency.
+
+| Method | April–November | December | Year |
+|---|---|---|---|
+| Budget remainder | 110 | 110 | 1,350 |
+| Run rate (3 months) | 120 | 120 | 1,440 |
+| Growth +10 % | 110 | 220 | 1,460 |
+| Seasonal | 108 | 216 | 1,440 |
+
+Forecast vs budget for that line (run rate): budget 1,320, actual to date 360, forecast ahead 1,080, projected 1,440, variance +120 (unfavorable for an expense).
+
+**Balance sheet and cash flow budgets**
+
+- **Balance sheet** (`balance_sheet`): asset, liability and equity accounts; each amount is the planned **month-end balance**. Actual = everything posted up to the end of the month (opening balance included), on the account's natural side, so it equals the Balance Sheet report. A quarter, the year and version totals show the **last month** (closing), never a sum; approval rules size a balance sheet version by its closing balances. Prefill from actuals copies last year's month-end balances.
+- **Cash flow** (`cash_flow`): cash and bank accounts; each amount is the planned **net movement** (money in − money out) of the month. Reports add inflows (debits) and outflows (credits), and a **cash position**: opening cash (all cash and bank accounts before the period) and closing cash per column, actual and budgeted (actual opening + budgeted movements).
+- Favorable: more assets, equity and cash is favorable; more liabilities is not. Neither type has a net income line, utilization status or spending control (`BUDGET_NOT_FOR_TYPE` on a policy). Reports offered for them: budget vs actual, monthly variance, branch, project and exceptions.
+
+**Dashboard** (`GET /api/budgets/dashboard?budgetId=&asOfMonth=`, Budget `View`)
+
+- One budget at a time (default: the latest with an active version) and a year-to-date month (default: last month, inside the period). Every figure is taken from the reports: budget vs actual for the whole period by month and for the year to date, exceptions to date, and forecast vs budget of the latest forecast. So the dashboard equals the reports by construction (e2e compares them).
+- KPIs: revenue achievement, expense utilization (to date and of the year) and remaining budget, net income (P&L-style budgets); totals by account group (every type); cash position (cash flow); lines over, near the limit, unbudgeted and exceptions. Also budget/actual by month with a running total, the five largest variances, the year-end projection, and workflow counts (waiting for me, override requests, alerts in 30 days, unread notifications).
+
+**Notifications**
+
+- Written in the **same transaction** as the change they report (`budget_notifications`), so a refused or rolled-back change notifies nobody; they form the in-app list (`GET /api/budgets/notifications`, `POST …/notifications/read`, Budgets › Approvals › Notifications) and a BullMQ job (`budget-notifications`, 5 s delay) emails the pending ones, claiming each row before sending. Links use the company's own 103 DiTech host.
+- Who hears what: a version waiting on a step → whoever can decide it (its delegate; else the users of its role, or admins when nobody holds it; else everyone who can approve), minus the submitter and earlier approvers when self-approval is prevented; final approval or rejection → submitter and budget owner; delegation → the delegate; override request → approvers (minus the requester when the rule for that amount prevents self-approval); override decision → requester; spending alert → the budget owner, **the first time** a line reaches the level in a period. The person who made the change is never notified about it.
+- Company settings (`GET/PUT /api/budgets/settings/notifications`, Budget `ConfigurePolicy` to change): email on/off (default on) and alert level `off` / `exceeded` (default) / `warning`.
+- Without SMTP, emails fail and the rows say so (`failed`); the in-app list is unaffected. A crash between claiming and sending leaves a row in `sending`.

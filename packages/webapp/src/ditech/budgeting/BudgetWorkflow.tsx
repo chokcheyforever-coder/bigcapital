@@ -39,6 +39,9 @@ import {
   useSaveBudgetPolicy,
 } from '@/hooks/query/budgets';
 
+import { ForecastDialog, ForecastVsBudgetDrawer, RollingForecastDrawer, forecastSummary } from './BudgetForecast';
+import { CONTROLLABLE_TYPES, FORECASTABLE_TYPES } from './BudgetDialogs';
+
 export const errorMessage = (e, fallback) => e?.data?.errors?.[0]?.message ?? fallback;
 export const fmt = (n: number | null | undefined, decimals = 2) =>
   n === null || n === undefined ? '' : Number(n).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
@@ -66,6 +69,10 @@ export function VersionWorkflowBar({ budget, detail, isDirty, onVersionCreated }
   const can = (a) => ability.can(a, AbilitySubject.Budget);
   const inReview = ['submitted', 'under_review'].includes(status);
   const isScenario = version.kind === 'scenario';
+  const isForecast = version.kind === 'forecast';
+  const controllable = CONTROLLABLE_TYPES.includes(budget.type);
+  const forecastable = FORECASTABLE_TYPES.includes(budget.type);
+  const hasForecast = budget.versions.some((v) => v.kind === 'forecast' && v.status !== 'cancelled');
   const hasApproved = budget.versions.some((v) => ['approved', 'locked'].includes(v.status));
 
   const act = async (action, body = {}) => {
@@ -110,9 +117,18 @@ export function VersionWorkflowBar({ budget, detail, isDirty, onVersionCreated }
         </span>
       )}
 
+      {isForecast && (
+        <span className={Classes.TEXT_MUTED} data-testid="forecast-summary">
+          {forecastSummary(version)}
+        </span>
+      )}
+
       <span style={{ flex: 1 }} />
 
-      {['draft', 'rejected'].includes(status) && !isScenario && can(BudgetAction.Submit) && (
+      {isForecast && (
+        <Button icon="timeline-line-chart" text="Forecast vs budget" onClick={() => setDialog('forecast-vs-budget')} data-testid="open-forecast-vs-budget" />
+      )}
+      {['draft', 'rejected'].includes(status) && !isScenario && !isForecast && can(BudgetAction.Submit) && (
         <Button
           intent={Intent.PRIMARY}
           icon="send-message"
@@ -142,14 +158,24 @@ export function VersionWorkflowBar({ budget, detail, isDirty, onVersionCreated }
               <>
                 <MenuItem icon="git-branch" text="New revision…" disabled={!hasApproved} title={hasApproved ? '' : 'Get a version approved first.'} onClick={() => setDialog('revision')} />
                 <MenuItem icon="git-new-branch" text="New scenario…" onClick={() => setDialog('scenario')} />
+                {forecastable && <MenuItem icon="timeline-line-chart" text="New forecast…" onClick={() => setDialog('forecast')} data-testid="new-forecast" />}
                 {version.kind !== 'original' && ['draft', 'rejected'].includes(status) && (
                   <MenuItem icon="disable" intent={Intent.DANGER} text="Cancel this version" onClick={() => setDialog('cancel')} />
                 )}
               </>
             )}
+            {isForecast && status === 'draft' && can(BudgetAction.EditDraft) && (
+              <MenuItem icon="refresh" text="Refresh forecast…" onClick={() => setDialog('refresh-forecast')} />
+            )}
             <MenuItem icon="comparison" text="Compare versions" disabled={budget.versions.length < 2} onClick={() => setDialog('compare')} />
-            <MenuItem icon="dashboard" text="Available to spend" disabled={!budget.activeVersionId} onClick={() => setDialog('availability')} />
-            {can(BudgetAction.ConfigurePolicy) && <MenuItem icon="shield" text="Spending control…" onClick={() => setDialog('policy')} />}
+            {forecastable && (
+              <>
+                <MenuItem icon="timeline-line-chart" text="Forecast vs budget" disabled={!hasForecast} onClick={() => setDialog('forecast-vs-budget')} />
+                <MenuItem icon="timeline-events" text="Rolling 12-month forecast" onClick={() => setDialog('rolling')} />
+              </>
+            )}
+            {controllable && <MenuItem icon="dashboard" text="Available to spend" disabled={!budget.activeVersionId} onClick={() => setDialog('availability')} />}
+            {controllable && can(BudgetAction.ConfigurePolicy) && <MenuItem icon="shield" text="Spending control…" onClick={() => setDialog('policy')} />}
             <MenuItem icon="history" text="Approval history" onClick={() => setDialog('approvals')} />
             {can(BudgetAction.ViewAudit) && <MenuItem icon="list-detail-view" text="Audit history" onClick={() => setDialog('audit')} />}
           </Menu>
@@ -173,6 +199,21 @@ export function VersionWorkflowBar({ budget, detail, isDirty, onVersionCreated }
       <PolicyDialog isOpen={dialog === 'policy'} budget={budget} onClose={() => setDialog(null)} />
       <ApprovalsDrawer isOpen={dialog === 'approvals'} approvals={approvals} onClose={() => setDialog(null)} />
       <AuditDrawer isOpen={dialog === 'audit'} budget={budget} onClose={() => setDialog(null)} />
+      {forecastable && (
+        <>
+          <ForecastDialog
+            key={dialog === 'refresh-forecast' ? `refresh-${version.versionNo}-${version.lockVersion}` : 'new'}
+            isOpen={dialog === 'forecast' || dialog === 'refresh-forecast'}
+            budget={budget}
+            months={detail.months}
+            version={dialog === 'refresh-forecast' ? version : null}
+            onClose={() => setDialog(null)}
+            onDone={(no) => no !== version.versionNo && onVersionCreated?.(no)}
+          />
+          <ForecastVsBudgetDrawer isOpen={dialog === 'forecast-vs-budget'} budget={budget} forecastVersionNo={isForecast ? version.versionNo : null} onClose={() => setDialog(null)} />
+          <RollingForecastDrawer isOpen={dialog === 'rolling'} budget={budget} onClose={() => setDialog(null)} />
+        </>
+      )}
     </div>
   );
 }
@@ -255,7 +296,9 @@ function DelegateDialog({ isOpen, onClose, onConfirm, loading }) {
 function NewVersionDialog({ kind, budget, version, onClose, onCreated }) {
   const { mutateAsync: revise, isPending: revising } = useCreateBudgetRevision();
   const { mutateAsync: scenario, isPending: scenarioing } = useCreateBudgetScenario();
-  const sources = budget.versions.filter((v) => (kind === 'revision' ? ['approved', 'locked'].includes(v.status) || v.kind === 'scenario' : v.status !== 'cancelled'));
+  const sources = budget.versions.filter((v) =>
+    kind === 'revision' ? ['approved', 'locked'].includes(v.status) || ((v.kind === 'scenario' || v.kind === 'forecast') && v.status !== 'cancelled') : v.status !== 'cancelled',
+  );
   const defaultSource = budget.versions.find((v) => v.id === budget.activeVersionId)?.versionNo ?? version.versionNo;
   const [source, setSource] = useState('');
   const [reason, setReason] = useState('');

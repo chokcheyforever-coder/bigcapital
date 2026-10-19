@@ -2377,6 +2377,143 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/budgets/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Budget dashboard: KPIs, months, worst variances and projection, all taken from the budget reports. */
+        get: operations["BudgetForecastController_dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My budget notifications, newest first (unread=true: only unread). */
+        get: operations["BudgetForecastController_getNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marks some (ids) or all of my budget notifications read. */
+        post: operations["BudgetForecastController_markRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/settings/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Company settings for budget emails and spending alerts. */
+        get: operations["BudgetForecastController_getNotificationSettings"];
+        /** Turns budget emails on or off and sets the spending alert level. */
+        put: operations["BudgetForecastController_saveNotificationSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/forecasts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Creates a forecast version: actuals up to the as-of month, then the chosen method. */
+        post: operations["BudgetForecastController_createForecast"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}/forecast/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recomputes a draft forecast with current actuals (and optionally new settings). Replaces its amounts. */
+        post: operations["BudgetForecastController_refreshForecast"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/forecast-vs-budget": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Forecast vs budget: budget, actual to date, remaining forecast and projected total per line. */
+        get: operations["BudgetForecastController_forecastVsBudget"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/rolling-forecast": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Rolling forecast: the next 12 months after the as-of month, from actuals. */
+        get: operations["BudgetForecastController_rolling"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/budgets": {
         parameters: {
             query?: never;
@@ -10038,6 +10175,69 @@ export interface components {
         DecideOverrideDto: {
             comment?: string;
         };
+        MarkNotificationsReadDto: {
+            /** @description Notifications to mark read; leave out to mark all of mine read */
+            ids?: string[];
+        };
+        SaveNotificationSettingsDto: {
+            /** @description Send budget notifications by email (they always show in the app) */
+            email: boolean;
+            /**
+             * @description Tell the budget owner about spending: never, when a line is exceeded, or from the warning threshold
+             * @enum {string}
+             */
+            alertLevel: "off" | "exceeded" | "warning";
+        };
+        CreateForecastDto: {
+            /**
+             * @default run_rate
+             * @enum {string}
+             */
+            method: "budget" | "run_rate" | "growth" | "seasonal";
+            /**
+             * @description Last month with actuals (YYYY-MM); defaults to last month, kept inside the budget period
+             * @example 2027-03
+             */
+            asOfMonth?: string;
+            /**
+             * @description Months averaged by run_rate and seasonal
+             * @default 3
+             */
+            runRateMonths: number;
+            /**
+             * @description growth: change on the same month last year, in percent
+             * @example 5
+             */
+            growthPercent?: number;
+            /** @example Forecast after Q1 */
+            label?: string;
+            /** @description Budget version the forecast starts from (lines, and amounts for the budget method); defaults to the active version */
+            baseVersionNo?: number;
+        };
+        RefreshForecastDto: {
+            /**
+             * @default run_rate
+             * @enum {string}
+             */
+            method: "budget" | "run_rate" | "growth" | "seasonal";
+            /**
+             * @description Last month with actuals (YYYY-MM); defaults to last month, kept inside the budget period
+             * @example 2027-03
+             */
+            asOfMonth?: string;
+            /**
+             * @description Months averaged by run_rate and seasonal
+             * @default 3
+             */
+            runRateMonths: number;
+            /**
+             * @description growth: change on the same month last year, in percent
+             * @example 5
+             */
+            growthPercent?: number;
+            /** @description Version lock (the forecast is overwritten; refused if someone saved it since) */
+            lockVersion: number;
+        };
         CreateBudgetDto: {
             /** @example Operating budget 2027 */
             name: string;
@@ -10047,7 +10247,7 @@ export interface components {
              */
             reference?: string;
             /** @enum {string} */
-            type: "profit_loss" | "revenue" | "operating_expenses" | "operational" | "capex";
+            type: "profit_loss" | "revenue" | "operating_expenses" | "operational" | "capex" | "balance_sheet" | "cash_flow";
             /**
              * @description Fiscal year (the calendar year it starts in)
              * @example 2027
@@ -23596,11 +23796,257 @@ export interface operations {
             };
         };
     };
+    BudgetForecastController_dashboard: {
+        parameters: {
+            query?: {
+                /** @description Budget to show; defaults to the latest budget with an active version */
+                budgetId?: number;
+                /** @description Year to date up to this month (YYYY-MM); defaults to last month, kept inside the budget period */
+                asOfMonth?: string;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetForecastController_getNotifications: {
+        parameters: {
+            query?: {
+                /** @description Only the ones I have not read */
+                unread?: boolean;
+                page?: number;
+                pageSize?: number;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetForecastController_markRead: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkNotificationsReadDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetForecastController_getNotificationSettings: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetForecastController_saveNotificationSettings: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveNotificationSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetForecastController_createForecast: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateForecastDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetForecastController_refreshForecast: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshForecastDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetForecastController_forecastVsBudget: {
+        parameters: {
+            query?: {
+                /** @description Forecast version; defaults to the latest forecast */
+                forecastVersionNo?: number;
+                /** @description Budget version to compare with; defaults to the active version */
+                baseVersionNo?: number;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetForecastController_rolling: {
+        parameters: {
+            query?: {
+                method?: "run_rate" | "growth" | "seasonal";
+                /** @description Last month with actuals (YYYY-MM); defaults to last month */
+                asOfMonth?: string;
+                /** @description 1 to 12 months ahead */
+                months?: number;
+                runRateMonths?: number;
+                growthPercent?: number;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     BudgetingController_getBudgets: {
         parameters: {
             query?: {
                 fiscalYear?: number;
-                type?: "profit_loss" | "revenue" | "operating_expenses" | "operational" | "capex";
+                type?: "profit_loss" | "revenue" | "operating_expenses" | "operational" | "capex" | "balance_sheet" | "cash_flow";
                 /** @description Search by name or reference */
                 search?: string;
                 page?: number;

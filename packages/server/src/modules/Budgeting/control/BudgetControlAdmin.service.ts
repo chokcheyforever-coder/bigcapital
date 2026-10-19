@@ -15,6 +15,7 @@ import { BudgetApprovalRule } from '../models/BudgetApprovalRule.model';
 import { fromMilli, toMilli } from '../calc/budget-calc';
 import { CONTROLLED_TYPES, ControlledType, LEDGER_REFERENCE, normalizeThresholds } from '../calc/control';
 import { pickRule } from '../workflow/approval';
+import { CONTROLLABLE_BUDGET_TYPES, ERRORS } from '../Budgeting.types';
 import { parseRule } from '../commands/BudgetWorkflow.service';
 import { dateOnly } from '../commands/BudgetCommands.service';
 import {
@@ -25,6 +26,7 @@ import {
 } from '../dtos/BudgetControl.dto';
 import { BudgetControlService, parsePolicy, Policy, toCheckDto } from './BudgetControl.service';
 import { BudgetDocumentLedgerService } from './BudgetDocumentLedger.service';
+import { BudgetNotificationService } from '../notifications/BudgetNotification.service';
 
 const TYPE_BY_REFERENCE = Object.fromEntries(Object.entries(LEDGER_REFERENCE).map(([k, v]) => [v, k])) as Record<string, ControlledType>;
 
@@ -61,6 +63,7 @@ export class BudgetControlAdminService {
     private readonly documents: BudgetDocumentLedgerService,
     private readonly auditLog: AuditLogService,
     private readonly cls: ClsService,
+    private readonly notifier: BudgetNotificationService,
     @Inject(Budget.name) private readonly budgetModel: TenantModelProxy<typeof Budget>,
     @Inject(BudgetControlPolicy.name) private readonly policyModel: TenantModelProxy<typeof BudgetControlPolicy>,
     @Inject(BudgetOverride.name) private readonly overrideModel: TenantModelProxy<typeof BudgetOverride>,
@@ -88,6 +91,9 @@ export class BudgetControlAdminService {
       if (budgetId) {
         const budget = await this.budgetModel().query(trx).modify('notDeleted').findById(budgetId);
         if (!budget) throw new ServiceError('BUDGET_NOT_FOUND', 'The budget was not found.', null, 404);
+        if (!CONTROLLABLE_BUDGET_TYPES.includes(budget.type)) {
+          throw new ServiceError(ERRORS.NOT_FOR_TYPE, 'Spending control applies to P&L, expense and CAPEX budgets only.', { type: budget.type });
+        }
       }
       let thresholds: number[];
       try {
@@ -191,6 +197,12 @@ export class BudgetControlAdminService {
           trx,
         });
       }
+      // Approvers hear about it; the requester too when the rule for that amount lets them decide it.
+      const budgets = await this.budgetModel().query(trx).whereIn('id', [...new Set(created.map((o) => o.budgetId))]);
+      const total = created.reduce((a, o) => a + toMilli(String(o.amount)), 0);
+      const rule = pickRule((await this.ruleModel().query(trx)).map(parseRule), total);
+      const label = await this.documents.label(dto.referenceType, dto.referenceId, trx);
+      await this.notifier.overrideRequested(trx, budgets, created, label, dto.reason.trim(), rule.preventSelfApproval ? [this.userId] : []);
       return { overrides: created.map((o) => toOverrideDto(o)), checks: checks.map(toCheckDto) };
     });
   }
@@ -231,6 +243,10 @@ export class BudgetControlAdminService {
         metadata: { overrideId: id, referenceType: override.referenceType, referenceId: override.referenceId, amount: Number(override.amount), comment: comment?.trim() || null },
         trx,
       });
+      const budget = await this.budgetModel().query(trx).findById(override.budgetId);
+      const type = TYPE_BY_REFERENCE[override.referenceType];
+      const label = type ? await this.documents.label(type, override.referenceId, trx) : `${override.referenceType} #${override.referenceId}`;
+      await this.notifier.overrideDecided(trx, budget ?? null, saved, label);
       return toOverrideDto(saved);
     });
   }

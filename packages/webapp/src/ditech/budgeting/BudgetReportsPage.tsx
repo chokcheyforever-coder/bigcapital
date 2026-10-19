@@ -53,7 +53,9 @@ const STATUS = {
   unbudgeted: { label: 'Unbudgeted', intent: Intent.DANGER },
   no_activity: { label: 'No activity', intent: Intent.NONE },
 };
-const ROOT_LABEL = { income: 'Income', expense: 'Expenses', asset: 'Fixed assets' };
+const ROOT_LABEL = { income: 'Income', expense: 'Expenses', asset: 'Assets', liability: 'Liabilities', equity: 'Equity' };
+/** Reports that make sense for each kind of budget (balance sheet and cash flow have no revenue or spending targets). */
+const REPORTS_FOR_BALANCES = ['budget-vs-actual', 'monthly-variance', 'branch', 'project', 'exceptions'];
 
 const pct = (v: number | null) => (v === null || v === undefined ? 'n/a' : `${v.toLocaleString('en-US', { maximumFractionDigits: 2 })}%`);
 
@@ -120,7 +122,10 @@ export function BudgetReportsPage() {
   const decimals = currencyDecimals(budget.currencyCode);
   const money = (n: number) => formatAmount(toMilli(n), decimals);
   const reportInfo = BUDGET_REPORTS.find((r) => r.value === reportName) ?? BUDGET_REPORTS[0];
-  const reportOptions = BUDGET_REPORTS.filter((r) => (r.value === 'capex' ? isCapexBudget : true)).filter((r) => r.value !== 'project' || projectsEnabled);
+  const balanceOrCash = ['balance_sheet', 'cash_flow'].includes(budget.type);
+  const reportOptions = BUDGET_REPORTS.filter((r) => (r.value === 'capex' ? isCapexBudget : true))
+    .filter((r) => r.value !== 'project' || projectsEnabled)
+    .filter((r) => !balanceOrCash || REPORTS_FOR_BALANCES.includes(r.value));
   const exportQuery = () => {
     const sp = new URLSearchParams();
     for (const [k, v] of Object.entries(query ?? {})) {
@@ -305,7 +310,7 @@ const monthLabel = (m: string) => new Date(`${m.slice(0, 7)}-01T00:00:00Z`).toLo
 /** Headline numbers: each account group and net income, budget against actual. */
 function Summary({ report, money }) {
   const cards = [
-    ...report.groups.map((g) => ({ key: g.key, label: ROOT_LABEL[g.rootType] ?? g.rootType, f: g.total })),
+    ...report.groups.map((g) => ({ key: g.key, label: `${ROOT_LABEL[g.rootType] ?? g.rootType}${report.closing ? ' (closing)' : ''}`, f: g.total })),
     ...(report.netIncome ? [{ key: 'net', label: 'Net income', f: report.netIncome.total }] : []),
   ];
   if (cards.length === 0) return null;
@@ -328,11 +333,12 @@ function Summary({ report, money }) {
 
 function ReportTable({ report, money }) {
   const isCapex = report.report === 'capex';
+  const isCash = report.budget.type === 'cash_flow';
   const showUsed = ['revenue-achievement', 'expense-utilization', 'capex'].includes(report.report);
   const usedLabel = report.report === 'revenue-achievement' ? 'Achieved' : 'Used';
   const showStatus = ['expense-utilization', 'capex', 'exceptions'].includes(report.report);
-  const cols = [...report.columns, { key: 'total', label: report.columns.length ? 'Total' : '', months: [] }];
-  const metricCount = 4 + (showUsed ? 1 : 0) + (isCapex ? 1 : 0);
+  const cols = [...report.columns, { key: 'total', label: report.columns.length ? (report.closing ? 'Closing' : 'Total') : '', months: [] }];
+  const metricCount = 4 + (showUsed ? 1 : 0) + (isCapex ? 1 : 0) + (isCash ? 2 : 0);
   const dimension = report.report === 'branch' ? 'branch' : report.report === 'project' ? 'project' : null;
 
   const figureCells = (f, bold = false) => (
@@ -345,6 +351,8 @@ function ReportTable({ report, money }) {
       <td className="num">{pct(f.variancePercent)}</td>
       {showUsed && <td className="num">{pct(f.usedPercent)}</td>}
       {isCapex && <td className="num">{money(f.disposals ?? 0)}</td>}
+      {isCash && <td className="num">{money(f.inflows ?? 0)}</td>}
+      {isCash && <td className="num">{money(f.outflows ?? 0)}</td>}
     </>
   );
   const totalsRow = (label: string, t, key: string, className = 'group') => (
@@ -435,6 +443,8 @@ function ReportTable({ report, money }) {
                 <th className="num">Var %</th>
                 {showUsed && <th className="num">{usedLabel}</th>}
                 {isCapex && <th className="num">Disposals</th>}
+                {isCash && <th className="num">In</th>}
+                {isCash && <th className="num">Out</th>}
               </Fragment>
             ))}
           </tr>
@@ -458,6 +468,27 @@ function ReportTable({ report, money }) {
         </tbody>
         {report.netIncome && (
           <tfoot>{totalsRow('Net income', report.netIncome, 'net', 'net')}</tfoot>
+        )}
+        {report.cashPosition && (
+          <tfoot data-testid="cash-position">
+            <tr className="net">
+              <td className="account">Opening cash {money(report.cashPosition.opening)} → closing cash</td>
+              {showStatus && <td />}
+              {cols.map((c) => {
+                const p = c.key === 'total' ? report.cashPosition.closing : report.cashPosition.columns.find((x) => x.key === c.key);
+                return (
+                  <Fragment key={c.key}>
+                    <td className="num">{money(p.budget)}</td>
+                    <td className="num">{money(p.actual)}</td>
+                    <td className="num" style={{ color: p.variance === 0 ? undefined : p.variance > 0 ? Colors.GREEN3 : Colors.RED3 }}>
+                      {money(p.variance)}
+                    </td>
+                    <td colSpan={metricCount - 3} />
+                  </Fragment>
+                );
+              })}
+            </tr>
+          </tfoot>
         )}
       </table>
     </TableWrap>

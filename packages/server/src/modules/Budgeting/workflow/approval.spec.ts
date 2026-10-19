@@ -83,6 +83,7 @@ describe('submitting', () => {
     expect(code(() => ensureSubmittable({ status: 'approved', kind: 'original' }, 1))).toBe(APPROVAL_ERRORS.INVALID_STATUS);
     expect(code(() => ensureSubmittable({ status: 'submitted', kind: 'original' }, 1))).toBe(APPROVAL_ERRORS.INVALID_STATUS);
     expect(code(() => ensureSubmittable({ status: 'draft', kind: 'scenario' }, 1))).toBe(APPROVAL_ERRORS.NOT_SUBMITTABLE);
+    expect(code(() => ensureSubmittable({ status: 'draft', kind: 'forecast' }, 1))).toBe(APPROVAL_ERRORS.NOT_SUBMITTABLE);
     expect(code(() => ensureSubmittable({ status: 'draft', kind: 'original' }, 0))).toBe(APPROVAL_ERRORS.EMPTY_VERSION);
   });
 });
@@ -134,6 +135,7 @@ describe('revisions and cancelling', () => {
     expect(code(() => ensureCanRevise(approved, [approved]))).toBeNull();
     expect(code(() => ensureCanRevise({ kind: 'original', status: 'locked' }, [{ kind: 'original', status: 'locked' }]))).toBeNull();
     expect(code(() => ensureCanRevise({ kind: 'scenario', status: 'draft' }, [approved]))).toBeNull();
+    expect(code(() => ensureCanRevise({ kind: 'forecast', status: 'draft' }, [approved]))).toBeNull();
     expect(code(() => ensureCanRevise({ kind: 'original', status: 'draft' }, [{ kind: 'original', status: 'draft' }]))).toBe(APPROVAL_ERRORS.INVALID_SOURCE);
     expect(code(() => ensureCanRevise({ kind: 'scenario', status: 'draft' }, [{ kind: 'original', status: 'draft' }]))).toBe(
       APPROVAL_ERRORS.INVALID_SOURCE,

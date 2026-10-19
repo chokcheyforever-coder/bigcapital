@@ -27,7 +27,7 @@ import { useProjects } from '@/hooks/query/projects';
 import { useAllocateBudget, useBudget, useBudgetVersion, useDeleteBudget, useSaveBudgetLines } from '@/hooks/query/budgets';
 import { useProjectsEnabled } from '@/ditech/projects/hooks';
 import { BudgetGrid, GridView } from './BudgetGrid';
-import { AddLinesDialog, AllocateDialog, BUDGET_TYPE_LABEL, ImportDialog, LineNoteDialog, PrefillDialog } from './BudgetDialogs';
+import { AddLinesDialog, AllocateDialog, BUDGET_TYPE_LABEL, ImportDialog, LineNoteDialog, PL_TYPES, PrefillDialog, rootTypeOf } from './BudgetDialogs';
 import { currencyDecimals, toMilli } from './money';
 import { lineKey, useBudgetGrid } from './gridState';
 import { STATUS_INTENT, statusLabel } from './BudgetsPage';
@@ -131,7 +131,7 @@ export function BudgetEditorPage() {
     const add = preview.lines
       .filter((l) => !grid.lines.some((g) => g.key === lineKey(l.accountId, l.branchId, l.projectId)))
       .map((l) => ({
-        account: { id: l.account.id, code: l.account.code, name: l.account.name, accountType: l.account.accountType, rootType: ['income', 'other-income'].includes(l.account.accountType) ? 'income' : ['fixed-asset', 'non-current-asset'].includes(l.account.accountType) ? 'asset' : 'expense' },
+        account: { id: l.account.id, code: l.account.code, name: l.account.name, accountType: l.account.accountType, rootType: rootTypeOf(l.account.accountType) },
         branchId: l.branchId,
         projectId: l.projectId,
         note: null,
@@ -147,7 +147,8 @@ export function BudgetEditorPage() {
   if (budgetError) return <DashboardPageContent><EmptyStatus title="Budget not found" description={<p>It may have been deleted.</p>} action={<Button onClick={() => history.push('/budgets')}>Back to budgets</Button>} /></DashboardPageContent>;
   if (budgetLoading || versionLoading || !budget || !detail) return <DashboardPageContent><div style={{ padding: 40 }}><Spinner /></div></DashboardPageContent>;
 
-  const showNetIncome = !['capex'].includes(budget.type);
+  const showNetIncome = PL_TYPES.includes(budget.type);
+  const closing = budget.type === 'balance_sheet';
   const status = detail.version.status;
 
   return (
@@ -297,6 +298,7 @@ export function BudgetEditorPage() {
               decimals={decimals}
               readOnly={!editable}
               showNetIncome={showNetIncome}
+              closing={closing}
               selected={selected}
               onToggleSelect={(key) => setSelected((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; })}
               onToggleSelectAll={(keys, on) => setSelected(on ? new Set(keys) : new Set())}
