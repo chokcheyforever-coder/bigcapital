@@ -35,6 +35,15 @@ export const BUDGETS_ROUTES = {
   OVERRIDE_REJECT: '/api/budgets/overrides/{id}/reject',
   ALERTS: '/api/budgets/alerts',
   AVAILABILITY: '/api/budgets/{id}/availability',
+  // Phase 6: forecasts, dashboard, notifications.
+  DASHBOARD: '/api/budgets/dashboard',
+  NOTIFICATIONS: '/api/budgets/notifications',
+  NOTIFICATIONS_READ: '/api/budgets/notifications/read',
+  NOTIFICATION_SETTINGS: '/api/budgets/settings/notifications',
+  FORECASTS: '/api/budgets/{id}/forecasts',
+  FORECAST_REFRESH: '/api/budgets/{id}/versions/{versionNo}/forecast/refresh',
+  FORECAST_VS_BUDGET: '/api/budgets/{id}/forecast-vs-budget',
+  ROLLING_FORECAST: '/api/budgets/{id}/rolling-forecast',
 } as const satisfies Record<string, keyof paths>;
 
 export type GetBudgetsQuery = OpQueryParams<OpForPath<typeof BUDGETS_ROUTES.LIST, 'get'>>;
@@ -46,7 +55,7 @@ export type PrefillBudgetBody = OpRequestBody<OpForPath<typeof BUDGETS_ROUTES.PR
 export type BudgetReportQuery = OpQueryParams<OpForPath<typeof BUDGETS_ROUTES.REPORT, 'get'>>;
 
 // Responses (camelCased by the fetcher). Month keys are "YYYY-MM-01".
-export type BudgetType = 'profit_loss' | 'revenue' | 'operating_expenses' | 'operational' | 'capex';
+export type BudgetType = 'profit_loss' | 'revenue' | 'operating_expenses' | 'operational' | 'capex' | 'balance_sheet' | 'cash_flow';
 export type BudgetVersionStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'locked' | 'rejected' | 'cancelled';
 
 export interface Budget {
@@ -85,9 +94,21 @@ export interface BudgetVersion {
   approvedBy?: number | null;
   lockedAt?: string | null;
   lockedBy?: number | null;
+  /** Forecast versions: how they were made. */
+  forecast?: BudgetForecastSettings | null;
   createdAt: string;
   updatedAt: string;
   total?: number;
+}
+
+export type BudgetForecastMethod = 'budget' | 'run_rate' | 'growth' | 'seasonal';
+
+export interface BudgetForecastSettings {
+  method: BudgetForecastMethod;
+  asOfMonth: string | null;
+  runRateMonths?: number;
+  growthPercent?: number;
+  baseVersionNo?: number;
 }
 
 export interface BudgetsListResponse {
@@ -120,11 +141,14 @@ export interface BudgetVersionDetail {
   budget: Budget;
   version: BudgetVersion;
   months: string[];
+  /** Balance sheet budgets: amounts are month-end balances; quarters and totals are the last month. */
+  closing?: boolean;
   quarters: Array<{ label: string; months: string[] }>;
   lines: BudgetVersionLine[];
   totals: {
     groups: Array<BudgetPeriodAmounts & { rootType: string }>;
-    netIncome: BudgetPeriodAmounts;
+    /** null for balance sheet, cash flow and CAPEX budgets. */
+    netIncome: BudgetPeriodAmounts | null;
     grand: BudgetPeriodAmounts;
   };
 }
@@ -232,6 +256,9 @@ export interface BudgetReportFigures {
   unbudgeted: boolean;
   /** CAPEX only. */
   disposals?: number;
+  /** Cash flow only: money in (debits) and out (credits) of the cash accounts. */
+  inflows?: number;
+  outflows?: number;
 }
 
 export interface BudgetReportTotals {
@@ -253,8 +280,18 @@ export interface BudgetReportRow extends BudgetReportTotals {
   drilldown: { fromDate: string; toDate: string; accountsIds: number[]; branchesIds: number[]; projectsIds: number[]; exact: boolean };
 }
 
+export interface BudgetCashPosition {
+  opening: number;
+  columns: Array<{ key: string; budget: number; actual: number; variance: number }>;
+  closing: { budget: number; actual: number; variance: number };
+}
+
 export interface BudgetReport {
   report: BudgetReportName;
+  /** Balance sheet: figures are month-end balances; a column shows its last month. */
+  closing?: boolean;
+  /** Cash flow budgets: cash at the start and at the end of each column. */
+  cashPosition?: BudgetCashPosition | null;
   budget: Budget;
   version: BudgetVersion;
   currencyCode: string;
@@ -610,4 +647,219 @@ export async function fetchBudgetAvailability(
   const get = fetcher.path(BUDGETS_ROUTES.AVAILABILITY).method('get').create();
   const { data } = await get({ id: Number(id), ...(query ?? {}) } as never);
   return data as unknown as BudgetAvailability;
+}
+
+// ---------------------------------------------------------------- forecasts, dashboard, notifications (Phase 6)
+
+export interface BudgetForecastFigures {
+  budget: number;
+  actualToDate: number;
+  forecastRemaining: number;
+  projected: number;
+  variance: number;
+  variancePercent: number | null;
+  favorable: boolean;
+}
+
+export interface BudgetForecastMonth {
+  month: string;
+  budget: number;
+  /** null after the as-of month. */
+  actual: number | null;
+  forecast: number;
+}
+
+export interface BudgetForecastVsBudget {
+  budget: Budget;
+  baseVersion: BudgetVersion;
+  forecastVersion: BudgetVersion;
+  asOfMonth: string | null;
+  months: string[];
+  rows: Array<
+    BudgetForecastFigures & {
+      account: { id: number; code: string | null; name: string; accountType: string; rootType: string; normal: string };
+      branchId: number | null;
+      projectId: number | null;
+      unbudgeted: boolean;
+      months: BudgetForecastMonth[];
+    }
+  >;
+  groups: Array<BudgetForecastFigures & { rootType: string; months: BudgetForecastMonth[] }>;
+  netIncome: (BudgetForecastFigures & { months: BudgetForecastMonth[] }) | null;
+}
+
+export interface BudgetRollingTotals {
+  history: Array<{ month: string; actual: number }>;
+  months: Array<{ month: string; forecast: number; budget: number | null }>;
+  forecastTotal: number;
+}
+
+export interface BudgetRollingForecast {
+  budget: Budget;
+  version: BudgetVersion;
+  asOfMonth: string;
+  method: Exclude<BudgetForecastMethod, 'budget'>;
+  runRateMonths: number;
+  growthPercent: number;
+  historyMonths: string[];
+  months: string[];
+  rows: Array<
+    BudgetRollingTotals & {
+      account: { id: number; code: string | null; name: string; accountType: string; rootType: string; normal: string };
+      branchId: number | null;
+      projectId: number | null;
+      unbudgeted: boolean;
+      direction: 'income' | 'spend';
+    }
+  >;
+  groups: Array<BudgetRollingTotals & { rootType: string }>;
+  netIncome: BudgetRollingTotals | null;
+}
+
+export interface BudgetDashboard {
+  budgets: Array<{ id: number; reference: string; name: string; type: BudgetType; fiscalYear: number; hasActiveVersion: boolean }>;
+  budget: Budget | null;
+  version?: BudgetVersion;
+  activeVersion?: boolean;
+  approved?: boolean;
+  currencyCode?: string;
+  asOfMonth?: string | null;
+  months?: string[];
+  kpis?: {
+    revenue: { annualBudget: number; ytdBudget: number; ytdActual: number; achievementPercent: number | null } | null;
+    expenses: {
+      annualBudget: number;
+      ytdBudget: number;
+      ytdActual: number;
+      utilizationPercent: number | null;
+      annualUsedPercent: number | null;
+      remaining: number;
+    } | null;
+    netIncome: { annualBudget: number; ytdBudget: number; ytdActual: number; ytdVariance: number } | null;
+    groups: Array<{ rootType: string; annualBudget: number; ytd: BudgetReportFigures | null }>;
+    cashPosition: BudgetCashPosition | null;
+    lines: { budgeted: number; over: number; near: number; unbudgeted: number; exceptions: number };
+  };
+  monthly?: Array<{
+    month: string;
+    label: string;
+    groups: Record<string, { budget: number; actual: number | null }>;
+    netIncome: { budget: number; actual: number | null } | null;
+    cumulative: { budget: number; actual: number | null };
+  }>;
+  topExceptions?: Array<{
+    account: BudgetReportRow['account'];
+    branch: { id: number; name: string } | null;
+    project: { id: number; name: string } | null;
+    unbudgeted: boolean;
+    budget: number;
+    actual: number;
+    variance: number;
+    variancePercent: number | null;
+  }>;
+  projection?: {
+    forecastVersionNo: number;
+    asOfMonth: string | null;
+    method: BudgetForecastMethod | null;
+    groups: Array<{ rootType: string; budget: number; projected: number; variance: number; variancePercent: number | null; favorable: boolean }>;
+    netIncome: { budget: number; projected: number; variance: number; variancePercent: number | null; favorable: boolean } | null;
+  } | null;
+  workflow: { waitingForMe: number; pendingOverrides: number; alertsLast30Days: number; unreadNotifications: number };
+}
+
+export interface BudgetNotificationItem {
+  id: number;
+  kind: string;
+  budgetId: number | null;
+  subject: string;
+  body: string;
+  link: string | null;
+  emailStatus: 'pending' | 'sending' | 'sent' | 'failed' | 'skipped';
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface BudgetNotificationSettings {
+  email: boolean;
+  alertLevel: 'off' | 'exceeded' | 'warning';
+}
+
+export interface BudgetForecastInput {
+  method?: BudgetForecastMethod;
+  asOfMonth?: string;
+  runRateMonths?: number;
+  growthPercent?: number;
+}
+
+export async function createBudgetForecast(
+  fetcher: ApiFetcher,
+  id: number | string,
+  values: BudgetForecastInput & { label?: string; baseVersionNo?: number },
+): Promise<{ versionNo: number; version: BudgetVersionDetail }> {
+  const post = fetcher.path(BUDGETS_ROUTES.FORECASTS).method('post').create();
+  const { data } = await post({ id: Number(id), ...values } as never);
+  return data as never;
+}
+
+export async function refreshBudgetForecast(
+  fetcher: ApiFetcher,
+  v: VersionRef,
+  values: BudgetForecastInput & { lockVersion: number },
+): Promise<BudgetVersionDetail> {
+  const post = fetcher.path(BUDGETS_ROUTES.FORECAST_REFRESH).method('post').create();
+  const { data } = await post({ ...ref(v), ...values } as never);
+  return data as unknown as BudgetVersionDetail;
+}
+
+export async function fetchBudgetForecastVsBudget(
+  fetcher: ApiFetcher,
+  id: number | string,
+  query?: { forecastVersionNo?: number; baseVersionNo?: number },
+): Promise<BudgetForecastVsBudget> {
+  const get = fetcher.path(BUDGETS_ROUTES.FORECAST_VS_BUDGET).method('get').create();
+  const { data } = await get({ id: Number(id), ...(query ?? {}) } as never);
+  return data as unknown as BudgetForecastVsBudget;
+}
+
+export async function fetchBudgetRollingForecast(
+  fetcher: ApiFetcher,
+  id: number | string,
+  query?: { asOfMonth?: string; method?: 'run_rate' | 'growth' | 'seasonal'; months?: number; runRateMonths?: number; growthPercent?: number },
+): Promise<BudgetRollingForecast> {
+  const get = fetcher.path(BUDGETS_ROUTES.ROLLING_FORECAST).method('get').create();
+  const { data } = await get({ id: Number(id), ...(query ?? {}) } as never);
+  return data as unknown as BudgetRollingForecast;
+}
+
+export async function fetchBudgetDashboard(fetcher: ApiFetcher, query?: { budgetId?: number; asOfMonth?: string }): Promise<BudgetDashboard> {
+  const get = fetcher.path(BUDGETS_ROUTES.DASHBOARD).method('get').create();
+  const { data } = await get((query ?? {}) as never);
+  return data as unknown as BudgetDashboard;
+}
+
+export async function fetchBudgetNotifications(
+  fetcher: ApiFetcher,
+  query?: { unread?: boolean; page?: number; pageSize?: number },
+): Promise<{ data: BudgetNotificationItem[]; unread: number; pagination: { page: number; pageSize: number; total: number } }> {
+  const get = fetcher.path(BUDGETS_ROUTES.NOTIFICATIONS).method('get').create();
+  const { data } = await get((query ?? {}) as never);
+  return data as never;
+}
+
+export async function markBudgetNotificationsRead(fetcher: ApiFetcher, ids?: number[]): Promise<{ updated: number }> {
+  const post = fetcher.path(BUDGETS_ROUTES.NOTIFICATIONS_READ).method('post').create();
+  const { data } = await post((ids ? { ids } : {}) as never);
+  return data as never;
+}
+
+export async function fetchBudgetNotificationSettings(fetcher: ApiFetcher): Promise<BudgetNotificationSettings> {
+  const get = fetcher.path(BUDGETS_ROUTES.NOTIFICATION_SETTINGS).method('get').create();
+  const { data } = await get({} as never);
+  return data as unknown as BudgetNotificationSettings;
+}
+
+export async function saveBudgetNotificationSettings(fetcher: ApiFetcher, values: BudgetNotificationSettings): Promise<BudgetNotificationSettings> {
+  const put = fetcher.path(BUDGETS_ROUTES.NOTIFICATION_SETTINGS).method('put').create();
+  const { data } = await put(values as never);
+  return data as unknown as BudgetNotificationSettings;
 }

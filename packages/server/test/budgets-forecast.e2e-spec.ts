@@ -29,7 +29,7 @@ describe('Budget forecasts, balance sheet, cash flow, dashboard (e2e)', () => {
   let savedRules: any[] = [];
 
   const ok = async (res: request.Response, status = 200) => {
-    if (res.status !== status) throw new Error(`${res.req?.method} ${res.req?.path} ${res.status}: ${JSON.stringify(res.body)}`);
+    if (res.status !== status) throw new Error(`${res.status}: ${JSON.stringify(res.body)}`);
     return res.body;
   };
   const journal = (date: string, debitAccount: number, creditAccount: number, amount: number) =>

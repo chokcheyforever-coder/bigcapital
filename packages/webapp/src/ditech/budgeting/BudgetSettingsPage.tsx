@@ -7,7 +7,15 @@ import { AppToaster, DashboardActionsBar, DashboardPageContent, EmptyStatus } fr
 import { useAbilityContext } from '@/hooks/utils';
 import { AbilitySubject, BudgetAction } from '@/constants/abilityOption';
 import { useRoles } from '@/hooks/query/roles/queries';
-import { useBudgetApprovalRules, useBudgetPolicies, useDeleteBudgetPolicy, useSaveBudgetApprovalRules, useSaveBudgetPolicy } from '@/hooks/query/budgets';
+import {
+  useBudgetApprovalRules,
+  useBudgetNotificationSettings,
+  useBudgetPolicies,
+  useDeleteBudgetPolicy,
+  useSaveBudgetApprovalRules,
+  useSaveBudgetNotificationSettings,
+  useSaveBudgetPolicy,
+} from '@/hooks/query/budgets';
 import { errorMessage, fmt, PolicyForm } from './BudgetWorkflow';
 import { useBudgetingEnabled } from './hooks';
 
@@ -38,6 +46,7 @@ export function BudgetSettingsPage() {
           )}
           <ApprovalRulesCard readOnly={!canConfigure} />
           <DefaultPolicyCard readOnly={!canConfigure} />
+          <NotificationsCard readOnly={!canConfigure} />
         </div>
       </DashboardPageContent>
     </>
@@ -187,6 +196,45 @@ function DefaultPolicyCard({ readOnly }) {
             </p>
           )}
         </>
+      )}
+    </Card>
+  );
+}
+
+const ALERT_LEVEL_LABEL = {
+  off: 'No spending alerts',
+  exceeded: 'When a line goes over its budget',
+  warning: 'From the warning threshold (and when over)',
+};
+
+/** Budget emails on/off and when the budget owner hears about spending (design §15). */
+function NotificationsCard({ readOnly }) {
+  const { data, isLoading } = useBudgetNotificationSettings();
+  const { mutateAsync: save, isPending } = useSaveBudgetNotificationSettings();
+  const update = (patch) =>
+    save({ ...data, ...patch })
+      .then(() => AppToaster.show({ message: 'Notification settings saved.', intent: Intent.SUCCESS }))
+      .catch((e) => AppToaster.show({ message: errorMessage(e, 'Could not save the settings.'), intent: Intent.DANGER }));
+  return (
+    <Card style={{ marginTop: 16 }} data-testid="notification-settings">
+      <H4>Notifications</H4>
+      <p className={Classes.TEXT_MUTED}>
+        Approvers hear when a version waits for them, submitters when it is approved or rejected, approvers when someone asks to post over budget, and the budget owner
+        when spending reaches the alert level (once per line, level and period). Notifications always show in Budgets › Approvals › Notifications.
+      </p>
+      {isLoading || !data ? (
+        <Spinner />
+      ) : (
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Switch disabled={readOnly || isPending} checked={data.email} label="Also send them by email" onChange={(e) => update({ email: e.target.checked })} style={{ margin: 0 }} />
+          <span>Spending alerts:</span>
+          <HTMLSelect
+            disabled={readOnly || isPending}
+            value={data.alertLevel}
+            onChange={(e) => update({ alertLevel: e.target.value })}
+            options={Object.entries(ALERT_LEVEL_LABEL).map(([value, label]) => ({ value, label }))}
+          />
+        </div>
       )}
     </Card>
   );

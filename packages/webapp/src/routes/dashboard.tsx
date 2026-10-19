@@ -1317,6 +1317,16 @@ export const getDashboardRoutes = () => [
   },
   // 103 DiTech: budgeting. Fixed paths before /budgets/:id.
   {
+    path: '/budgets/dashboard',
+    component: lazy(() =>
+      import('@/ditech/budgeting/BudgetDashboardPage').then((m) => ({
+        default: m.BudgetDashboardPage,
+      })),
+    ),
+    pageTitle: 'Budget dashboard',
+    subscriptionActive: [SUBSCRIPTION_TYPE.MAIN],
+  },
+  {
     path: '/budgets/approvals',
     component: lazy(() =>
       import('@/ditech/budgeting/BudgetApprovalsPage').then((m) => ({

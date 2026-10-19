@@ -9,16 +9,18 @@ import { AbilitySubject, BudgetAction } from '@/constants/abilityOption';
 import {
   useBudgetAlerts,
   useBudgetApprovals,
+  useBudgetNotifications,
   useBudgetOverrideDrafts,
   useBudgetOverrides,
   useDecideBudgetOverride,
+  useMarkBudgetNotificationsRead,
   useRequestBudgetOverride,
 } from '@/hooks/query/budgets';
 import { STATUS_INTENT, statusLabel } from './BudgetsPage';
 import { errorMessage, fmt, MODE_LABEL, TYPE_LABEL } from './BudgetWorkflow';
 import { useBudgetingEnabled } from './hooks';
 
-const TABS = ['mine', 'review', 'overrides', 'alerts'] as const;
+const TABS = ['mine', 'review', 'overrides', 'alerts', 'notifications'] as const;
 const OVERRIDE_INTENT = { pending: Intent.PRIMARY, approved: Intent.SUCCESS, rejected: Intent.DANGER, cancelled: Intent.NONE };
 const LEVEL_INTENT = { info: Intent.PRIMARY, warning: Intent.WARNING, exceeded: Intent.DANGER };
 const docLabel = (type, id) => `${TYPE_LABEL[type]?.replace(/s$/, '') ?? type} #${id}`;
@@ -48,6 +50,7 @@ export function BudgetApprovalsPage() {
             <Tab id="review" title="Approval status" panel={<ApprovalsTable />} />
             <Tab id="overrides" title="Override requests" panel={<OverridesPanel />} />
             <Tab id="alerts" title="Alerts" panel={<AlertsPanel />} />
+            <Tab id="notifications" title="Notifications" panel={<NotificationsPanel />} />
           </Tabs>
         </div>
       </DashboardPageContent>
@@ -378,3 +381,67 @@ function AlertsPanel() {
 }
 
 export default BudgetApprovalsPage;
+
+const KIND_LABEL = {
+  approval_waiting: 'Waiting for approval',
+  approval_delegated: 'Handed to you',
+  version_approved: 'Approved',
+  version_rejected: 'Rejected',
+  override_requested: 'Override request',
+  override_approved: 'Override approved',
+  override_rejected: 'Override rejected',
+  budget_alert: 'Spending alert',
+};
+const EMAIL_LABEL = { pending: 'email queued', sending: 'sending', sent: 'emailed', failed: 'email failed', skipped: 'in app only' };
+
+/** My budget notifications (design §15); they are also emailed when the company has emails on. */
+function NotificationsPanel() {
+  const history = useHistory();
+  const [unreadOnly, setUnreadOnly] = useState(false);
+  const { data, isLoading } = useBudgetNotifications({ unread: unreadOnly || undefined, pageSize: 100 });
+  const { mutate: markRead, isPending } = useMarkBudgetNotificationsRead();
+  if (isLoading) return <Spinner />;
+  const list = data?.data ?? [];
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+        <HTMLSelect value={unreadOnly ? 'unread' : 'all'} onChange={(e) => setUnreadOnly(e.target.value === 'unread')} options={[{ value: 'all', label: 'All' }, { value: 'unread', label: 'Unread' }]} />
+        <span className={Classes.TEXT_MUTED}>{data?.unread ?? 0} unread</span>
+        <span style={{ flex: 1 }} />
+        <Button small icon="tick" text="Mark all read" disabled={!data?.unread} loading={isPending} onClick={() => markRead(undefined)} data-testid="mark-all-read" />
+      </div>
+      {list.length === 0 ? (
+        <EmptyStatus title="No notifications" description={<p>Approvals, override requests and spending alerts for you show up here.</p>} />
+      ) : (
+        <HTMLTable compact striped interactive style={{ width: '100%' }} data-testid="notifications-table">
+          <tbody>
+            {list.map((n) => (
+              <tr
+                key={n.id}
+                style={{ fontWeight: n.readAt ? 400 : 600, cursor: n.link ? 'pointer' : undefined }}
+                onClick={() => {
+                  if (!n.readAt) markRead([n.id]);
+                  if (n.link) history.push(n.link);
+                }}
+              >
+                <td style={{ width: 150 }}>
+                  <Tag minimal intent={n.kind === 'budget_alert' || n.kind.endsWith('rejected') ? Intent.WARNING : Intent.PRIMARY}>{KIND_LABEL[n.kind] ?? n.kind}</Tag>
+                </td>
+                <td>
+                  <div>{n.subject}</div>
+                  <div className={Classes.TEXT_MUTED} style={{ fontWeight: 400 }}>
+                    {n.body}
+                  </div>
+                </td>
+                <td className={Classes.TEXT_MUTED} style={{ whiteSpace: 'nowrap', fontWeight: 400 }}>
+                  {new Date(n.createdAt).toLocaleString()}
+                  <div style={{ fontSize: 11 }}>{EMAIL_LABEL[n.emailStatus] ?? n.emailStatus}</div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </HTMLTable>
+      )}
+    </div>
+  );
+}
