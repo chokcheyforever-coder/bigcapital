@@ -17,6 +17,7 @@ export class BudgetVersion extends BaseModel {
   lockedAt!: Date | null;
   lockedBy!: number | null;
   lockVersion!: number;
+  submissionNo!: number;
   createdBy!: number | null;
   createdAt!: Date;
   updatedAt!: Date;

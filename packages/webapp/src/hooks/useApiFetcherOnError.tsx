@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useAuthActions, useSetGlobalErrors } from './state';
 import type { ApiError } from 'openapi-typescript-fetch';
 import { PLAN_ERROR_CODES } from '@/ditech/plan';
+import { showBudgetControlError } from '@/ditech/budgeting/controlErrors';
 
 /**
  * Returns a stable callback that translates SDK fetcher rejections into
@@ -37,6 +38,7 @@ export function useApiFetcherOnError() {
         setGlobalErrors({ too_many_requests: true });
       }
       if (status === 400 && Array.isArray(data?.errors)) {
+        showBudgetControlError(data.errors);
         const lockedError = data.errors.find(
           (e: { type?: string }) => e.type === 'TRANSACTIONS_DATE_LOCKED',
         );

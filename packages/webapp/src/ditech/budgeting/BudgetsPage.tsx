@@ -75,6 +75,10 @@ export function BudgetsPage() {
           />
           <HTMLSelect value={type} onChange={(e) => setType(e.target.value)} options={[{ value: '', label: 'All types' }, ...BUDGET_TYPES.map(({ value, label }) => ({ value, label }))]} style={{ marginLeft: 8 }} />
         </NavbarGroup>
+        <NavbarGroup align="right">
+          <Button className={Classes.MINIMAL} icon="endorsed" text="Approvals" onClick={() => history.push('/budgets/approvals')} data-testid="open-approvals" />
+          <Button className={Classes.MINIMAL} icon="cog" text="Settings" onClick={() => history.push('/budgets/settings')} />
+        </NavbarGroup>
       </DashboardActionsBar>
 
       <DashboardPageContent>

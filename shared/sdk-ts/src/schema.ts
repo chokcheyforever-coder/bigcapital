@@ -1999,6 +1999,384 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/budgets/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Approval status report: versions in review, the step each waits on and for how long (mine=true: the ones I can decide). */
+        get: operations["BudgetWorkflowController_getApprovals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/settings/approval-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Approval rules: steps by gross version amount. */
+        get: operations["BudgetWorkflowController_getApprovalRules"];
+        /** Replaces the approval rules (ranges must not overlap). Applies to later submissions only. */
+        put: operations["BudgetWorkflowController_saveApprovalRules"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Approval history of a version (every submission and step) and whether I can decide now. */
+        get: operations["BudgetWorkflowController_getVersionApprovals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submits a draft or rejected version; its steps come from the approval rules. */
+        post: operations["BudgetWorkflowController_submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approves the current step; after the last step the version is approved and becomes active. */
+        post: operations["BudgetWorkflowController_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rejects the version at the current step (comment required); it can be edited and resubmitted. */
+        post: operations["BudgetWorkflowController_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}/delegate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Hands the current step to another user who can approve budgets. */
+        post: operations["BudgetWorkflowController_delegate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Takes a version in review back to draft. */
+        post: operations["BudgetWorkflowController_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancels a draft or rejected revision or scenario. */
+        post: operations["BudgetWorkflowController_cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}/lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Locks an approved version. */
+        post: operations["BudgetWorkflowController_lock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/versions/{versionNo}/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Unlocks a locked version (back to approved; still read-only). */
+        post: operations["BudgetWorkflowController_unlock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Creates a draft revision copied from an approved/locked version or a scenario (one revision in progress at a time). */
+        post: operations["BudgetWorkflowController_createRevision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Creates a what-if scenario copied from a version; scenarios are edited freely and never submitted. */
+        post: operations["BudgetWorkflowController_createScenario"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Compares two versions line by line (default: original vs active). */
+        get: operations["BudgetWorkflowController_compareVersions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Audit history of the budget, newest first. */
+        get: operations["BudgetWorkflowController_getAudit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/settings/policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Spending control policies: the company default and per-budget policies. */
+        get: operations["BudgetControlController_getPolicies"];
+        /** Saves the default policy (no budgetId) or a budget's own policy. */
+        put: operations["BudgetControlController_savePolicy"];
+        post?: never;
+        /** Removes a budget's own policy (it then follows the default), or the default. */
+        delete: operations["BudgetControlController_deletePolicy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Override requests, newest first. */
+        get: operations["BudgetControlController_getOverrides"];
+        put?: never;
+        /** Requests approval to post a draft bill, expense or journal over its budget. */
+        post: operations["BudgetControlController_requestOverride"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/overrides/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Latest draft bills, expenses and manual journals, to request an override for. */
+        get: operations["BudgetControlController_getOverrideDrafts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/overrides/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approves an override request; the document can then be posted. */
+        post: operations["BudgetControlController_approveOverride"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/overrides/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rejects an override request. */
+        post: operations["BudgetControlController_rejectOverride"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Budget alerts: every threshold a posted document reached, newest first. */
+        get: operations["BudgetControlController_getAlerts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/budgets/{id}/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Budget, actual, open commitments (draft bills and expenses) and available per line of the active version. */
+        get: operations["BudgetControlController_getAvailability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/budgets": {
         parameters: {
             query?: never;
@@ -2166,6 +2544,128 @@ export interface paths {
         put?: never;
         /** Imports an Excel/CSV file into a draft version: all rows or none (committed=false with the errors). */
         post: operations["BudgetingController_importCommit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bills/validate-bulk-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Validate which bills can be deleted and return the results. */
+        post: operations["BillsController_validateBulkDeleteBills"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bills/bulk-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deletes multiple bills. */
+        post: operations["BillsController_bulkDeleteBills"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieves the bills. */
+        get: operations["BillsController_getBills"];
+        put?: never;
+        /** Create a new bill. */
+        post: operations["BillsController_createBill"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bills/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieves the bill details. */
+        get: operations["BillsController_getBill"];
+        /** Edit the given bill. */
+        put: operations["BillsController_editBill"];
+        post?: never;
+        /** Delete the given bill. */
+        delete: operations["BillsController_deleteBill"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bills/{id}/payment-transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieve the specific bill associated payment transactions. */
+        get: operations["BillsController_getBillPaymentTransactions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bills/{id}/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Open the given bill. */
+        patch: operations["BillsController_openBill"];
+        trace?: never;
+    };
+    "/api/bills/due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieves the due bills. */
+        get: operations["BillsController_getDueBills"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2761,128 +3261,6 @@ export interface paths {
         put?: never;
         /** Close the given sale receipt. */
         post: operations["SaleReceiptsController_closeSaleReceipt"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/bills/validate-bulk-delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Validate which bills can be deleted and return the results. */
-        post: operations["BillsController_validateBulkDeleteBills"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/bills/bulk-delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Deletes multiple bills. */
-        post: operations["BillsController_bulkDeleteBills"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/bills": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Retrieves the bills. */
-        get: operations["BillsController_getBills"];
-        put?: never;
-        /** Create a new bill. */
-        post: operations["BillsController_createBill"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/bills/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Retrieves the bill details. */
-        get: operations["BillsController_getBill"];
-        /** Edit the given bill. */
-        put: operations["BillsController_editBill"];
-        post?: never;
-        /** Delete the given bill. */
-        delete: operations["BillsController_deleteBill"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/bills/{id}/payment-transactions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Retrieve the specific bill associated payment transactions. */
-        get: operations["BillsController_getBillPaymentTransactions"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/bills/{id}/open": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Open the given bill. */
-        patch: operations["BillsController_openBill"];
-        trace?: never;
-    };
-    "/api/bills/due": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Retrieves the due bills. */
-        get: operations["BillsController_getDueBills"];
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -9563,6 +9941,103 @@ export interface components {
              */
             status: "active" | "closed";
         };
+        ApprovalRuleStepDto: {
+            /** @example 1 */
+            order: number;
+            /** @description Role that decides this step; empty = anyone with Budget Approve */
+            roleId?: number | null;
+            /** @example Finance manager */
+            label: string;
+        };
+        ApprovalRuleDto: {
+            /**
+             * @description Gross version amount from (inclusive)
+             * @example 0
+             */
+            minAmount: number;
+            /** @description Up to (exclusive); empty = no limit */
+            maxAmount?: number | null;
+            steps: components["schemas"]["ApprovalRuleStepDto"][];
+            /**
+             * @description The submitter may not approve, and one person may not approve two steps
+             * @default true
+             */
+            preventSelfApproval: boolean;
+        };
+        SaveApprovalRulesDto: {
+            /** @description Replaces all rules; ranges must not overlap */
+            rules: components["schemas"]["ApprovalRuleDto"][];
+        };
+        WorkflowCommentDto: {
+            /** @description Shown in the approval history */
+            comment?: string;
+        };
+        RejectVersionDto: {
+            /** @description Why the version is rejected (required) */
+            comment: string;
+        };
+        DelegateStepDto: {
+            /** @description Tenant user id (from GET /users) who decides the current step instead */
+            userId: number;
+            comment?: string;
+        };
+        CreateRevisionDto: {
+            /** @description Why the approved budget is being revised */
+            reason: string;
+            /** @description Version to copy; defaults to the active version */
+            sourceVersionNo?: number;
+            /** @example Mid-year revision */
+            label?: string;
+        };
+        CreateScenarioDto: {
+            /** @enum {string} */
+            scenario: "base" | "best" | "worst" | "custom";
+            /** @example Worst case: sales −15% */
+            label: string;
+            /** @description Version to copy; defaults to the active version, else the latest */
+            sourceVersionNo?: number;
+        };
+        SaveControlPolicyDto: {
+            /** @description Budget the policy is for; empty = the company default */
+            budgetId?: number | null;
+            /**
+             * @description off, inform (warn only), warn_approve (needs an approved override), block
+             * @enum {string}
+             */
+            mode: "off" | "inform" | "warn_approve" | "block";
+            /**
+             * @description Alert at these % of budget used
+             * @example [
+             *       75,
+             *       90
+             *     ]
+             */
+            thresholds?: number[];
+            /**
+             * @default month
+             * @enum {string}
+             */
+            periodBasis: "month" | "ytd" | "year";
+            /**
+             * @default [
+             *       "bill",
+             *       "expense",
+             *       "manual_journal"
+             *     ]
+             */
+            transactionTypes: ("bill" | "expense" | "manual_journal")[];
+        };
+        RequestOverrideDto: {
+            /** @enum {string} */
+            referenceType: "bill" | "expense" | "manual_journal";
+            /** @description Id of the draft bill, expense or manual journal */
+            referenceId: number;
+            /** @description Why the document must go over budget */
+            reason: string;
+        };
+        DecideOverrideDto: {
+            comment?: string;
+        };
         CreateBudgetDto: {
             /** @example Operating budget 2027 */
             name: string;
@@ -9674,6 +10149,719 @@ export interface components {
             growthPercent?: number;
             /** @description Only these accounts (default: every account the budget type allows) */
             accountIds?: number[];
+        };
+        BillPaymentTransactionDto: {
+            /**
+             * @description The bill ID
+             * @example 1
+             */
+            billId: number;
+            /**
+             * @description The bill payment ID
+             * @example 1
+             */
+            billPaymentId: number;
+            /**
+             * @description The payment date
+             * @example 2024-03-15
+             */
+            paymentDate: string;
+            /**
+             * @description The formatted payment date
+             * @example 15/03/2024
+             */
+            formattedPaymentDate: string;
+            /**
+             * @description The payment amount
+             * @example 1000
+             */
+            paymentAmount: number;
+            /**
+             * @description The formatted payment amount
+             * @example $1,000.00
+             */
+            formattedPaymentAmount: string;
+            /**
+             * @description The currency code
+             * @example USD
+             */
+            currencyCode: string;
+            /**
+             * @description The payment reference number
+             * @example PAY-001
+             */
+            paymentNumber: string;
+            /**
+             * @description The payment reference no.
+             * @example REF-001
+             */
+            paymentReferenceNo: string | null;
+            /**
+             * @description The bill number
+             * @example BILL-001
+             */
+            billNumber: string;
+            /**
+             * @description The bill reference no.
+             * @example REF-002
+             */
+            billReferenceNo: string | null;
+            /**
+             * @description The payment account ID
+             * @example 5
+             */
+            paymentAccountId: number;
+            /**
+             * @description The payment account name
+             * @example Accounts Payable
+             */
+            paymentAccountName: string;
+            /**
+             * @description The payment account slug
+             * @example accounts-payable
+             */
+            paymentAccountSlug: string;
+        };
+        VendorResponseDto: {
+            /**
+             * @description Vendor id.
+             * @example 1
+             */
+            id: number;
+            /** @example 1500 */
+            balance: number;
+            /** @example USD */
+            currencyCode: string;
+            /** @example 1000 */
+            openingBalance: number;
+            /**
+             * Format: date-time
+             * @example 2024-01-01T00:00:00Z
+             */
+            openingBalanceAt: string;
+            /** @example 1 */
+            openingBalanceExchangeRate: number;
+            /** @example 1 */
+            openingBalanceBranchId?: number;
+            /** @example Mr. */
+            salutation?: string;
+            /** @example John */
+            firstName?: string;
+            /** @example Doe */
+            lastName?: string;
+            /** @example Acme Corporation */
+            companyName?: string;
+            /** @example John Doe - Acme Corporation */
+            displayName: string;
+            /** @example john.doe@acme.com */
+            email?: string;
+            /** @example +1 (555) 123-4567 */
+            workPhone?: string;
+            /** @example +1 (555) 987-6543 */
+            personalPhone?: string;
+            /** @example https://www.acme.com */
+            website?: string;
+            /** @example 123 Business Ave */
+            billingAddress1?: string;
+            /** @example Suite 100 */
+            billingAddress2?: string;
+            /** @example New York */
+            billingAddressCity?: string;
+            /** @example United States */
+            billingAddressCountry?: string;
+            /** @example billing@acme.com */
+            billingAddressEmail?: string;
+            /** @example 10001 */
+            billingAddressPostcode?: string;
+            /** @example +1 (555) 111-2222 */
+            billingAddressPhone?: string;
+            /** @example NY */
+            billingAddressState?: string;
+            /** @example 456 Shipping St */
+            shippingAddress1?: string;
+            /** @example Unit 200 */
+            shippingAddress2?: string;
+            /** @example Los Angeles */
+            shippingAddressCity?: string;
+            /** @example United States */
+            shippingAddressCountry?: string;
+            /** @example shipping@acme.com */
+            shippingAddressEmail?: string;
+            /** @example 90001 */
+            shippingAddressPostcode?: string;
+            /** @example +1 (555) 333-4444 */
+            shippingAddressPhone?: string;
+            /** @example CA */
+            shippingAddressState?: string;
+            /** @example Important supplier with regular monthly orders */
+            note: string;
+            /** @example true */
+            active: boolean;
+            /**
+             * Format: date-time
+             * @example 2024-01-01T00:00:00Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @example 2024-01-01T00:00:00Z
+             */
+            updatedAt: string;
+            /** @example 1000 */
+            localOpeningBalance: number;
+            /** @example 1500 */
+            closingBalance: number;
+        };
+        BillResponseDto: {
+            /**
+             * @description The unique identifier of the bill
+             * @example 1
+             */
+            id: number;
+            /**
+             * @description The bill number
+             * @example BILL-2024-001
+             */
+            billNumber: string;
+            /**
+             * Format: date-time
+             * @description The date the bill was issued
+             * @example 2024-03-15T00:00:00Z
+             */
+            billDate: string;
+            /**
+             * Format: date-time
+             * @description The due date of the bill
+             * @example 2024-04-15T00:00:00Z
+             */
+            dueDate: string;
+            /**
+             * @description The reference number
+             * @example PO-2024-001
+             */
+            referenceNo?: string;
+            /**
+             * @description The ID of the vendor
+             * @example 1001
+             */
+            vendorId: number;
+            /**
+             * @description The exchange rate for currency conversion
+             * @example 1.25
+             */
+            exchangeRate?: number;
+            /**
+             * @description The currency code
+             * @example USD
+             */
+            currencyCode?: string;
+            /**
+             * @description Additional notes about the bill
+             * @example Office supplies and equipment for Q2 2024
+             */
+            note?: string;
+            /**
+             * @description Whether tax is inclusive in the item rates
+             * @example false
+             */
+            isInclusiveTax?: boolean;
+            /** @description The line items of the bill */
+            entries: components["schemas"]["ItemEntryDto"][];
+            /** @description The tax entries of the bill */
+            taxes?: components["schemas"]["SaleInvoiceTaxEntryDto"][];
+            /**
+             * @description The ID of the warehouse
+             * @example 101
+             */
+            warehouseId?: number;
+            /**
+             * @description The ID of the branch
+             * @example 201
+             */
+            branchId?: number;
+            /** @description Branch details */
+            branch?: components["schemas"]["BranchResponseDto"];
+            /**
+             * @description The ID of the project
+             * @example 301
+             */
+            projectId?: number;
+            /** @description The attachments of the bill */
+            attachments?: components["schemas"]["AttachmentLinkDto"][];
+            /**
+             * @description The discount value
+             * @example 100
+             */
+            discount?: number;
+            /**
+             * @description The computed discount amount
+             * @example 100
+             */
+            discountAmount?: number;
+            /**
+             * @description The type of discount (percentage or fixed)
+             * @example amount
+             * @enum {string}
+             */
+            discountType?: "percentage" | "amount";
+            /**
+             * @description The adjustment amount
+             * @example 50
+             */
+            adjustment?: number;
+            /**
+             * @description The total amount of tax withheld
+             * @example 50
+             */
+            taxAmountWithheld?: number;
+            /**
+             * @description The balance of the bill
+             * @example 1000
+             */
+            balance: number;
+            /**
+             * @description The amount paid
+             * @example 500
+             */
+            paymentAmount: number;
+            /**
+             * @description The amount credited
+             * @example 0
+             */
+            creditedAmount?: number;
+            /**
+             * @description The subtotal amount before tax and adjustments
+             * @example 900
+             */
+            subtotal: number;
+            /**
+             * @description The total amount including tax and adjustments
+             * @example 1000
+             */
+            total: number;
+            /**
+             * @description The due amount remaining to be paid
+             * @example 500
+             */
+            dueAmount: number;
+            /**
+             * @description Whether the bill is overdue
+             * @example false
+             */
+            isOverdue: boolean;
+            /**
+             * @description Whether the bill is partially paid
+             * @example true
+             */
+            isPartiallyPaid: boolean;
+            /**
+             * @description Whether the bill is fully paid
+             * @example false
+             */
+            isFullyPaid: boolean;
+            /**
+             * @description Whether the bill is currently open for editing
+             * @example false
+             */
+            isOpen?: boolean;
+            /**
+             * Format: date-time
+             * @description The date when the bill was created
+             * @example 2024-03-15T00:00:00Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description The date when the bill was last updated
+             * @example 2024-03-16T00:00:00Z
+             */
+            updatedAt?: string;
+            /**
+             * @description Formatted bill date
+             * @example 2024-03-15
+             */
+            formattedBillDate?: string;
+            /**
+             * @description Formatted due date
+             * @example 2024-04-15
+             */
+            formattedDueDate?: string;
+            /**
+             * @description Formatted created at date
+             * @example 2024-03-15
+             */
+            formattedCreatedAt?: string;
+            /**
+             * @description Formatted bill amount
+             * @example $1,000.00
+             */
+            formattedAmount?: string;
+            /**
+             * @description Formatted payment amount
+             * @example $500.00
+             */
+            formattedPaymentAmount?: string;
+            /**
+             * @description Formatted balance amount
+             * @example $500.00
+             */
+            formattedBalance?: string;
+            /**
+             * @description Formatted due amount
+             * @example $500.00
+             */
+            formattedDueAmount?: string;
+            /**
+             * @description Formatted exchange rate
+             * @example 1.25
+             */
+            formattedExchangeRate?: string;
+            /**
+             * @description Formatted subtotal
+             * @example $900.00
+             */
+            subtotalFormatted?: string;
+            /**
+             * @description Formatted subtotal in local currency
+             * @example $900.00
+             */
+            subtotalLocalFormatted?: string;
+            /**
+             * @description Formatted subtotal excluding tax
+             * @example $800.00
+             */
+            subtotalExcludingTaxFormatted?: string;
+            /**
+             * @description Formatted tax amount withheld in local currency
+             * @example $50.00
+             */
+            taxAmountWithheldLocalFormatted?: string;
+            /**
+             * @description Formatted total
+             * @example $1,000.00
+             */
+            totalFormatted?: string;
+            /**
+             * @description Formatted total in local currency
+             * @example $1,000.00
+             */
+            totalLocalFormatted?: string;
+            /**
+             * @description Formatted discount amount
+             * @example $100.00
+             */
+            discountAmountFormatted?: string;
+            /**
+             * @description Formatted discount percentage
+             * @example 10%
+             */
+            discountPercentageFormatted?: string;
+            /**
+             * @description Formatted adjustment amount
+             * @example $50.00
+             */
+            adjustmentFormatted?: string;
+            /** @description The vendor of the bill */
+            vendor: components["schemas"]["VendorResponseDto"];
+            /**
+             * @description Number of days the bill is overdue
+             * @example 0
+             */
+            overdueDays: number | null;
+            /**
+             * @description Number of days remaining until the bill is due
+             * @example 15
+             */
+            remainingDays: number | null;
+        };
+        BillEntryDto: {
+            /**
+             * @description The index of the item entry
+             * @example 1
+             */
+            index: number;
+            /**
+             * @description The id of the item
+             * @example 1
+             */
+            itemId: number;
+            /** @description The nested item summary */
+            item?: components["schemas"]["ItemLinkDto"];
+            /**
+             * @description The rate of the item entry
+             * @example 1
+             */
+            rate: number;
+            /**
+             * @description The quantity of the item entry
+             * @example 1
+             */
+            quantity: number;
+            /**
+             * @description The discount of the item entry
+             * @example 1
+             */
+            discount: number;
+            /**
+             * @description The type of the discount
+             * @example percentage
+             */
+            discountType: string;
+            /**
+             * @description The description of the item entry
+             * @example This is a description
+             */
+            description: string;
+            /**
+             * @description The tax code of the item entry
+             * @example 123456
+             */
+            taxCode: string;
+            /**
+             * @description The tax rate id of the item entry
+             * @example 1
+             */
+            taxRateId: number;
+            /**
+             * @description The warehouse id of the item entry
+             * @example 1
+             */
+            warehouseId: number;
+            /**
+             * @description The project id of the item entry
+             * @example 1
+             */
+            projectId: number;
+            /**
+             * @description The project ref id of the item entry
+             * @example 1
+             */
+            projectRefId: number;
+            /**
+             * @description The project ref type of the item entry
+             * @example TASK
+             */
+            projectRefType: string;
+            /**
+             * @description The project ref invoiced amount of the item entry
+             * @example 100
+             */
+            projectRefInvoicedAmount: number;
+            /**
+             * @description The sell account id of the item entry
+             * @example 1020
+             */
+            sellAccountId: number;
+            /**
+             * @description The cost account id of the item entry
+             * @example 1021
+             */
+            costAccountId: number;
+            /**
+             * @description The computed amount of the item entry (quantity * rate)
+             * @example 100
+             */
+            amount?: number;
+            /**
+             * @description Formatted quantity of the item entry
+             * @example 12
+             */
+            quantityFormatted?: string;
+            /**
+             * @description Formatted rate of the item entry
+             * @example $10.00
+             */
+            rateFormatted?: string;
+            /**
+             * @description Formatted discount amount of the item entry
+             * @example $2.00
+             */
+            discountFormatted?: string;
+            /**
+             * @description Formatted total of the item entry
+             * @example $118.00
+             */
+            totalFormatted?: string;
+            /**
+             * @description Flag indicating whether the entry contributes to landed cost
+             * @example true
+             */
+            landedCost?: boolean;
+        };
+        AttachmentDto: {
+            /**
+             * @description Storage key of the attachment file
+             * @example attachments/bills/receipt.pdf
+             */
+            key: string;
+        };
+        CreateBillDto: {
+            /**
+             * @description Unique bill number
+             * @example BILL-2024-001
+             */
+            billNumber?: string;
+            /**
+             * @description Reference number
+             * @example PO-2024-001
+             */
+            referenceNo?: string;
+            /**
+             * Format: date-time
+             * @description Date the bill was issued
+             * @example 2024-03-15
+             */
+            billDate: string;
+            /**
+             * Format: date-time
+             * @description Date the bill is due
+             * @example 2024-04-15
+             */
+            dueDate?: string;
+            /**
+             * @description Vendor identifier
+             * @example 1001
+             */
+            vendorId: number;
+            /**
+             * @description Exchange rate applied to bill amounts
+             * @example 1.25
+             */
+            exchangeRate?: number;
+            /**
+             * @description Warehouse identifier
+             * @example 101
+             */
+            warehouseId?: number;
+            /**
+             * @description Branch identifier
+             * @example 201
+             */
+            branchId?: number;
+            /**
+             * @description Project identifier
+             * @example 301
+             */
+            projectId?: number;
+            /**
+             * @description Additional notes about the bill
+             * @example Office supplies and equipment for Q2 2024
+             */
+            note?: string;
+            /**
+             * @description Indicates if the bill is open
+             * @example true
+             */
+            open?: boolean;
+            /**
+             * @description Indicates if tax is inclusive in prices
+             * @example false
+             */
+            isInclusiveTax?: boolean;
+            /** @description Bill line items */
+            entries: components["schemas"]["BillEntryDto"][];
+            /** @description File attachments associated with the bill */
+            attachments?: components["schemas"]["AttachmentDto"][];
+            /**
+             * @description Type of discount applied
+             * @example amount
+             * @enum {string}
+             */
+            discountType?: "percentage" | "amount";
+            /**
+             * @description Discount value
+             * @example 100
+             */
+            discount?: number;
+            /**
+             * @description Adjustment value
+             * @example 50
+             */
+            adjustment?: number;
+        };
+        EditBillDto: {
+            /**
+             * @description Unique bill number
+             * @example BILL-2024-001
+             */
+            billNumber?: string;
+            /**
+             * @description Reference number
+             * @example PO-2024-001
+             */
+            referenceNo?: string;
+            /**
+             * Format: date-time
+             * @description Date the bill was issued
+             * @example 2024-03-15
+             */
+            billDate: string;
+            /**
+             * Format: date-time
+             * @description Date the bill is due
+             * @example 2024-04-15
+             */
+            dueDate?: string;
+            /**
+             * @description Vendor identifier
+             * @example 1001
+             */
+            vendorId: number;
+            /**
+             * @description Exchange rate applied to bill amounts
+             * @example 1.25
+             */
+            exchangeRate?: number;
+            /**
+             * @description Warehouse identifier
+             * @example 101
+             */
+            warehouseId?: number;
+            /**
+             * @description Branch identifier
+             * @example 201
+             */
+            branchId?: number;
+            /**
+             * @description Project identifier
+             * @example 301
+             */
+            projectId?: number;
+            /**
+             * @description Additional notes about the bill
+             * @example Office supplies and equipment for Q2 2024
+             */
+            note?: string;
+            /**
+             * @description Indicates if the bill is open
+             * @example true
+             */
+            open?: boolean;
+            /**
+             * @description Indicates if tax is inclusive in prices
+             * @example false
+             */
+            isInclusiveTax?: boolean;
+            /** @description Bill line items */
+            entries: components["schemas"]["BillEntryDto"][];
+            /** @description File attachments associated with the bill */
+            attachments?: components["schemas"]["AttachmentDto"][];
+            /**
+             * @description Type of discount applied
+             * @example amount
+             * @enum {string}
+             */
+            discountType?: "percentage" | "amount";
+            /**
+             * @description Discount value
+             * @example 100
+             */
+            discount?: number;
+            /**
+             * @description Adjustment value
+             * @example 50
+             */
+            adjustment?: number;
         };
         WarehouseTransferEntryResponseDto: {
             /**
@@ -10138,96 +11326,6 @@ export interface components {
              * @default false
              */
             skipUndeletable: boolean;
-        };
-        VendorResponseDto: {
-            /**
-             * @description Vendor id.
-             * @example 1
-             */
-            id: number;
-            /** @example 1500 */
-            balance: number;
-            /** @example USD */
-            currencyCode: string;
-            /** @example 1000 */
-            openingBalance: number;
-            /**
-             * Format: date-time
-             * @example 2024-01-01T00:00:00Z
-             */
-            openingBalanceAt: string;
-            /** @example 1 */
-            openingBalanceExchangeRate: number;
-            /** @example 1 */
-            openingBalanceBranchId?: number;
-            /** @example Mr. */
-            salutation?: string;
-            /** @example John */
-            firstName?: string;
-            /** @example Doe */
-            lastName?: string;
-            /** @example Acme Corporation */
-            companyName?: string;
-            /** @example John Doe - Acme Corporation */
-            displayName: string;
-            /** @example john.doe@acme.com */
-            email?: string;
-            /** @example +1 (555) 123-4567 */
-            workPhone?: string;
-            /** @example +1 (555) 987-6543 */
-            personalPhone?: string;
-            /** @example https://www.acme.com */
-            website?: string;
-            /** @example 123 Business Ave */
-            billingAddress1?: string;
-            /** @example Suite 100 */
-            billingAddress2?: string;
-            /** @example New York */
-            billingAddressCity?: string;
-            /** @example United States */
-            billingAddressCountry?: string;
-            /** @example billing@acme.com */
-            billingAddressEmail?: string;
-            /** @example 10001 */
-            billingAddressPostcode?: string;
-            /** @example +1 (555) 111-2222 */
-            billingAddressPhone?: string;
-            /** @example NY */
-            billingAddressState?: string;
-            /** @example 456 Shipping St */
-            shippingAddress1?: string;
-            /** @example Unit 200 */
-            shippingAddress2?: string;
-            /** @example Los Angeles */
-            shippingAddressCity?: string;
-            /** @example United States */
-            shippingAddressCountry?: string;
-            /** @example shipping@acme.com */
-            shippingAddressEmail?: string;
-            /** @example 90001 */
-            shippingAddressPostcode?: string;
-            /** @example +1 (555) 333-4444 */
-            shippingAddressPhone?: string;
-            /** @example CA */
-            shippingAddressState?: string;
-            /** @example Important supplier with regular monthly orders */
-            note: string;
-            /** @example true */
-            active: boolean;
-            /**
-             * Format: date-time
-             * @example 2024-01-01T00:00:00Z
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @example 2024-01-01T00:00:00Z
-             */
-            updatedAt: string;
-            /** @example 1000 */
-            localOpeningBalance: number;
-            /** @example 1500 */
-            closingBalance: number;
         };
         VendorsPaginationDto: {
             /** @example 1 */
@@ -11337,629 +12435,6 @@ export interface components {
              * @example 1
              */
             adjustment: number;
-        };
-        BillPaymentTransactionDto: {
-            /**
-             * @description The bill ID
-             * @example 1
-             */
-            billId: number;
-            /**
-             * @description The bill payment ID
-             * @example 1
-             */
-            billPaymentId: number;
-            /**
-             * @description The payment date
-             * @example 2024-03-15
-             */
-            paymentDate: string;
-            /**
-             * @description The formatted payment date
-             * @example 15/03/2024
-             */
-            formattedPaymentDate: string;
-            /**
-             * @description The payment amount
-             * @example 1000
-             */
-            paymentAmount: number;
-            /**
-             * @description The formatted payment amount
-             * @example $1,000.00
-             */
-            formattedPaymentAmount: string;
-            /**
-             * @description The currency code
-             * @example USD
-             */
-            currencyCode: string;
-            /**
-             * @description The payment reference number
-             * @example PAY-001
-             */
-            paymentNumber: string;
-            /**
-             * @description The payment reference no.
-             * @example REF-001
-             */
-            paymentReferenceNo: string | null;
-            /**
-             * @description The bill number
-             * @example BILL-001
-             */
-            billNumber: string;
-            /**
-             * @description The bill reference no.
-             * @example REF-002
-             */
-            billReferenceNo: string | null;
-            /**
-             * @description The payment account ID
-             * @example 5
-             */
-            paymentAccountId: number;
-            /**
-             * @description The payment account name
-             * @example Accounts Payable
-             */
-            paymentAccountName: string;
-            /**
-             * @description The payment account slug
-             * @example accounts-payable
-             */
-            paymentAccountSlug: string;
-        };
-        BillResponseDto: {
-            /**
-             * @description The unique identifier of the bill
-             * @example 1
-             */
-            id: number;
-            /**
-             * @description The bill number
-             * @example BILL-2024-001
-             */
-            billNumber: string;
-            /**
-             * Format: date-time
-             * @description The date the bill was issued
-             * @example 2024-03-15T00:00:00Z
-             */
-            billDate: string;
-            /**
-             * Format: date-time
-             * @description The due date of the bill
-             * @example 2024-04-15T00:00:00Z
-             */
-            dueDate: string;
-            /**
-             * @description The reference number
-             * @example PO-2024-001
-             */
-            referenceNo?: string;
-            /**
-             * @description The ID of the vendor
-             * @example 1001
-             */
-            vendorId: number;
-            /**
-             * @description The exchange rate for currency conversion
-             * @example 1.25
-             */
-            exchangeRate?: number;
-            /**
-             * @description The currency code
-             * @example USD
-             */
-            currencyCode?: string;
-            /**
-             * @description Additional notes about the bill
-             * @example Office supplies and equipment for Q2 2024
-             */
-            note?: string;
-            /**
-             * @description Whether tax is inclusive in the item rates
-             * @example false
-             */
-            isInclusiveTax?: boolean;
-            /** @description The line items of the bill */
-            entries: components["schemas"]["ItemEntryDto"][];
-            /** @description The tax entries of the bill */
-            taxes?: components["schemas"]["SaleInvoiceTaxEntryDto"][];
-            /**
-             * @description The ID of the warehouse
-             * @example 101
-             */
-            warehouseId?: number;
-            /**
-             * @description The ID of the branch
-             * @example 201
-             */
-            branchId?: number;
-            /** @description Branch details */
-            branch?: components["schemas"]["BranchResponseDto"];
-            /**
-             * @description The ID of the project
-             * @example 301
-             */
-            projectId?: number;
-            /** @description The attachments of the bill */
-            attachments?: components["schemas"]["AttachmentLinkDto"][];
-            /**
-             * @description The discount value
-             * @example 100
-             */
-            discount?: number;
-            /**
-             * @description The computed discount amount
-             * @example 100
-             */
-            discountAmount?: number;
-            /**
-             * @description The type of discount (percentage or fixed)
-             * @example amount
-             * @enum {string}
-             */
-            discountType?: "percentage" | "amount";
-            /**
-             * @description The adjustment amount
-             * @example 50
-             */
-            adjustment?: number;
-            /**
-             * @description The total amount of tax withheld
-             * @example 50
-             */
-            taxAmountWithheld?: number;
-            /**
-             * @description The balance of the bill
-             * @example 1000
-             */
-            balance: number;
-            /**
-             * @description The amount paid
-             * @example 500
-             */
-            paymentAmount: number;
-            /**
-             * @description The amount credited
-             * @example 0
-             */
-            creditedAmount?: number;
-            /**
-             * @description The subtotal amount before tax and adjustments
-             * @example 900
-             */
-            subtotal: number;
-            /**
-             * @description The total amount including tax and adjustments
-             * @example 1000
-             */
-            total: number;
-            /**
-             * @description The due amount remaining to be paid
-             * @example 500
-             */
-            dueAmount: number;
-            /**
-             * @description Whether the bill is overdue
-             * @example false
-             */
-            isOverdue: boolean;
-            /**
-             * @description Whether the bill is partially paid
-             * @example true
-             */
-            isPartiallyPaid: boolean;
-            /**
-             * @description Whether the bill is fully paid
-             * @example false
-             */
-            isFullyPaid: boolean;
-            /**
-             * @description Whether the bill is currently open for editing
-             * @example false
-             */
-            isOpen?: boolean;
-            /**
-             * Format: date-time
-             * @description The date when the bill was created
-             * @example 2024-03-15T00:00:00Z
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description The date when the bill was last updated
-             * @example 2024-03-16T00:00:00Z
-             */
-            updatedAt?: string;
-            /**
-             * @description Formatted bill date
-             * @example 2024-03-15
-             */
-            formattedBillDate?: string;
-            /**
-             * @description Formatted due date
-             * @example 2024-04-15
-             */
-            formattedDueDate?: string;
-            /**
-             * @description Formatted created at date
-             * @example 2024-03-15
-             */
-            formattedCreatedAt?: string;
-            /**
-             * @description Formatted bill amount
-             * @example $1,000.00
-             */
-            formattedAmount?: string;
-            /**
-             * @description Formatted payment amount
-             * @example $500.00
-             */
-            formattedPaymentAmount?: string;
-            /**
-             * @description Formatted balance amount
-             * @example $500.00
-             */
-            formattedBalance?: string;
-            /**
-             * @description Formatted due amount
-             * @example $500.00
-             */
-            formattedDueAmount?: string;
-            /**
-             * @description Formatted exchange rate
-             * @example 1.25
-             */
-            formattedExchangeRate?: string;
-            /**
-             * @description Formatted subtotal
-             * @example $900.00
-             */
-            subtotalFormatted?: string;
-            /**
-             * @description Formatted subtotal in local currency
-             * @example $900.00
-             */
-            subtotalLocalFormatted?: string;
-            /**
-             * @description Formatted subtotal excluding tax
-             * @example $800.00
-             */
-            subtotalExcludingTaxFormatted?: string;
-            /**
-             * @description Formatted tax amount withheld in local currency
-             * @example $50.00
-             */
-            taxAmountWithheldLocalFormatted?: string;
-            /**
-             * @description Formatted total
-             * @example $1,000.00
-             */
-            totalFormatted?: string;
-            /**
-             * @description Formatted total in local currency
-             * @example $1,000.00
-             */
-            totalLocalFormatted?: string;
-            /**
-             * @description Formatted discount amount
-             * @example $100.00
-             */
-            discountAmountFormatted?: string;
-            /**
-             * @description Formatted discount percentage
-             * @example 10%
-             */
-            discountPercentageFormatted?: string;
-            /**
-             * @description Formatted adjustment amount
-             * @example $50.00
-             */
-            adjustmentFormatted?: string;
-            /** @description The vendor of the bill */
-            vendor: components["schemas"]["VendorResponseDto"];
-            /**
-             * @description Number of days the bill is overdue
-             * @example 0
-             */
-            overdueDays: number | null;
-            /**
-             * @description Number of days remaining until the bill is due
-             * @example 15
-             */
-            remainingDays: number | null;
-        };
-        BillEntryDto: {
-            /**
-             * @description The index of the item entry
-             * @example 1
-             */
-            index: number;
-            /**
-             * @description The id of the item
-             * @example 1
-             */
-            itemId: number;
-            /** @description The nested item summary */
-            item?: components["schemas"]["ItemLinkDto"];
-            /**
-             * @description The rate of the item entry
-             * @example 1
-             */
-            rate: number;
-            /**
-             * @description The quantity of the item entry
-             * @example 1
-             */
-            quantity: number;
-            /**
-             * @description The discount of the item entry
-             * @example 1
-             */
-            discount: number;
-            /**
-             * @description The type of the discount
-             * @example percentage
-             */
-            discountType: string;
-            /**
-             * @description The description of the item entry
-             * @example This is a description
-             */
-            description: string;
-            /**
-             * @description The tax code of the item entry
-             * @example 123456
-             */
-            taxCode: string;
-            /**
-             * @description The tax rate id of the item entry
-             * @example 1
-             */
-            taxRateId: number;
-            /**
-             * @description The warehouse id of the item entry
-             * @example 1
-             */
-            warehouseId: number;
-            /**
-             * @description The project id of the item entry
-             * @example 1
-             */
-            projectId: number;
-            /**
-             * @description The project ref id of the item entry
-             * @example 1
-             */
-            projectRefId: number;
-            /**
-             * @description The project ref type of the item entry
-             * @example TASK
-             */
-            projectRefType: string;
-            /**
-             * @description The project ref invoiced amount of the item entry
-             * @example 100
-             */
-            projectRefInvoicedAmount: number;
-            /**
-             * @description The sell account id of the item entry
-             * @example 1020
-             */
-            sellAccountId: number;
-            /**
-             * @description The cost account id of the item entry
-             * @example 1021
-             */
-            costAccountId: number;
-            /**
-             * @description The computed amount of the item entry (quantity * rate)
-             * @example 100
-             */
-            amount?: number;
-            /**
-             * @description Formatted quantity of the item entry
-             * @example 12
-             */
-            quantityFormatted?: string;
-            /**
-             * @description Formatted rate of the item entry
-             * @example $10.00
-             */
-            rateFormatted?: string;
-            /**
-             * @description Formatted discount amount of the item entry
-             * @example $2.00
-             */
-            discountFormatted?: string;
-            /**
-             * @description Formatted total of the item entry
-             * @example $118.00
-             */
-            totalFormatted?: string;
-            /**
-             * @description Flag indicating whether the entry contributes to landed cost
-             * @example true
-             */
-            landedCost?: boolean;
-        };
-        AttachmentDto: {
-            /**
-             * @description Storage key of the attachment file
-             * @example attachments/bills/receipt.pdf
-             */
-            key: string;
-        };
-        CreateBillDto: {
-            /**
-             * @description Unique bill number
-             * @example BILL-2024-001
-             */
-            billNumber?: string;
-            /**
-             * @description Reference number
-             * @example PO-2024-001
-             */
-            referenceNo?: string;
-            /**
-             * Format: date-time
-             * @description Date the bill was issued
-             * @example 2024-03-15
-             */
-            billDate: string;
-            /**
-             * Format: date-time
-             * @description Date the bill is due
-             * @example 2024-04-15
-             */
-            dueDate?: string;
-            /**
-             * @description Vendor identifier
-             * @example 1001
-             */
-            vendorId: number;
-            /**
-             * @description Exchange rate applied to bill amounts
-             * @example 1.25
-             */
-            exchangeRate?: number;
-            /**
-             * @description Warehouse identifier
-             * @example 101
-             */
-            warehouseId?: number;
-            /**
-             * @description Branch identifier
-             * @example 201
-             */
-            branchId?: number;
-            /**
-             * @description Project identifier
-             * @example 301
-             */
-            projectId?: number;
-            /**
-             * @description Additional notes about the bill
-             * @example Office supplies and equipment for Q2 2024
-             */
-            note?: string;
-            /**
-             * @description Indicates if the bill is open
-             * @example true
-             */
-            open?: boolean;
-            /**
-             * @description Indicates if tax is inclusive in prices
-             * @example false
-             */
-            isInclusiveTax?: boolean;
-            /** @description Bill line items */
-            entries: components["schemas"]["BillEntryDto"][];
-            /** @description File attachments associated with the bill */
-            attachments?: components["schemas"]["AttachmentDto"][];
-            /**
-             * @description Type of discount applied
-             * @example amount
-             * @enum {string}
-             */
-            discountType?: "percentage" | "amount";
-            /**
-             * @description Discount value
-             * @example 100
-             */
-            discount?: number;
-            /**
-             * @description Adjustment value
-             * @example 50
-             */
-            adjustment?: number;
-        };
-        EditBillDto: {
-            /**
-             * @description Unique bill number
-             * @example BILL-2024-001
-             */
-            billNumber?: string;
-            /**
-             * @description Reference number
-             * @example PO-2024-001
-             */
-            referenceNo?: string;
-            /**
-             * Format: date-time
-             * @description Date the bill was issued
-             * @example 2024-03-15
-             */
-            billDate: string;
-            /**
-             * Format: date-time
-             * @description Date the bill is due
-             * @example 2024-04-15
-             */
-            dueDate?: string;
-            /**
-             * @description Vendor identifier
-             * @example 1001
-             */
-            vendorId: number;
-            /**
-             * @description Exchange rate applied to bill amounts
-             * @example 1.25
-             */
-            exchangeRate?: number;
-            /**
-             * @description Warehouse identifier
-             * @example 101
-             */
-            warehouseId?: number;
-            /**
-             * @description Branch identifier
-             * @example 201
-             */
-            branchId?: number;
-            /**
-             * @description Project identifier
-             * @example 301
-             */
-            projectId?: number;
-            /**
-             * @description Additional notes about the bill
-             * @example Office supplies and equipment for Q2 2024
-             */
-            note?: string;
-            /**
-             * @description Indicates if the bill is open
-             * @example true
-             */
-            open?: boolean;
-            /**
-             * @description Indicates if tax is inclusive in prices
-             * @example false
-             */
-            isInclusiveTax?: boolean;
-            /** @description Bill line items */
-            entries: components["schemas"]["BillEntryDto"][];
-            /** @description File attachments associated with the bill */
-            attachments?: components["schemas"]["AttachmentDto"][];
-            /**
-             * @description Type of discount applied
-             * @example amount
-             * @enum {string}
-             */
-            discountType?: "percentage" | "amount";
-            /**
-             * @description Discount value
-             * @example 100
-             */
-            discount?: number;
-            /**
-             * @description Adjustment value
-             * @example 50
-             */
-            adjustment?: number;
         };
         ManualJournalEntryResponseDto: {
             /**
@@ -22433,6 +22908,694 @@ export interface operations {
             };
         };
     };
+    BudgetWorkflowController_getApprovals: {
+        parameters: {
+            query?: {
+                /** @description Only versions waiting for a step I can decide */
+                mine?: boolean;
+                status?: "in_review" | "all";
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_getApprovalRules: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_saveApprovalRules: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveApprovalRulesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_getVersionApprovals: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_submit: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkflowCommentDto"];
+            };
+        };
+        responses: {
+            /** @description Wrong status, a scenario, or no lines. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_approve: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkflowCommentDto"];
+            };
+        };
+        responses: {
+            /** @description Another role's step, a delegated step, or self-approval. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_reject: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectVersionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_delegate: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DelegateStepDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_withdraw: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_cancel: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_lock: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_unlock: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+                versionNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_createRevision: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRevisionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_createScenario: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateScenarioDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_compareVersions: {
+        parameters: {
+            query?: {
+                /** @description Defaults to 1 (the original) */
+                baseVersionNo?: number;
+                /** @description Defaults to the active version, else the latest */
+                versionNo?: number;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetWorkflowController_getAudit: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetControlController_getPolicies: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetControlController_savePolicy: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveControlPolicyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetControlController_deletePolicy: {
+        parameters: {
+            query?: {
+                /** @description Empty removes the default policy */
+                budgetId?: string;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetControlController_getOverrides: {
+        parameters: {
+            query?: {
+                status?: "pending" | "approved" | "rejected" | "cancelled";
+                referenceType?: "bill" | "expense" | "manual_journal";
+                referenceId?: number;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetControlController_requestOverride: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestOverrideDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetControlController_getOverrideDrafts: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetControlController_approveOverride: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideOverrideDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetControlController_rejectOverride: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecideOverrideDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetControlController_getAlerts: {
+        parameters: {
+            query?: {
+                budgetId?: number;
+                level?: "info" | "warning" | "exceeded";
+                page?: number;
+                pageSize?: number;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BudgetControlController_getAvailability: {
+        parameters: {
+            query?: {
+                /** @description Month the period is anchored on; defaults to this month (inside the budget) */
+                month?: string;
+                /** @description Defaults to the policy's basis, else year */
+                basis?: "month" | "ytd" | "year";
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     BudgetingController_getBudgets: {
         parameters: {
             query?: {
@@ -22786,6 +23949,298 @@ export interface operations {
             };
         };
         responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BillsController_validateBulkDeleteBills: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkDeleteDto"];
+            };
+        };
+        responses: {
+            /** @description Validation completed with counts and IDs of deletable and non-deletable bills. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidateBulkDeleteResponseDto"];
+                };
+            };
+        };
+    };
+    BillsController_bulkDeleteBills: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkDeleteDto"];
+            };
+        };
+        responses: {
+            /** @description Bills deleted successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BillsController_getBills: {
+        parameters: {
+            query?: {
+                /** @description Page number (1-based) */
+                page?: number;
+                /** @description Page size */
+                pageSize?: number;
+                /** @description Custom view ID */
+                customViewId?: number;
+                /** @description Filter roles */
+                filterRoles?: string[];
+                /** @description Column to sort by */
+                columnSortBy?: string;
+                /** @description Sort order (asc/desc) */
+                sortOrder?: string;
+                /** @description Stringified filter roles */
+                stringifiedFilterRoles?: string;
+                /** @description Search keyword */
+                searchKeyword?: string;
+                /** @description View slug */
+                viewSlug?: string;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                /** @description The bill id */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The bill details has been retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponseDto"] & {
+                        data?: components["schemas"]["BillResponseDto"][];
+                    };
+                };
+            };
+        };
+    };
+    BillsController_createBill: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBillDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BillsController_getBill: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                /** @description The bill id */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The bill details have been successfully retrieved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillResponseDto"];
+                };
+            };
+        };
+    };
+    BillsController_editBill: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                /** @description The bill id */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditBillDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BillsController_deleteBill: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                /** @description The bill id */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BillsController_getBillPaymentTransactions: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                /** @description The bill id */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of payment transactions for the bill. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillPaymentTransactionDto"][];
+                };
+            };
+        };
+    };
+    BillsController_openBill: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                /** @description The bill id */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    BillsController_getDueBills: {
+        parameters: {
+            query?: {
+                /** @description Filter due bills by vendor ID. */
+                vendor_id?: number;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of due bills (optionally filtered by vendor). */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -24188,298 +25643,6 @@ export interface operations {
         requestBody?: never;
         responses: {
             201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    BillsController_validateBulkDeleteBills: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
-                Authorization: string;
-                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
-                "organization-id": string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BulkDeleteDto"];
-            };
-        };
-        responses: {
-            /** @description Validation completed with counts and IDs of deletable and non-deletable bills. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ValidateBulkDeleteResponseDto"];
-                };
-            };
-        };
-    };
-    BillsController_bulkDeleteBills: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
-                Authorization: string;
-                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
-                "organization-id": string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["BulkDeleteDto"];
-            };
-        };
-        responses: {
-            /** @description Bills deleted successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    BillsController_getBills: {
-        parameters: {
-            query?: {
-                /** @description Page number (1-based) */
-                page?: number;
-                /** @description Page size */
-                pageSize?: number;
-                /** @description Custom view ID */
-                customViewId?: number;
-                /** @description Filter roles */
-                filterRoles?: string[];
-                /** @description Column to sort by */
-                columnSortBy?: string;
-                /** @description Sort order (asc/desc) */
-                sortOrder?: string;
-                /** @description Stringified filter roles */
-                stringifiedFilterRoles?: string;
-                /** @description Search keyword */
-                searchKeyword?: string;
-                /** @description View slug */
-                viewSlug?: string;
-            };
-            header: {
-                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
-                Authorization: string;
-                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
-                "organization-id": string;
-            };
-            path: {
-                /** @description The bill id */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The bill details has been retrieved successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaginatedResponseDto"] & {
-                        data?: components["schemas"]["BillResponseDto"][];
-                    };
-                };
-            };
-        };
-    };
-    BillsController_createBill: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
-                Authorization: string;
-                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
-                "organization-id": string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateBillDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    BillsController_getBill: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
-                Authorization: string;
-                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
-                "organization-id": string;
-            };
-            path: {
-                /** @description The bill id */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The bill details have been successfully retrieved. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BillResponseDto"];
-                };
-            };
-        };
-    };
-    BillsController_editBill: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
-                Authorization: string;
-                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
-                "organization-id": string;
-            };
-            path: {
-                /** @description The bill id */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EditBillDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    BillsController_deleteBill: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
-                Authorization: string;
-                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
-                "organization-id": string;
-            };
-            path: {
-                /** @description The bill id */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    BillsController_getBillPaymentTransactions: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
-                Authorization: string;
-                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
-                "organization-id": string;
-            };
-            path: {
-                /** @description The bill id */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description List of payment transactions for the bill. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BillPaymentTransactionDto"][];
-                };
-            };
-        };
-    };
-    BillsController_openBill: {
-        parameters: {
-            query?: never;
-            header: {
-                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
-                Authorization: string;
-                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
-                "organization-id": string;
-            };
-            path: {
-                /** @description The bill id */
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    BillsController_getDueBills: {
-        parameters: {
-            query?: {
-                /** @description Filter due bills by vendor ID. */
-                vendor_id?: number;
-            };
-            header: {
-                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
-                Authorization: string;
-                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
-                "organization-id": string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description List of due bills (optionally filtered by vendor). */
-            200: {
                 headers: {
                     [name: string]: unknown;
                 };
