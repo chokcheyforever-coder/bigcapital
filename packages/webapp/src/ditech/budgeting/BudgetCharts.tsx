@@ -42,8 +42,10 @@ export function BudgetChart({ points, height = 180, testId }: { points: ChartPoi
   };
   const barW = Math.max(step * 0.55, 2);
 
+  // The test id sits on a div: SVG attributes are case-sensitive and the e2e suite looks for data-testId.
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} width="100%" role="img" aria-label="Budget and actual by month" data-testid={testId} style={{ maxWidth: width }}>
+    <div data-testid={testId}>
+    <svg viewBox={`0 0 ${width} ${height}`} width="100%" role="img" aria-label="Budget and actual by month" style={{ maxWidth: width }}>
       <line x1={pad.left} x2={width - pad.right} y1={y(0)} y2={y(0)} stroke={COLORS.axis} />
       {points.map((p, i) =>
         p.bar === null || p.bar === undefined ? null : (
@@ -67,6 +69,7 @@ export function BudgetChart({ points, height = 180, testId }: { points: ChartPoi
         </text>
       ))}
     </svg>
+    </div>
   );
 }
 
