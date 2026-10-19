@@ -16,8 +16,9 @@ export enum BudgetAction {
 }
 
 /**
- * Release 1 types: period movements on accounts, which the ledger gives
- * exactly (design §2). Balance Sheet and Cash Flow come in Phase 6.
+ * Release 1 types are period movements on accounts, which the ledger gives
+ * exactly (design §2). Phase 6 adds Balance Sheet (month-end balances) and
+ * Cash Flow (net movement of cash and bank accounts), design §15.
  */
 export enum BudgetType {
   ProfitLoss = 'profit_loss',
@@ -25,6 +26,8 @@ export enum BudgetType {
   OperatingExpenses = 'operating_expenses',
   Operational = 'operational',
   Capex = 'capex',
+  BalanceSheet = 'balance_sheet',
+  CashFlow = 'cash_flow',
 }
 
 const PL_TYPES = [
@@ -42,7 +45,41 @@ export const BUDGET_TYPE_ACCOUNT_TYPES: Record<BudgetType, string[]> = {
   [BudgetType.Revenue]: [ACCOUNT_TYPE.INCOME, ACCOUNT_TYPE.OTHER_INCOME],
   [BudgetType.OperatingExpenses]: [ACCOUNT_TYPE.EXPENSE, ACCOUNT_TYPE.OTHER_EXPENSE],
   [BudgetType.Capex]: [ACCOUNT_TYPE.FIXED_ASSET, ACCOUNT_TYPE.NON_CURRENT_ASSET],
+  [BudgetType.BalanceSheet]: [
+    ACCOUNT_TYPE.CASH,
+    ACCOUNT_TYPE.BANK,
+    ACCOUNT_TYPE.ACCOUNTS_RECEIVABLE,
+    ACCOUNT_TYPE.INVENTORY,
+    ACCOUNT_TYPE.OTHER_CURRENT_ASSET,
+    ACCOUNT_TYPE.FIXED_ASSET,
+    ACCOUNT_TYPE.NON_CURRENT_ASSET,
+    ACCOUNT_TYPE.ACCOUNTS_PAYABLE,
+    ACCOUNT_TYPE.CREDIT_CARD,
+    ACCOUNT_TYPE.TAX_PAYABLE,
+    ACCOUNT_TYPE.OTHER_CURRENT_LIABILITY,
+    ACCOUNT_TYPE.LOGN_TERM_LIABILITY,
+    ACCOUNT_TYPE.NON_CURRENT_LIABILITY,
+    ACCOUNT_TYPE.EQUITY,
+  ],
+  [BudgetType.CashFlow]: [ACCOUNT_TYPE.CASH, ACCOUNT_TYPE.BANK],
 };
+
+/** Amounts are month-end balances: a quarter or a year shows its last month, never a sum. */
+export const isBalanceBudget = (type: string) => type === BudgetType.BalanceSheet;
+
+/** Budgets whose lines are income and expense, with a net income line. */
+export const PL_BUDGET_TYPES: string[] = [
+  BudgetType.ProfitLoss,
+  BudgetType.Revenue,
+  BudgetType.OperatingExpenses,
+  BudgetType.Operational,
+];
+
+/** Spending control applies to spending budgets only (design §13, §15). */
+export const CONTROLLABLE_BUDGET_TYPES: string[] = [...PL_BUDGET_TYPES, BudgetType.Capex];
+
+/** Forecasts project movements; a balance sheet budget has none to project (design §15). */
+export const FORECASTABLE_BUDGET_TYPES: string[] = [...CONTROLLABLE_BUDGET_TYPES, BudgetType.CashFlow];
 
 export enum BudgetVersionKind {
   Original = 'original',
@@ -91,4 +128,6 @@ export const ERRORS = {
   INVALID_AMOUNT: 'BUDGET_INVALID_AMOUNT',
   INVALID_ALLOCATION: 'BUDGET_INVALID_ALLOCATION',
   REPORT_NOT_FOR_TYPE: 'BUDGET_REPORT_NOT_FOR_TYPE',
+  NOT_FOR_TYPE: 'BUDGET_NOT_FOR_TYPE',
+  INVALID_FORECAST: 'BUDGET_INVALID_FORECAST',
 };

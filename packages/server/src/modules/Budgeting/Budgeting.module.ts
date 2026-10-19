@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { TenancyModule } from '../Tenancy/Tenancy.module';
 import { TenancyDatabaseModule } from '../Tenancy/TenancyDB/TenancyDB.module';
 import { AuditLogsModule } from '../AuditLogs/AuditLogs.module';
@@ -10,6 +11,12 @@ import { BudgetingController } from './Budgeting.controller';
 import { BudgetReportsController } from './BudgetReports.controller';
 import { BudgetWorkflowController } from './BudgetWorkflow.controller';
 import { BudgetControlController } from './BudgetControl.controller';
+import { BudgetForecastController } from './BudgetForecast.controller';
+import { BudgetForecastService } from './queries/BudgetForecast.service';
+import { BudgetDashboardService } from './queries/BudgetDashboard.service';
+import { BudgetNotificationService, BUDGET_NOTIFICATIONS_QUEUE } from './notifications/BudgetNotification.service';
+import { BudgetNotificationsProcessor } from './notifications/BudgetNotifications.processor';
+import { MailModule } from '../Mail/Mail.module';
 import { BudgetControlService } from './control/BudgetControl.service';
 import { BudgetControlAdminService } from './control/BudgetControlAdmin.service';
 import { BudgetControlSubscriber } from './control/BudgetControl.subscriber';
@@ -26,9 +33,17 @@ import { BudgetSheetService } from './commands/BudgetSheet.service';
 
 /** Budget planning & control (DiTech, docs/ditech/budgeting). */
 @Module({
-  imports: [TenancyModule, TenancyDatabaseModule, AuditLogsModule, BillsModule, ExpensesModule],
-  // Fixed paths first: `budgets/reports/...`, `budgets/approvals`, `budgets/overrides`… must not reach the `:id` routes.
-  controllers: [BudgetReportsController, BudgetWorkflowController, BudgetControlController, BudgetingController],
+  imports: [
+    TenancyModule,
+    TenancyDatabaseModule,
+    AuditLogsModule,
+    BillsModule,
+    ExpensesModule,
+    MailModule,
+    BullModule.registerQueue({ name: BUDGET_NOTIFICATIONS_QUEUE }),
+  ],
+  // Fixed paths first: `budgets/reports/...`, `budgets/approvals`, `budgets/dashboard`… must not reach the `:id` routes.
+  controllers: [BudgetReportsController, BudgetWorkflowController, BudgetControlController, BudgetForecastController, BudgetingController],
   providers: [
     BudgetCommandsService,
     BudgetValidator,
@@ -43,6 +58,10 @@ import { BudgetSheetService } from './commands/BudgetSheet.service';
     BudgetControlService,
     BudgetControlAdminService,
     BudgetControlSubscriber,
+    BudgetForecastService,
+    BudgetDashboardService,
+    BudgetNotificationService,
+    BudgetNotificationsProcessor,
     AuthorizationGuard,
     PermissionGuard,
   ],

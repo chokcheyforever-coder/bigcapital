@@ -12,7 +12,7 @@ import { BudgetLine } from '../models/BudgetLine.model';
 import { BudgetControlPolicy } from '../models/BudgetControlPolicy.model';
 import { BudgetOverride } from '../models/BudgetOverride.model';
 import { BudgetControlEvent } from '../models/BudgetControlEvent.model';
-import { BudgetType } from '../Budgeting.types';
+import { BudgetType, CONTROLLABLE_BUDGET_TYPES, ERRORS } from '../Budgeting.types';
 import { dateOnly } from '../commands/BudgetCommands.service';
 import { fromMilli, Milli, periodMonths, toMilli } from '../calc/budget-calc';
 import { matchLine } from '../calc/variance';
@@ -30,6 +30,8 @@ import {
 } from '../calc/control';
 import { APPROVED_STATUSES } from '../workflow/approval';
 import { BudgetDocumentLedgerService } from './BudgetDocumentLedger.service';
+import { BudgetNotificationService } from '../notifications/BudgetNotification.service';
+import { alertReaches } from '../workflow/recipients';
 
 export const CONTROL_ERRORS = {
   EXCEEDED: 'BUDGET_EXCEEDED',
@@ -116,6 +118,7 @@ export class BudgetControlService {
   constructor(
     private readonly documents: BudgetDocumentLedgerService,
     private readonly cls: ClsService,
+    private readonly notifier: BudgetNotificationService,
     @Inject(Budget.name) private readonly budgetModel: TenantModelProxy<typeof Budget>,
     @Inject(BudgetVersion.name) private readonly versionModel: TenantModelProxy<typeof BudgetVersion>,
     @Inject(BudgetLine.name) private readonly lineModel: TenantModelProxy<typeof BudgetLine>,
@@ -170,7 +173,13 @@ export class BudgetControlService {
       );
     }
     const now = moment().toDate();
-    for (const c of checks.filter((x) => x.level !== 'none')) {
+    const reached = checks.filter((x) => x.level !== 'none');
+    // Alerts go out the first time a line reaches a level in a period, not for every later document.
+    const earlier = reached.length
+      ? await this.eventModel().query(trx).whereIn('lineId', reached.map((c) => c.lineId)).select('lineId', 'periodFrom', 'periodTo', 'level')
+      : [];
+    const seen = new Set(earlier.map((e) => `${e.lineId}|${dateOnly(e.periodFrom)}|${dateOnly(e.periodTo)}|${e.level}`));
+    for (const c of reached) {
       await this.eventModel().query(trx).insert({
         budgetId: c.budgetId,
         versionId: c.versionId,
@@ -191,6 +200,16 @@ export class BudgetControlService {
         createdAt: now,
       });
     }
+    const settings = await this.notifier.getSettings(trx);
+    const fresh = reached.filter((c) => alertReaches(c.level, settings.alertLevel) && !seen.has(`${c.lineId}|${c.periodFrom}|${c.periodTo}|${c.level}`));
+    if (fresh.length) {
+      const label = await this.documents.label(type, id, trx);
+      const budgets = await this.budgetModel().query(trx).whereIn('id', [...new Set(fresh.map((c) => c.budgetId))]);
+      for (const c of fresh) {
+        const budget = budgets.find((b) => b.id === c.budgetId);
+        if (budget) await this.notifier.spendingAlert(trx, budget, c.level, label, c.percentAfter, c.accountName);
+      }
+    }
     return checks;
   }
 
@@ -210,6 +229,7 @@ export class BudgetControlService {
       .query(trx)
       .modify('notDeleted')
       .whereNotNull('activeVersionId')
+      .whereIn('type', CONTROLLABLE_BUDGET_TYPES)
       .where('startDate', '<=', endOfMonth(docMonths[docMonths.length - 1]))
       .where('endDate', '>=', docMonths[0]);
     const controlled = budgets
@@ -305,6 +325,9 @@ export class BudgetControlService {
   async availability(budgetId: number, month: string | undefined, basis: PeriodBasis | undefined) {
     const budget = await this.budgetModel().query().modify('notDeleted').findById(budgetId);
     if (!budget) throw new ServiceError('BUDGET_NOT_FOUND', 'The budget was not found.', null, 404);
+    if (!CONTROLLABLE_BUDGET_TYPES.includes(budget.type)) {
+      throw new ServiceError(ERRORS.NOT_FOR_TYPE, 'Spending control applies to P&L, expense and CAPEX budgets only.', { type: budget.type });
+    }
     const version = budget.activeVersionId ? await this.versionModel().query().findById(budget.activeVersionId) : null;
     if (!version || !APPROVED_STATUSES.includes(version.status)) {
       throw new ServiceError('BUDGET_NO_ACTIVE_VERSION', 'The budget has no approved version yet.', null, 409);

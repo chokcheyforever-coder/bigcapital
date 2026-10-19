@@ -75,6 +75,15 @@ describe('periods', () => {
     const b = periodTotals({ '2026-01-01': 250 }, months);
     expect(sumTotals([a, b], months)).toMatchObject({ total: 550, quarters: [750, 0, 0, -200] });
   });
+
+  it('balance sheet amounts: a quarter and the year show their last month (design §15)', () => {
+    const months = periodMonths('2026-07-01', '2027-06-30');
+    const amounts = Object.fromEntries(months.map((m, i) => [m, (i + 1) * 1000]));
+    const t = periodTotals(amounts, months, true);
+    expect(t.quarters).toEqual([3000, 6000, 9000, 12000]);
+    expect(t.total).toBe(12_000);
+    expect(sumTotals([t, t], months, true)).toMatchObject({ total: 24_000, quarters: [6000, 12000, 18000, 24000] });
+  });
 });
 
 describe('allocation', () => {

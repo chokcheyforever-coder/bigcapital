@@ -30,6 +30,20 @@ export class BudgetDocumentLedgerService {
     return toLegs(await this.ledger(type, id, trx));
   }
 
+  /** How people know the document: "Bill B-0012", "Expense #31", "Journal MJ-0004". */
+  async label(type: ControlledType, id: number, trx?: Knex.Transaction): Promise<string> {
+    if (type === 'bill') {
+      const bill = await this.billModel().query(trx).findById(id);
+      return `Bill ${bill?.billNumber || bill?.referenceNo || `#${id}`}`;
+    }
+    if (type === 'expense') {
+      const expense = await this.expenseModel().query(trx).findById(id);
+      return `Expense ${expense?.referenceNo || `#${id}`}`;
+    }
+    const journal = await this.journalModel().query(trx).findById(id);
+    return `Journal ${journal?.journalNumber || `#${id}`}`;
+  }
+
   /** Whether the document posts to the ledger (open bill, published expense or journal). */
   async isPosted(type: ControlledType, id: number, trx?: Knex.Transaction): Promise<boolean | null> {
     if (type === 'bill') {

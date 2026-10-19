@@ -8,7 +8,7 @@ import { BudgetLine } from '../models/BudgetLine.model';
 import { PrefillBudgetDto } from '../dtos/Budget.dto';
 import { BudgetValidator } from '../commands/BudgetValidator.service';
 import { currencyDecimals, dateOnly } from '../commands/BudgetCommands.service';
-import { BUDGET_TYPE_ACCOUNT_TYPES, BudgetType, ERRORS } from '../Budgeting.types';
+import { BUDGET_TYPE_ACCOUNT_TYPES, BudgetType, ERRORS, isBalanceBudget } from '../Budgeting.types';
 import { fromMilli, Milli, periodMonths, roundTo, toMilli, unitFor } from '../calc/budget-calc';
 import { BudgetActualsService } from './BudgetActuals.service';
 
@@ -18,6 +18,12 @@ interface Series {
   projectId: number | null;
   /** Amounts in the target budget's months, by index of month. */
   values: Milli[];
+}
+
+/** Month-end balance at each of `months` from monthly movements (all history included). */
+export function closingBalances(movements: Record<string, Milli>, months: string[]): Milli[] {
+  const keys = Object.keys(movements).sort();
+  return months.map((m) => keys.reduce((sum, k) => (k <= m ? sum + movements[k] : sum), 0));
 }
 
 /**
@@ -58,15 +64,17 @@ export class BudgetPrefillService {
       const shifted = months.map((m) => moment(m).subtract(yearsBack, 'years').format('YYYY-MM-01'));
       const fromDate = shifted[0];
       const toDate = moment(shifted[shifted.length - 1]).endOf('month').format('YYYY-MM-DD');
+      // Balance sheet: month-end balances, so everything posted before counts too (design §15).
+      const balance = isBalanceBudget(budget.type);
       const found = await this.actuals.byMonth({
         accountIds,
-        fromDate,
+        fromDate: balance ? '1970-01-01' : fromDate,
         toDate,
         branchIds: budget.branchId ? [budget.branchId] : undefined,
         projectIds: budget.projectId ? [budget.projectId] : undefined,
         splitBy: dto.splitBy ?? 'none',
       });
-      series = found.map((s) => ({ ...s, values: shifted.map((m) => s.months[m] ?? 0) }));
+      series = found.map((s) => ({ ...s, values: balance ? closingBalances(s.months, shifted) : shifted.map((m) => s.months[m] ?? 0) }));
       source = { type: 'actuals', fromDate, toDate, yearsBack, splitBy: dto.splitBy ?? 'none' };
     } else {
       if (!dto.sourceBudgetId) throw new ServiceError(ERRORS.INVALID_ALLOCATION, 'sourceBudgetId is required.');

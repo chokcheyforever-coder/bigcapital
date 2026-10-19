@@ -14,7 +14,7 @@ import { BudgetVersion } from '../models/BudgetVersion.model';
 import { BudgetLine } from '../models/BudgetLine.model';
 import { BudgetApprovalRule } from '../models/BudgetApprovalRule.model';
 import { BudgetApprovalStep } from '../models/BudgetApprovalStep.model';
-import { BudgetAction, BudgetVersionKind, BudgetVersionStatus, ERRORS } from '../Budgeting.types';
+import { BudgetAction, BudgetVersionKind, BudgetVersionStatus, ERRORS, isBalanceBudget } from '../Budgeting.types';
 import { fromMilli, toMilli } from '../calc/budget-calc';
 import {
   Actor,
@@ -41,6 +41,8 @@ import {
   SaveApprovalRulesDto,
 } from '../dtos/BudgetWorkflow.dto';
 import { BudgetValidator } from './BudgetValidator.service';
+import { BudgetNotificationService } from '../notifications/BudgetNotification.service';
+import { dateOnly } from './BudgetCommands.service';
 
 /** Turns a workflow refusal into the API's error shape. */
 const asServiceError = (err: unknown) =>
@@ -75,6 +77,7 @@ export class BudgetWorkflowService {
     private readonly validator: BudgetValidator,
     private readonly auditLog: AuditLogService,
     private readonly cls: ClsService,
+    private readonly notifier: BudgetNotificationService,
 
     @Inject(Budget.name) private readonly budgetModel: TenantModelProxy<typeof Budget>,
     @Inject(BudgetVersion.name) private readonly versionModel: TenantModelProxy<typeof BudgetVersion>,
@@ -156,11 +159,13 @@ export class BudgetWorkflowService {
 
   submit(budgetId: number, versionNo: number, comment?: string) {
     return this.run(async (trx) => {
-      await this.validator.getBudgetOrThrow(budgetId, trx);
+      const budget = await this.validator.getBudgetOrThrow(budgetId, trx);
       const version = await this.validator.getVersionOrThrow(budgetId, versionNo, trx);
       const amounts = await trx('budget_line_amounts')
         .join('budget_lines', 'budget_lines.id', 'budget_line_amounts.line_id')
         .where('budget_lines.version_id', version.id)
+        // A balance sheet version is sized by its closing balances (design §15).
+        .modify((q) => (isBalanceBudget(budget.type) ? q.where('budget_line_amounts.month', `${dateOnly(budget.endDate).slice(0, 7)}-01`) : q))
         .select('budget_line_amounts.amount');
       const lineCount = await this.lineModel().query(trx).where('versionId', version.id).resultSize();
       ensureSubmittable(version, lineCount);
@@ -168,7 +173,8 @@ export class BudgetWorkflowService {
       const gross = grossAmount(amounts.map((a: any) => toMilli(String(a.amount))));
       const rule = pickRule((await this.ruleModel().query(trx)).map(parseRule), gross);
       const submissionNo = (version.submissionNo ?? 0) + 1;
-      for (const s of stepsFor(rule)) {
+      const steps = stepsFor(rule);
+      for (const s of steps) {
         await this.stepModel().query(trx).insert({
           versionId: version.id,
           submissionNo,
@@ -179,13 +185,21 @@ export class BudgetWorkflowService {
           decision: 'pending',
         });
       }
-      await this.versionModel().query(trx).patchAndFetchById(version.id, {
+      const submitted = await this.versionModel().query(trx).patchAndFetchById(version.id, {
         status: BudgetVersionStatus.Submitted,
         submissionNo,
         submittedAt: moment().toDate(),
         submittedBy: this.userId,
         lockVersion: version.lockVersion + 1,
       });
+      await this.notifier.versionWaiting(
+        trx,
+        budget,
+        submitted,
+        { ...steps[0], stepOrder: steps[0].order, assignedUserId: null },
+        steps.length,
+        rule.preventSelfApproval ? [this.userId] : [],
+      );
       await this.audit(trx, budgetId, 'submitted', {
         versionNo,
         submissionNo,
@@ -217,9 +231,17 @@ export class BudgetWorkflowService {
         patch.approvedAt = moment().toDate();
         patch.approvedBy = this.userId;
       }
-      await this.versionModel().query(trx).patchAndFetchById(version.id, patch);
+      const saved = await this.versionModel().query(trx).patchAndFetchById(version.id, patch);
       if (status === BudgetVersionStatus.Approved) {
         await this.budgetModel().query(trx).patchAndFetchById(budgetId, { activeVersionId: version.id });
+        await this.notifier.versionDecided(trx, budget, saved, 'approved', comment?.trim() || null);
+      } else {
+        const next = steps.filter((s) => s.decision === 'pending' && s.id !== (step as BudgetApprovalStep).id).sort((a, b) => a.stepOrder - b.stepOrder)[0];
+        if (next) {
+          const prevent = !!steps[0]?.preventSelfApproval;
+          const decided = [...steps.filter((s) => s.decision === 'approved').map((s) => s.decidedBy), this.userId];
+          await this.notifier.versionWaiting(trx, budget, saved, next, steps.length, prevent ? [saved.submittedBy, ...decided].filter((id): id is number => !!id) : []);
+        }
       }
       await this.audit(trx, budgetId, status === BudgetVersionStatus.Approved ? 'approved' : 'step_approved', {
         versionNo,
@@ -233,7 +255,7 @@ export class BudgetWorkflowService {
 
   reject(budgetId: number, versionNo: number, comment: string) {
     return this.run(async (trx) => {
-      await this.validator.getBudgetOrThrow(budgetId, trx);
+      const budget = await this.validator.getBudgetOrThrow(budgetId, trx);
       const version = await this.validator.getVersionOrThrow(budgetId, versionNo, trx);
       ensureInReview(version, 'rejected');
       const steps = await this.currentSteps(version, trx);
@@ -246,10 +268,11 @@ export class BudgetWorkflowService {
         decidedAt: moment().toDate(),
       });
       await this.closePendingSteps(version, trx);
-      await this.versionModel().query(trx).patchAndFetchById(version.id, {
+      const saved = await this.versionModel().query(trx).patchAndFetchById(version.id, {
         status: BudgetVersionStatus.Rejected,
         lockVersion: version.lockVersion + 1,
       });
+      await this.notifier.versionDecided(trx, budget, saved, 'rejected', comment.trim());
       await this.audit(trx, budgetId, 'rejected', { versionNo, submissionNo: version.submissionNo, step: step.stepOrder, comment: comment.trim() });
     });
   }
@@ -257,7 +280,7 @@ export class BudgetWorkflowService {
   /** Hands the current step to another user who can approve budgets. */
   delegate(budgetId: number, versionNo: number, dto: DelegateStepDto) {
     return this.run(async (trx) => {
-      await this.validator.getBudgetOrThrow(budgetId, trx);
+      const budget = await this.validator.getBudgetOrThrow(budgetId, trx);
       const version = await this.validator.getVersionOrThrow(budgetId, versionNo, trx);
       ensureInReview(version, 'delegated');
       const steps = await this.currentSteps(version, trx);
@@ -278,6 +301,7 @@ export class BudgetWorkflowService {
         assignedUserId: delegate.systemUserId,
         delegatedFromUserId: this.userId,
       });
+      await this.notifier.stepDelegated(trx, budget, version, delegate.systemUserId, dto.comment?.trim() || null);
       await this.audit(trx, budgetId, 'step_delegated', {
         versionNo,
         submissionNo: version.submissionNo,
