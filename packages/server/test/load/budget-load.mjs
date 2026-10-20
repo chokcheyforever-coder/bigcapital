@@ -65,7 +65,7 @@ const bank = list.find((a) => a.slug === 'bank-account').id;
 
 const expenseIds = [];
 for (let i = 0; i < ACCOUNTS; i++) {
-  const a = await api('POST', '/accounts', { name: `Load expense ${i} ${run}`, code: `L${i}`, accountType: 'expense' });
+  const a = await api('POST', '/accounts', { name: `Load expense ${i} ${run}`, code: `L${String(i).padStart(3, "0")}`, accountType: 'expense' });
   expenseIds.push(a.id ?? a.data?.id);
 }
 const projectIds = [];
