@@ -286,3 +286,7 @@ Forecast vs budget for that line (run rate): budget 1,320, actual to date 360, f
 - Who hears what: a version waiting on a step → whoever can decide it (its delegate; else the users of its role, or admins when nobody holds it; else everyone who can approve), minus the submitter and earlier approvers when self-approval is prevented; final approval or rejection → submitter and budget owner; delegation → the delegate; override request → approvers (minus the requester when the rule for that amount prevents self-approval); override decision → requester; spending alert → the budget owner, **the first time** a line reaches the level in a period. The person who made the change is never notified about it.
 - Company settings (`GET/PUT /api/budgets/settings/notifications`, Budget `ConfigurePolicy` to change): email on/off (default on) and alert level `off` / `exceeded` (default) / `warning`.
 - Without SMTP, emails fail and the rows say so (`failed`); the in-app list is unaffected. A crash between claiming and sending leaves a row in `sending`.
+
+## 16. Phase 7 (release), 2026-10-21
+
+Results in `docs/ditech/release/phase-7-results.md`: load test within limits, rollback rehearsed on a copy of staging data, security review (`release/security-review.md`), deployment checklist (`release/deployment-checklist.md`), user guide EN/KM (`user-guide/`).
