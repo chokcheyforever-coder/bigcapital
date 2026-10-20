@@ -39,7 +39,7 @@ test.describe('Price levels', () => {
     const row = page.getByRole('row', { name: new RegExp(levelName) });
     await expect(row).toBeVisible({ timeout: 30_000 });
     await expect(row).toContainText('−15% (ends in .99)');
-    await expect(row).toContainText('1 customers');
+    await expect(row).toContainText('1 customer');
 
     await page.goto('/invoices/new');
     await waitForInvoiceForm(page, 'New Invoice');
