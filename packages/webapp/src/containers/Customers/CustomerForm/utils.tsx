@@ -49,6 +49,7 @@ export type CustomerFormValues = {
   shippingAddressPhone: string;
 
   currencyCode: string;
+  priceLevelId?: number | null;
 
   openingBalance: string | number;
   openingBalanceAt: string;
@@ -90,6 +91,7 @@ export const defaultInitialValues: CustomerFormValues = {
   shippingAddressPhone: '',
 
   currencyCode: '',
+  priceLevelId: null,
 
   openingBalance: '',
   openingBalanceAt: moment(new Date()).format('YYYY-MM-DD'),
@@ -131,6 +133,7 @@ export const transformFormToCreateRequest = (
 ): CreateCustomerBody => ({
   customerType: values.customerType,
   currencyCode: values.currencyCode,
+  priceLevelId: values.priceLevelId ?? null,
   displayName: values.displayName,
   active: parseBoolean(values.active, true),
 
@@ -176,6 +179,7 @@ export const transformFormToEditRequest = (
   customerType: values.customerType,
   displayName: values.displayName,
   active: parseBoolean(values.active, true),
+  priceLevelId: values.priceLevelId ?? null,
 
   salutation: values.salutation,
   firstName: values.firstName,

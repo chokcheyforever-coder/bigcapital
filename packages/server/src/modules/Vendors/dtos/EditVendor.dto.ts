@@ -2,8 +2,12 @@ import { ContactAddressDto } from '@/modules/Customers/dtos/ContactAddress.dto';
 import { IsEmail, IsString, IsBoolean } from 'class-validator';
 import { IsOptional } from '@/common/decorators/Validators';
 import { ApiProperty } from '@nestjs/swagger';
+import { PriceLevelIdField } from '@/modules/PriceLevels/dtos/PriceLevelIdField';
 
 export class EditVendorDto extends ContactAddressDto {
+  @PriceLevelIdField()
+  priceLevelId?: number | null;
+
   @ApiProperty({ required: false, description: 'Vendor salutation' })
   @IsOptional()
   @IsString()

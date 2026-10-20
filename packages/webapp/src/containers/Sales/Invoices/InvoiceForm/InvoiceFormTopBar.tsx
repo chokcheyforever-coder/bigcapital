@@ -23,6 +23,8 @@ import { Features } from '@/constants';
 import { useFeatureCan } from '@/hooks/state';
 import { DocumentProjectSelect } from '@/ditech/projects/DocumentProjectSelect';
 import { useProjectsEnabled } from '@/ditech/projects/hooks';
+import { DocumentPriceLevel } from '@/ditech/pricing/DocumentPriceLevel';
+import { usePriceLevelsEnabled } from '@/ditech/pricing/hooks';
 
 /**
  * Invoice form topbar .
@@ -40,11 +42,14 @@ export function InvoiceFormTopBar() {
 
   // Can't display the navigation bar if warehouses or branches feature is not enabled.
   const isProjectsEnabled = useProjectsEnabled();
+  const isPriceLevelsEnabled = usePriceLevelsEnabled();
+  const { isNewMode } = useInvoiceFormContext();
 
   if (
     !featureCan(Features.Warehouses) &&
     !featureCan(Features.Branches) &&
-    !isProjectsEnabled
+    !isProjectsEnabled &&
+    !isPriceLevelsEnabled
   ) {
     return null;
   }
@@ -63,6 +68,17 @@ export function InvoiceFormTopBar() {
         <DocumentProjectSelect
           divider={
             featureCan(Features.Warehouses) || featureCan(Features.Branches)
+          }
+        />
+        <DocumentPriceLevel
+          type={'sales'}
+          contactField={'customerId'}
+          dateField={'invoiceDate'}
+          isNewMode={isNewMode}
+          divider={
+            featureCan(Features.Warehouses) ||
+            featureCan(Features.Branches) ||
+            isProjectsEnabled
           }
         />
       </NavbarGroup>

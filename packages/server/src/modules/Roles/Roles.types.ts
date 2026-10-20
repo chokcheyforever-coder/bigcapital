@@ -73,6 +73,7 @@ export enum AbilitySubject {
   Branch = 'Branch',
   Attachment = 'Attachment',
   Budget = 'Budget',
+  PriceLevel = 'PriceLevel',
 }
 
 export interface IRoleCreatedPayload {

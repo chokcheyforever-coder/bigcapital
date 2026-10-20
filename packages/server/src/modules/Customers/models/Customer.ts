@@ -30,6 +30,7 @@ export class Customer extends TenantBaseModel {
 
   balance: number;
   currencyCode: string;
+  priceLevelId!: number | null;
 
   openingBalance: number;
   openingBalanceAt: Date | string;

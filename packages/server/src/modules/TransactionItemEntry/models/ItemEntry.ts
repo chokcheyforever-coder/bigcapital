@@ -20,6 +20,7 @@ export class ItemEntry extends BaseModel {
 
   public quantity: number;
   public rate: number;
+  public standardRate!: number | null;
 
   public taxRate: number;
   public isInclusiveTax: number;

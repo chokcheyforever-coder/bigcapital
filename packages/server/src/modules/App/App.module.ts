@@ -40,6 +40,7 @@ import { PdfTemplatesModule } from '../PdfTemplate/PdfTemplates.module';
 import { BranchesModule } from '../Branches/Branches.module';
 import { ProjectsModule } from '../Projects/Projects.module';
 import { BudgetingModule } from '../Budgeting/Budgeting.module';
+import { PriceLevelsModule } from '../PriceLevels/PriceLevels.module';
 import { WarehousesModule } from '../Warehouses/Warehouses.module';
 import { SerializeInterceptor } from '@/common/interceptors/serialize.interceptor';
 import { ToJsonInterceptor } from '@/common/interceptors/to-json.interceptor';
@@ -210,6 +211,7 @@ import { AppThrottleModule } from './AppThrottle.module';
     BranchesModule,
     ProjectsModule,
     BudgetingModule,
+    PriceLevelsModule,
     WarehousesModule,
     WarehousesTransfersModule,
     CustomersModule,

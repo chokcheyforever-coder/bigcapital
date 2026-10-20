@@ -15,6 +15,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { IsOptional, ToNumber } from '@/common/decorators/Validators';
+import { PriceLevelIdField } from '@/modules/PriceLevels/dtos/PriceLevelIdField';
 
 enum DiscountType {
   Percentage = 'percentage',
@@ -84,6 +85,9 @@ export class CommandSaleEstimateDto {
   @IsNumber()
   @ApiProperty({ description: 'The id of the branch', example: 1 })
   branchId?: number;
+
+  @PriceLevelIdField()
+  priceLevelId?: number | null;
 
   @IsArray()
   @ArrayMinSize(1)

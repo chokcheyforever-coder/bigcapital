@@ -39,6 +39,7 @@ export type CreditNoteEntry = {
 
 export type CreditNoteFormValues = {
   customerId: string | number;
+  priceLevelId?: number | null;
   creditNoteDate: string;
   creditNoteNumber: string;
   creditNoteNumberManually: string | boolean;
@@ -73,6 +74,7 @@ export const defaultCreditNoteEntry: CreditNoteEntry = {
 // Default credit note object.
 export const defaultCreditNote: CreditNoteFormValues = {
   customerId: '',
+  priceLevelId: null,
   creditNoteDate: moment(new Date()).format('YYYY-MM-DD'),
   creditNoteNumber: '',
   creditNoteNumberManually: false,

@@ -21,5 +21,6 @@ export const FEATURE_ROUTES: Record<string, string[]> = {
   multi_branch: ['/api/branches'],
   projects: ['/api/projects'],
   budgeting: ['/api/budgets'],
+  price_levels: ['/api/price-levels'],
   bank_rules: ['/api/banking/rules'],
 };

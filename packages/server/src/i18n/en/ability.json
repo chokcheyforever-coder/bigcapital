@@ -50,5 +50,6 @@
   "lock_budgets": "Lock and unlock budgets",
   "import_export_budgets": "Import and export budgets",
   "budget_audit_history": "View budget audit history",
-  "configure_budget_policies": "Configure budget policies"
+  "configure_budget_policies": "Configure budget policies",
+  "price_levels": "Price levels"
 }

@@ -86,6 +86,7 @@ export interface IVendorEventDeletedPayload {
   trx?: Knex.Transaction;
 }
 export interface IVendorEventEditingPayload {
+  vendorId: number;
   vendorDTO: EditVendorDto;
   trx?: Knex.Transaction;
 }

@@ -2472,7 +2472,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Recomputes a draft forecast with current actuals (and optionally new settings). Replaces its amounts. */
+        /** Recomputes a draft forecast with current actuals, keeping its settings unless new ones are given. Replaces its amounts. */
         post: operations["BudgetForecastController_refreshForecast"];
         delete?: never;
         options?: never;
@@ -2803,6 +2803,94 @@ export interface paths {
         get: operations["BillsController_getDueBills"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/price-levels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieves the price levels (active ones by default). */
+        get: operations["PriceLevelsController_getPriceLevels"];
+        put?: never;
+        /** Creates a price level. */
+        post: operations["PriceLevelsController_createPriceLevel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/price-levels/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Calculates the rates of document lines under a price level (or the contact's default one). */
+        post: operations["PriceLevelsController_resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/price-levels/reports/sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sales by price level: normal vs charged amounts per level, customer and item. */
+        get: operations["PriceLevelsController_salesReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/price-levels/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieves a price level with its item prices and categories. */
+        get: operations["PriceLevelsController_getPriceLevel"];
+        /** Edits a price level (also deactivates or reactivates it through `active`). */
+        put: operations["PriceLevelsController_editPriceLevel"];
+        post?: never;
+        /** Deletes a price level that nothing uses. */
+        delete: operations["PriceLevelsController_deletePriceLevel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/price-levels/{id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Makes this the default price level of the given customers or vendors. */
+        post: operations["PriceLevelsController_assign"];
         delete?: never;
         options?: never;
         head?: never;
@@ -8331,6 +8419,11 @@ export interface components {
              */
             branchId?: number;
             /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
+            /**
              * @description Project ID
              * @example 1
              */
@@ -8438,6 +8531,11 @@ export interface components {
              * @example 1
              */
             branchId?: number;
+            /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
             /**
              * @description Project ID
              * @example 1
@@ -10939,6 +11037,11 @@ export interface components {
              */
             branchId?: number;
             /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
+            /**
              * @description Project identifier
              * @example 301
              */
@@ -11023,6 +11126,11 @@ export interface components {
              */
             branchId?: number;
             /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
+            /**
              * @description Project identifier
              * @example 301
              */
@@ -11062,6 +11170,115 @@ export interface components {
              * @example 50
              */
             adjustment?: number;
+        };
+        ResolvePriceLineDto: {
+            itemId: number;
+            /** @default 1 */
+            quantity: number;
+        };
+        ResolvePricesDto: {
+            /** @description The price level to use; when left out, the contact's default price level */
+            priceLevelId?: number;
+            /** @description Customer or vendor whose default price level applies */
+            contactId?: number;
+            /**
+             * @description sales: sell prices, purchase: cost prices
+             * @enum {string}
+             */
+            type: "sales" | "purchase";
+            /** @description Document date (YYYY-MM-DD); default today */
+            date?: string;
+            lines: components["schemas"]["ResolvePriceLineDto"][];
+        };
+        PriceLevelItemDto: {
+            itemId: number;
+            /**
+             * @description Quantity from which this price applies (quantity break); default 1
+             * @example 10
+             */
+            minQuantity?: number;
+            /** @example 8 */
+            price: number;
+        };
+        CreatePriceLevelDto: {
+            /** @example Wholesale */
+            name: string;
+            description?: string;
+            /**
+             * @description sales (customers) or purchase (vendors)
+             * @enum {string}
+             */
+            type: "sales" | "purchase";
+            /** @enum {string} */
+            method: "percentage" | "per_item";
+            /**
+             * @description Percentage method: +15 marks the normal price up 15%, -10 marks it down 10%
+             * @example -15
+             */
+            percentage?: number;
+            /**
+             * @description Currency of per-item prices; empty = base currency
+             * @example USD
+             */
+            currencyCode?: string;
+            /**
+             * @description Rounding of percentage prices
+             * @default none
+             * @enum {string}
+             */
+            rounding: "none" | "0.01" | "0.05" | "0.10" | "0.50" | "1" | "x.99";
+            /** @example 2026-11-01 */
+            validFrom?: string;
+            /** @example 2026-11-30 */
+            validTo?: string;
+            /** @default true */
+            active: boolean;
+            /** @description Percentage method: only items in these categories (empty = all items) */
+            categoryIds?: number[];
+            /** @description Per-item method: the item prices and quantity breaks (replaces all) */
+            items?: components["schemas"]["PriceLevelItemDto"][];
+        };
+        EditPriceLevelDto: {
+            /** @example Wholesale */
+            name: string;
+            description?: string;
+            /**
+             * @description sales (customers) or purchase (vendors)
+             * @enum {string}
+             */
+            type: "sales" | "purchase";
+            /** @enum {string} */
+            method: "percentage" | "per_item";
+            /**
+             * @description Percentage method: +15 marks the normal price up 15%, -10 marks it down 10%
+             * @example -15
+             */
+            percentage?: number;
+            /**
+             * @description Currency of per-item prices; empty = base currency
+             * @example USD
+             */
+            currencyCode?: string;
+            /**
+             * @description Rounding of percentage prices
+             * @default none
+             * @enum {string}
+             */
+            rounding: "none" | "0.01" | "0.05" | "0.10" | "0.50" | "1" | "x.99";
+            /** @example 2026-11-01 */
+            validFrom?: string;
+            /** @example 2026-11-30 */
+            validTo?: string;
+            /** @default true */
+            active: boolean;
+            /** @description Percentage method: only items in these categories (empty = all items) */
+            categoryIds?: number[];
+            /** @description Per-item method: the item prices and quantity breaks (replaces all) */
+            items?: components["schemas"]["PriceLevelItemDto"][];
+        };
+        AssignPriceLevelDto: {
+            /** @description Customers (sales level) or vendors (purchase level) to give this default price level */
+            contactIds: number[];
         };
         WarehouseTransferEntryResponseDto: {
             /**
@@ -11345,6 +11562,11 @@ export interface components {
             /** @description Shipping address state */
             shippingAddressState?: string;
             /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
+            /**
              * @description Customer type
              * @example business
              */
@@ -11462,6 +11684,11 @@ export interface components {
             shippingAddressPhone?: string;
             /** @description Shipping address state */
             shippingAddressState?: string;
+            /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
             /** @description Customer type */
             customerType: string;
             /** @description Salutation */
@@ -11599,6 +11826,11 @@ export interface components {
             shippingAddressPhone?: string;
             /** @description Shipping address state */
             shippingAddressState?: string;
+            /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
             /** @description Vendor opening balance */
             openingBalance?: number;
             /**
@@ -11679,6 +11911,11 @@ export interface components {
             shippingAddressPhone?: string;
             /** @description Shipping address state */
             shippingAddressState?: string;
+            /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
             /** @description Vendor salutation */
             salutation?: string;
             /** @description Vendor first name */
@@ -12064,6 +12301,11 @@ export interface components {
              */
             branchId: number;
             /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
+            /**
              * @description The entries of the estimate
              * @example [
              *       {
@@ -12159,6 +12401,11 @@ export interface components {
              * @example 1
              */
             branchId: number;
+            /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
             /**
              * @description The entries of the estimate
              * @example [
@@ -12482,6 +12729,11 @@ export interface components {
              */
             branchId: number;
             /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
+            /**
              * @description The project ID
              * @example 1
              */
@@ -12582,6 +12834,11 @@ export interface components {
              * @example 1
              */
             branchId: number;
+            /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
             /**
              * @description The project ID
              * @example 1
@@ -13189,6 +13446,11 @@ export interface components {
              */
             branchId: number;
             /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
+            /**
              * @description The project ID
              * @example 1
              */
@@ -13281,6 +13543,11 @@ export interface components {
              * @example 1
              */
             branchId: number;
+            /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
             /**
              * @description The project ID
              * @example 1
@@ -13751,6 +14018,11 @@ export interface components {
              */
             branchId: number;
             /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
+            /**
              * @description The project ID
              * @example 1
              */
@@ -13841,6 +14113,11 @@ export interface components {
              * @example 1
              */
             branchId: number;
+            /**
+             * @description Price level (DiTech); null clears it
+             * @example 1
+             */
+            priceLevelId?: number | null;
             /**
              * @description The project ID
              * @example 1
@@ -24687,6 +24964,216 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description List of due bills (optionally filtered by vendor). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PriceLevelsController_getPriceLevels: {
+        parameters: {
+            query?: {
+                type?: "sales" | "purchase";
+                /** @description true: active only (default); false: inactive only; all: both */
+                active?: string;
+                search?: string;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PriceLevelsController_createPriceLevel: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePriceLevelDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PriceLevelsController_resolve: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolvePricesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PriceLevelsController_salesReport: {
+        parameters: {
+            query: {
+                fromDate: string;
+                toDate: string;
+                priceLevelId?: number;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PriceLevelsController_getPriceLevel: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The price level was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PriceLevelsController_editPriceLevel: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditPriceLevelDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PriceLevelsController_deletePriceLevel: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PriceLevelsController_assign: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignPriceLevelDto"];
+            };
+        };
+        responses: {
             200: {
                 headers: {
                     [name: string]: unknown;

@@ -52,6 +52,7 @@ export type PaymentMethodFormValue = { enable: boolean };
 
 export type InvoiceFormValues = {
   customerId: string | number;
+  priceLevelId?: number | null;
   invoiceDate: string;
   dueDate: string;
   invoiceNo: string;
@@ -101,6 +102,7 @@ export const defaultInvoiceEntry: InvoiceEntry = {
 // Default invoice object.
 export const defaultInvoice: InvoiceFormValues = {
   customerId: '',
+  priceLevelId: null,
   invoiceDate: moment(new Date()).format('YYYY-MM-DD'),
   dueDate: moment().format('YYYY-MM-DD'),
   delivered: '',

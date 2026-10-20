@@ -38,6 +38,7 @@ export type ReceiptEntry = {
 
 export type ReceiptFormValues = {
   customerId: string | number;
+  priceLevelId?: number | null;
   depositAccountId: string | number;
   receiptNumber: string;
   // Holds the receipt number that entered manually only.
@@ -81,6 +82,7 @@ const defaultReceiptEntryReq = {
 
 export const defaultReceipt: ReceiptFormValues = {
   customerId: '',
+  priceLevelId: null,
   depositAccountId: '',
   receiptNumber: '',
   receiptNumberManually: '',

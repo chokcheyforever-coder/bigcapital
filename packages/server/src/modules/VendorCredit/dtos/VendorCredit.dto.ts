@@ -14,6 +14,7 @@ import {
 } from 'class-validator';
 import { ToNumber } from '@/common/decorators/Validators';
 import { ItemEntryDto } from '@/modules/TransactionItemEntry/dto/ItemEntry.dto';
+import { PriceLevelIdField } from '@/modules/PriceLevels/dtos/PriceLevelIdField';
 
 enum DiscountType {
   Percentage = 'percentage',
@@ -101,6 +102,9 @@ export class CommandVendorCreditDto {
     example: 1,
   })
   branchId?: number;
+
+  @PriceLevelIdField()
+  priceLevelId?: number | null;
 
   @IsOptional()
   @ToNumber()

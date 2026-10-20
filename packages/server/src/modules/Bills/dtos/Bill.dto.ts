@@ -17,6 +17,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
+import { PriceLevelIdField } from '@/modules/PriceLevels/dtos/PriceLevelIdField';
 
 enum DiscountType {
   Percentage = 'percentage',
@@ -119,6 +120,9 @@ export class CommandBillDto {
   @ToNumber()
   @IsInt()
   branchId?: number;
+
+  @PriceLevelIdField()
+  priceLevelId?: number | null;
 
   @ApiProperty({
     description: 'Project identifier',

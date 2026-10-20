@@ -1,4 +1,5 @@
 import { ProjectAction } from '@/modules/Projects/Projects.types';
+import { PriceLevelAction } from '@/modules/PriceLevels/PriceLevels.types';
 import { BudgetAction } from '@/modules/Budgeting/Budgeting.types';
 import { ItemAction } from '@/interfaces/Item';
 import { ReportsAction } from '../FinancialStatements/types/Report.types';
@@ -407,6 +408,16 @@ export const AbilitySchema: ISubjectAbilitiesSchema[] = [
       { key: BudgetAction.ImportExport, label: 'ability.import_export_budgets' },
       { key: BudgetAction.ViewAudit, label: 'ability.budget_audit_history' },
       { key: BudgetAction.ConfigurePolicy, label: 'ability.configure_budget_policies' },
+    ],
+  },
+  {
+    subject: AbilitySubject.PriceLevel,
+    subjectLabel: 'ability.price_levels',
+    abilities: [
+      { key: PriceLevelAction.View, label: 'ability.view', default: true },
+      { key: PriceLevelAction.Create, label: 'ability.create', default: true },
+      { key: PriceLevelAction.Edit, label: 'ability.edit', default: true },
+      { key: PriceLevelAction.Delete, label: 'ability.delete', default: true },
     ],
   },
 ];

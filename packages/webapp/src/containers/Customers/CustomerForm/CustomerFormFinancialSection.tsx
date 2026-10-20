@@ -26,6 +26,7 @@ import {
 import { Features } from '@/constants';
 import { useDateInputFormatter } from '@/hooks';
 import { useCurrentOrganizationBaseCurrency } from '@/hooks/query';
+import { ContactPriceLevelField } from '@/ditech/pricing/ContactPriceLevelField';
 
 export function CustomerFormFinancialSection() {
   const { currencies, customerId, branches } = useCustomerFormContext();
@@ -51,6 +52,8 @@ export function CustomerFormFinancialSection() {
           disabled={Boolean(customerId)}
         />
       </FFormGroup>
+
+      <ContactPriceLevelField type={'sales'} />
 
       <CustomerOpeningBalanceField />
       <CustomerOpeningBalanceExchangeRateField />

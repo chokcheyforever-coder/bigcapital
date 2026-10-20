@@ -48,6 +48,8 @@ export class SaleEstimate extends TenantBaseModel {
   updatedAt?: Date | null;
 
   branchId?: number;
+
+  priceLevelId!: number | null;
   warehouseId?: number;
 
   discount: number;
