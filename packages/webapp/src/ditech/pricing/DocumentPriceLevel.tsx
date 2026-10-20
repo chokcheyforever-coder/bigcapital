@@ -9,6 +9,7 @@ import { useCustomer } from '@/hooks/query/customers';
 import { useVendor } from '@/hooks/query/vendors';
 import { PriceLevelSelect } from './PriceLevelSelect';
 import { usePriceLevelsEnabled } from './hooks';
+import { updateItemsEntriesTotal } from '@/containers/Entries/utils';
 
 const num = (v) => (v === '' || v == null || Number.isNaN(Number(v)) ? null : Number(v));
 const same = (a, b) => a != null && b != null && Math.abs(Number(a) - Number(b)) < 1e-6;
@@ -40,6 +41,9 @@ export function DocumentPriceLevel(props: {
 
 function DocumentPriceLevelField({ type, contactField, dateField, isNewMode, divider = false }) {
   const { values, setFieldValue } = useFormikContext();
+  // The latest values, for writes that land after an await.
+  const latest = useRef(values);
+  latest.current = values;
   const fetcher = useApiFetcher({ enableCamelCaseTransform: true });
   const { data: levels = [], isLoading } = usePriceLevels({ type, active: 'all' });
 
@@ -125,14 +129,20 @@ function DocumentPriceLevelField({ type, contactField, dateField, isNewMode, div
           return;
         }
         setCurrencyMismatch(false);
+        const rates = new Map<number, number>();
         todo.forEach((l, k) => {
           const out = res.lines[k];
           const prev = rows.current[l.i];
           const changed = !prev || prev.sig !== sigOf(l);
           const replaceable = force || l.rate == null || same(l.rate, out.standardRate) || (prev && same(l.rate, prev.auto));
           rows.current[l.i] = { sig: sigOf(l), auto: out.rate, until: changed ? Date.now() + SETTLE_MS : prev.until };
-          if (replaceable && !same(l.rate, out.rate)) setFieldValue(`entries[${l.i}].rate`, out.rate);
+          if (replaceable && !same(l.rate, out.rate)) rates.set(l.i, out.rate);
         });
+        if (rates.size > 0) {
+          // Whole list, with the line amounts recalculated as the table does on a typed edit.
+          const next = (latest.current.entries ?? []).map((e, i) => (rates.has(i) ? { ...e, rate: rates.get(i) } : e));
+          setFieldValue('entries', updateItemsEntriesTotal(next));
+        }
       } catch {
         // Rates can still be typed by hand.
       }

@@ -54,7 +54,7 @@ const COLUMNS = [
   { id: 'name', Header: 'Name', accessor: 'name', width: 180 },
   { id: 'type', Header: 'For', accessor: (l) => (l.type === 'sales' ? 'Customers' : 'Vendors'), width: 90 },
   { id: 'prices', Header: 'Prices', accessor: describeLevel, width: 170 },
-  { id: 'contacts', Header: 'Assigned to', accessor: (l) => `${l.contactsCount} ${l.type === 'sales' ? 'customers' : 'vendors'}`, width: 110 },
+  { id: 'contacts', Header: 'Assigned to', accessor: (l) => `${l.contactsCount} ${l.type === 'sales' ? 'customer' : 'vendor'}${l.contactsCount === 1 ? '' : 's'}`, width: 110 },
   { id: 'dates', Header: 'Valid', accessor: datesAccessor, width: 150 },
   { id: 'status', Header: 'Status', accessor: statusAccessor, width: 80 },
 ];
