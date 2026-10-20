@@ -30,7 +30,7 @@ export function AssignPriceLevelDialog({ level, onClose }) {
   const handleSubmit = (values, { setSubmitting }) => {
     assign([level.id, values.contactIds])
       .then((res) => {
-        AppToaster.show({ message: `${res.assigned} ${who} now use ${level.name}.`, intent: Intent.SUCCESS });
+        AppToaster.show({ message: `${res.assigned} ${res.assigned === 1 ? who.slice(0, -1) : who} now ${res.assigned === 1 ? 'uses' : 'use'} ${level.name}.`, intent: Intent.SUCCESS });
         onClose();
       })
       .catch((error) => {
@@ -55,6 +55,7 @@ export function AssignPriceLevelDialog({ level, onClose }) {
                   items={contacts}
                   placeholder={`Choose ${who}...`}
                   popoverProps={{ minimal: true }}
+                  fill
                   itemPredicate={contactPredicate}
                   itemRenderer={contactRenderer}
                   valueAccessor={(c) => c.id}

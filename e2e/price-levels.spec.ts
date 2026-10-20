@@ -51,6 +51,9 @@ test.describe('Price levels', () => {
     await expect
       .poll(() => page.evaluate(() => Array.from(document.querySelectorAll('input')).some((i) => i.value.replace(/,/g, '') === '764.99')), { timeout: 30_000 })
       .toBe(true);
+    // The line total and the subtotal follow the new rate (not the normal 900).
+    await expect.poll(() => page.evaluate(() => document.body.innerText.includes('764.99')), { timeout: 10_000 }).toBe(true);
+    expect(await page.evaluate(() => document.body.innerText.includes('900.00'))).toBe(false);
 
     const createRequest = page.waitForRequest(
       (req) => new URL(req.url()).pathname === '/api/sale-invoices' && req.method() === 'POST',

@@ -155,10 +155,10 @@ export function PriceLevelFormDialog({ isOpen, levelId, onClose }) {
 
                   <Group spacing={10} grow noWrap>
                     <FFormGroup name={'type'} label={'For'}>
-                      <FSelect name={'type'} items={TYPES} valueAccessor={'value'} textAccessor={'label'} popoverProps={{ minimal: true }} />
+                      <FSelect name={'type'} items={TYPES} valueAccessor={'value'} textAccessor={'label'} labelAccessor={'hint'} popoverProps={{ minimal: true }} />
                     </FFormGroup>
                     <FFormGroup name={'method'} label={'Prices'}>
-                      <FSelect name={'method'} items={METHODS} valueAccessor={'value'} textAccessor={'label'} popoverProps={{ minimal: true }} />
+                      <FSelect name={'method'} items={METHODS} valueAccessor={'value'} textAccessor={'label'} labelAccessor={'hint'} popoverProps={{ minimal: true }} />
                     </FFormGroup>
                   </Group>
 
@@ -166,13 +166,13 @@ export function PriceLevelFormDialog({ isOpen, levelId, onClose }) {
                     <>
                       <Group spacing={10} grow noWrap>
                         <FFormGroup name={'direction'} label={'Normal price'}>
-                          <FSelect name={'direction'} items={DIRECTIONS} valueAccessor={'value'} textAccessor={'label'} popoverProps={{ minimal: true }} />
+                          <FSelect name={'direction'} items={DIRECTIONS} valueAccessor={'value'} textAccessor={'label'} labelAccessor={'hint'} popoverProps={{ minimal: true }} />
                         </FFormGroup>
                         <FFormGroup name={'percent'} label={'Percent'} labelInfo={'*'}>
                           <FInputGroup name={'percent'} rightElement={<span className={Classes.TEXT_MUTED} style={{ padding: 6 }}>%</span>} inputMode={'decimal'} />
                         </FFormGroup>
                         <FFormGroup name={'rounding'} label={'Rounding'}>
-                          <FSelect name={'rounding'} items={ROUNDING_OPTIONS} valueAccessor={'value'} textAccessor={'label'} popoverProps={{ minimal: true }} />
+                          <FSelect name={'rounding'} items={ROUNDING_OPTIONS} valueAccessor={'value'} textAccessor={'label'} labelAccessor={'hint'} popoverProps={{ minimal: true }} />
                         </FFormGroup>
                       </Group>
                       <FFormGroup
@@ -249,10 +249,10 @@ export function PriceLevelFormDialog({ isOpen, levelId, onClose }) {
                   )}
 
                   <Group spacing={10} grow noWrap>
-                    <FFormGroup name={'validFrom'} label={'Valid from'} helperText={'Optional, for promotions.'}>
+                    <FFormGroup name={'validFrom'} label={'Valid from'}>
                       <FDateInput name={'validFrom'} {...dateInputFormatter} popoverProps={{ position: Position.BOTTOM_LEFT, minimal: true }} fill />
                     </FFormGroup>
-                    <FFormGroup name={'validTo'} label={'Valid to'}>
+                    <FFormGroup name={'validTo'} label={'Valid to'} labelInfo={<span className={Classes.TEXT_MUTED}>(optional, for promotions)</span>}>
                       <FDateInput name={'validTo'} {...dateInputFormatter} popoverProps={{ position: Position.BOTTOM_LEFT, minimal: true }} fill />
                     </FFormGroup>
                   </Group>
