@@ -193,13 +193,13 @@ export class PriceLevelQueriesService {
     const knex = this.tenantKnex();
     const [items, categoryIds] = await Promise.all([
       knex('price_level_items').where('price_level_id', level.id).select('item_id', 'min_quantity', 'price'),
-      knex('price_level_categories').where('price_level_id', level.id).pluck('category_id'),
+      knex('price_level_categories').where('price_level_id', level.id).select('category_id'),
     ]);
     return {
       method: level.method as PriceLevelMethod,
       percentage: level.percentage == null ? null : Number(level.percentage),
       rounding: level.rounding as Rounding,
-      categoryIds: categoryIds.map(Number),
+      categoryIds: categoryIds.map((r: any) => Number(r.categoryId ?? r.category_id)),
       items: items.map((i: any) => ({
         itemId: i.itemId ?? i.item_id,
         minQuantity: Number(i.minQuantity ?? i.min_quantity),

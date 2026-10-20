@@ -111,7 +111,7 @@ export class PriceLevelCommandsService {
       }
       const ids = [...new Set(dto.contactIds)];
       const service = level.type === 'sales' ? 'customer' : 'vendor';
-      const found = await trx('contacts').whereIn('id', ids).where('contact_service', service).pluck('id');
+      const found = (await trx('contacts').whereIn('id', ids).where('contact_service', service).select('id')).map((r: any) => r.id);
       const missing = ids.filter((cid) => !found.includes(cid));
       if (missing.length) {
         throw new ServiceError(ERRORS.PRICE_LEVEL_CONTACT_NOT_FOUND, `These ${service}s were not found.`, { contactIds: missing });
@@ -151,13 +151,14 @@ export class PriceLevelCommandsService {
       throw new ServiceError(ERRORS.PRICE_LEVEL_INVALID, 'An item has the same quantity break twice.');
     }
     const itemIds = [...new Set(items.map((i) => i.itemId))];
-    const foundItems = itemIds.length ? await trx('items').whereIn('id', itemIds).pluck('id') : [];
+    const foundItems = itemIds.length ? (await trx('items').whereIn('id', itemIds).select('id')).map((r: any) => r.id) : [];
     const missingItems = itemIds.filter((iid) => !foundItems.includes(iid));
     if (missingItems.length) {
       throw new ServiceError(ERRORS.PRICE_LEVEL_INVALID, 'Some items were not found.', { itemIds: missingItems });
     }
     const categoryIds = [...new Set(dto.categoryIds ?? [])];
-    const foundCategories = categoryIds.length ? await trx('items_categories').whereIn('id', categoryIds).pluck('id') : [];
+    // Not pluck(): it reads the raw (UPPER_SNAKE) column key before the identifier mapper runs.
+    const foundCategories = categoryIds.length ? (await trx('items_categories').whereIn('id', categoryIds).select('id')).map((r: any) => r.id) : [];
     const missingCategories = categoryIds.filter((cid) => !foundCategories.includes(cid));
     if (missingCategories.length) {
       throw new ServiceError(ERRORS.PRICE_LEVEL_INVALID, 'Some item categories were not found.', { categoryIds: missingCategories });
