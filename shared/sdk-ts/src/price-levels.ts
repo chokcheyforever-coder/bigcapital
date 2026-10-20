@@ -7,6 +7,7 @@ export const PRICE_LEVELS_ROUTES = {
   BY_ID: '/api/price-levels/{id}',
   ASSIGN: '/api/price-levels/{id}/assign',
   RESOLVE: '/api/price-levels/resolve',
+  SALES_REPORT: '/api/price-levels/reports/sales',
 } as const satisfies Record<string, keyof paths>;
 
 export type PriceLevelType = 'sales' | 'purchase';
@@ -126,4 +127,34 @@ export async function resolvePrices(fetcher: ApiFetcher, body: ResolvePricesBody
   const post = fetcher.path(PRICE_LEVELS_ROUTES.RESOLVE).method('post').create();
   const { data } = await post(body as never);
   return data as unknown as ResolvedPrices;
+}
+
+export interface PriceLevelSalesRow {
+  priceLevelId: number;
+  priceLevelName: string;
+  customerId: number | null;
+  customerName: string | null;
+  itemId: number | null;
+  itemName: string | null;
+  quantity: number;
+  normalAmount: number;
+  chargedAmount: number;
+  difference: number;
+}
+
+export interface PriceLevelSalesReport {
+  fromDate: string;
+  toDate: string;
+  currencyCode: string;
+  rows: PriceLevelSalesRow[];
+  total: { normalAmount: number; chargedAmount: number; difference: number };
+}
+
+export async function fetchPriceLevelSalesReport(
+  fetcher: ApiFetcher,
+  query: { fromDate: string; toDate: string; priceLevelId?: number },
+): Promise<PriceLevelSalesReport> {
+  const get = fetcher.path(PRICE_LEVELS_ROUTES.SALES_REPORT).method('get').create();
+  const { data } = await get(query as never);
+  return data as unknown as PriceLevelSalesReport;
 }

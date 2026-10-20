@@ -104,3 +104,46 @@ add quantity breaks, dates, rounding and a purchase side.
 2. **Quantity breaks are in the first release.**
 3. **Per-customer / per-vendor assignment with bulk assign**; customer groups later.
 4. **Sales and purchase** price levels in the first release; plan feature on **Business and above**.
+
+## 6. Formula fixture
+
+`modules/PriceLevels/calc/price-level.spec.ts` and `test/price-levels.e2e-spec.ts`.
+Items: Laptop 900 (cost 650, category "Computers"), Printer ink 25 (cost 12).
+
+| Level | Line | Rate |
+|---|---|---|
+| −15%, no rounding | Laptop / Ink | 765 / 21.25 |
+| −15%, ends in .99 | Laptop / Ink | 764.99 / 20.99 |
+| +12.5%, nearest whole | Router 120 | 135 |
+| −10%, nearest 0.05 | 24.99 | 22.50 |
+| −15%, category Computers only | Laptop / Ink | 765 / 25 (normal) |
+| Per item: Ink 1+ 10, 10+ 8, 50+ 7; Laptop 850 | Ink qty 1, 9, 10, 49, 50 | 10, 10, 8, 8, 7 |
+| same | Router (not listed) | 120 (normal) |
+| +10%, nearest whole, valid November | Laptop on 15 Nov / 1 Dec | 990 / 900 |
+| Purchase, per item Laptop 600 | Laptop / Ink (cost) | 600 / 12 |
+
+Invoice with "−15%, ends in .99": 2 laptops + 4 ink = 1,613.94 posted as income;
+Sales by price level shows normal 1,900.00, charged 1,613.94, difference −286.06.
+
+## 7. As built (2026-10-20)
+
+- Server `modules/PriceLevels`: migration `20261024000000_price_levels`
+  (price_levels, price_level_items, price_level_categories; `price_level_id` on
+  contacts and the six documents; `items_entries.standard_rate`).
+  `/api/price-levels` CRUD, `POST /:id/assign`, `POST /resolve` (signed-in users,
+  no extra permission: anyone preparing a document needs it),
+  `GET /reports/sales`. The plan feature `price_levels` gates every route.
+- Percentage rounding applies to percentage levels only; fixed item prices are
+  used as entered. A level that is inactive or outside its dates gives the
+  normal prices. Deleting is refused once anything uses a level (deactivate).
+- Documents keep the rate they are sent. The level on a document and on a
+  contact is checked in the document's transaction (exists, right type, active
+  unless unchanged). After saving, each line stores the item's normal price.
+- Sales by price level: delivered invoices and closed receipts less open
+  credit notes, quantity × rate before line discounts, in the base currency.
+- Webapp: Items › Price levels (list, editor, assign, report), price level on
+  customer/vendor forms, price level in the top bar of the six document forms.
+  Rates fill automatically; a typed rate is never overwritten.
+- Not in this release: a per-item currency picker in the editor (the API takes
+  `currencyCode`; documents in another currency keep their rates and show
+  "Other currency"), the optional "override price" permission, customer groups.

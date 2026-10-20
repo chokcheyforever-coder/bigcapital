@@ -35,6 +35,7 @@ import { fetchPriceLevel } from '@bigcapital/sdk-ts';
 import { useApiFetcher } from '@/hooks/useRequest';
 import { PriceLevelFormDialog } from './PriceLevelFormDialog';
 import { AssignPriceLevelDialog } from './AssignPriceLevelDialog';
+import { PriceLevelSalesReportDialog } from './PriceLevelSalesReportDialog';
 import { describeLevel, usePriceLevelsEnabled } from './hooks';
 
 const DELETE_ERRORS = {
@@ -91,6 +92,7 @@ export function PriceLevelsPage() {
   const [editing, setEditing] = useState<null | { id: number | null }>(null);
   const [assigning, setAssigning] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const query = { active, ...(search.trim() ? { search: search.trim() } : {}) };
   const { data: levels = [], isLoading, isFetching } = usePriceLevels(query, { enabled });
@@ -162,6 +164,8 @@ export function PriceLevelsPage() {
             <NavbarDivider />
           </Can>
           <InputGroup leftIcon={'search'} placeholder={'Search by name'} value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: 240 }} />
+          <NavbarDivider />
+          <Button className={Classes.MINIMAL} icon={<Icon icon="reader-18" />} text={'Sales by price level'} onClick={() => setReportOpen(true)} />
         </NavbarGroup>
       </DashboardActionsBar>
 
@@ -220,6 +224,7 @@ export function PriceLevelsPage() {
 
       <PriceLevelFormDialog isOpen={!!editing} levelId={editing?.id ?? null} onClose={() => setEditing(null)} />
       <AssignPriceLevelDialog level={assigning} onClose={() => setAssigning(null)} />
+      <PriceLevelSalesReportDialog isOpen={reportOpen} onClose={() => setReportOpen(false)} />
 
       <Alert
         isOpen={!!deleting}

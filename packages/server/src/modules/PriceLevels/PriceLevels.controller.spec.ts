@@ -18,6 +18,7 @@ describe('PriceLevelsController permissions', () => {
     editPriceLevel: PriceLevelAction.Edit,
     assign: PriceLevelAction.Edit,
     deletePriceLevel: PriceLevelAction.Delete,
+    salesReport: PriceLevelAction.View,
     resolve: null,
   };
 

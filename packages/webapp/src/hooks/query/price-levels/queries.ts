@@ -5,6 +5,7 @@ import {
   editPriceLevel,
   deletePriceLevel,
   assignPriceLevel,
+  fetchPriceLevelSalesReport,
 } from '@bigcapital/sdk-ts';
 import {
   useMutation,
@@ -18,6 +19,7 @@ import type {
   PriceLevelBody,
   PriceLevelDetail,
   PriceLevelListItem,
+  PriceLevelSalesReport,
 } from '@bigcapital/sdk-ts';
 import { useApiFetcher } from '../../useRequest';
 import { customersKeys } from '../customers/query-keys';
@@ -98,5 +100,17 @@ export function useAssignPriceLevel(
       queryClient.invalidateQueries({ queryKey: customersKeys.all() });
       queryClient.invalidateQueries({ queryKey: ['VENDORS'] });
     },
+  });
+}
+
+export function usePriceLevelSalesReport(
+  query: { fromDate: string; toDate: string; priceLevelId?: number },
+  props?: Omit<UseQueryOptions<PriceLevelSalesReport>, 'queryKey' | 'queryFn'>,
+) {
+  const fetcher = useApiFetcher({ enableCamelCaseTransform: true });
+  return useQuery({
+    ...props,
+    queryKey: [...priceLevelsKeys.all(), 'sales-report', query],
+    queryFn: () => fetchPriceLevelSalesReport(fetcher, query),
   });
 }

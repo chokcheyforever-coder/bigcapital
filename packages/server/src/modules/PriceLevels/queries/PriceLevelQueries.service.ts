@@ -5,7 +5,7 @@ import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 import { TenancyContext } from '@/modules/Tenancy/TenancyContext.service';
 import { TENANCY_DB_CONNECTION } from '@/modules/Tenancy/TenancyDB/TenancyDB.constants';
 import { PriceLevel } from '../models/PriceLevel.model';
-import { GetPriceLevelsQueryDto, ResolvePricesDto } from '../dtos/PriceLevel.dto';
+import { GetPriceLevelsQueryDto, PriceLevelSalesReportQueryDto, ResolvePricesDto } from '../dtos/PriceLevel.dto';
 import { PriceLevelValidator } from '../commands/PriceLevelValidator.service';
 import { fromUnits, levelApplies, priceFor, PriceLevelRule, toUnits } from '../calc/price-level';
 import { PriceLevelMethod, Rounding } from '../PriceLevels.types';
@@ -117,6 +117,75 @@ export class PriceLevelQueriesService {
           : { rate: standard, source: 'standard' as const };
         return { itemId: line.itemId, quantity, standardRate: fromUnits(standard), rate: fromUnits(priced.rate), source: item ? priced.source : 'unknown_item' };
       }),
+    };
+  }
+
+  /**
+   * Sales by price level: delivered invoices and closed receipts that used a
+   * price level, less open credit notes, per level, customer and item, in the
+   * base currency. "Normal" is the quantity at the item's normal price when
+   * the document was saved; "charged" is the quantity at the line rate.
+   */
+  async salesReport(query: PriceLevelSalesReportQueryDto) {
+    const from = query.fromDate.slice(0, 10);
+    const to = query.toDate.slice(0, 10);
+    const docs = [
+      { type: 'SaleInvoice', table: 'SALES_INVOICES', date: 'INVOICE_DATE', posted: 'DELIVERED_AT', sign: 1 },
+      { type: 'SaleReceipt', table: 'SALES_RECEIPTS', date: 'RECEIPT_DATE', posted: 'CLOSED_AT', sign: 1 },
+      { type: 'CreditNote', table: 'CREDIT_NOTES', date: 'CREDIT_NOTE_DATE', posted: 'OPENED_AT', sign: -1 },
+    ];
+    // Raw SQL bypasses the identifier mapper: tenant tables and columns are UPPER_SNAKE.
+    const parts = docs.map(
+      (d) => `SELECT D.PRICE_LEVEL_ID AS LEVEL_ID, D.CUSTOMER_ID AS CUSTOMER_ID, IE.ITEM_ID AS ITEM_ID,
+          ${d.sign} * IE.QUANTITY AS QTY,
+          ${d.sign} * IE.QUANTITY * COALESCE(IE.STANDARD_RATE, IE.RATE) * COALESCE(D.EXCHANGE_RATE, 1) AS NORMAL,
+          ${d.sign} * IE.QUANTITY * IE.RATE * COALESCE(D.EXCHANGE_RATE, 1) AS CHARGED
+        FROM ITEMS_ENTRIES IE JOIN ${d.table} D ON IE.REFERENCE_TYPE = '${d.type}' AND IE.REFERENCE_ID = D.ID
+        WHERE D.PRICE_LEVEL_ID IS NOT NULL AND D.${d.posted} IS NOT NULL AND D.${d.date} BETWEEN ? AND ?
+          ${query.priceLevelId ? 'AND D.PRICE_LEVEL_ID = ?' : ''}`,
+    );
+    const bindings = docs.flatMap(() => (query.priceLevelId ? [from, to, query.priceLevelId] : [from, to]));
+    const result = await this.tenantKnex().raw(
+      `SELECT T.LEVEL_ID, PL.NAME AS LEVEL_NAME, T.CUSTOMER_ID, C.DISPLAY_NAME AS CUSTOMER_NAME, T.ITEM_ID, I.NAME AS ITEM_NAME,
+          SUM(T.QTY) AS QTY, SUM(T.NORMAL) AS NORMAL, SUM(T.CHARGED) AS CHARGED
+        FROM (${parts.join(' UNION ALL ')}) T
+        JOIN PRICE_LEVELS PL ON PL.ID = T.LEVEL_ID
+        LEFT JOIN CONTACTS C ON C.ID = T.CUSTOMER_ID
+        LEFT JOIN ITEMS I ON I.ID = T.ITEM_ID
+        GROUP BY T.LEVEL_ID, PL.NAME, T.CUSTOMER_ID, C.DISPLAY_NAME, T.ITEM_ID, I.NAME
+        ORDER BY PL.NAME, C.DISPLAY_NAME, I.NAME`,
+      bindings,
+    );
+    const round = (n: unknown) => Math.round(Number(n ?? 0) * 100) / 100;
+    const rows = (result[0] as any[]).map((r) => {
+      // Raw rows keep the aliases (UPPER_SNAKE); accept a camelCased row too.
+      const get = (key: string) => r[key] ?? r[key.toLowerCase().replace(/_([a-z])/g, (_m, c) => c.toUpperCase())];
+      const normal = round(get('NORMAL'));
+      const charged = round(get('CHARGED'));
+      return {
+        priceLevelId: Number(get('LEVEL_ID')),
+        priceLevelName: get('LEVEL_NAME'),
+        customerId: get('CUSTOMER_ID') == null ? null : Number(get('CUSTOMER_ID')),
+        customerName: get('CUSTOMER_NAME') ?? null,
+        itemId: get('ITEM_ID') == null ? null : Number(get('ITEM_ID')),
+        itemName: get('ITEM_NAME') ?? null,
+        quantity: Number(get('QTY') ?? 0),
+        normalAmount: normal,
+        chargedAmount: charged,
+        difference: round(charged - normal),
+      };
+    });
+    const total = rows.reduce(
+      (t, r) => ({ normalAmount: round(t.normalAmount + r.normalAmount), chargedAmount: round(t.chargedAmount + r.chargedAmount) }),
+      { normalAmount: 0, chargedAmount: 0 },
+    );
+    const metadata = await this.tenancyContext.getTenantMetadata();
+    return {
+      fromDate: from,
+      toDate: to,
+      currencyCode: metadata.baseCurrency,
+      rows,
+      total: { ...total, difference: round(total.chargedAmount - total.normalAmount) },
     };
   }
 

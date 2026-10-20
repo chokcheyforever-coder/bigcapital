@@ -5,7 +5,14 @@ import { RequirePermission } from '@/modules/Roles/RequirePermission.decorator';
 import { PermissionGuard } from '@/modules/Roles/Permission.guard';
 import { AuthorizationGuard } from '@/modules/Roles/Authorization.guard';
 import { AbilitySubject } from '@/modules/Roles/Roles.types';
-import { AssignPriceLevelDto, CreatePriceLevelDto, EditPriceLevelDto, GetPriceLevelsQueryDto, ResolvePricesDto } from './dtos/PriceLevel.dto';
+import {
+  AssignPriceLevelDto,
+  CreatePriceLevelDto,
+  EditPriceLevelDto,
+  GetPriceLevelsQueryDto,
+  PriceLevelSalesReportQueryDto,
+  ResolvePricesDto,
+} from './dtos/PriceLevel.dto';
 import { PriceLevelCommandsService } from './commands/PriceLevelCommands.service';
 import { PriceLevelQueriesService } from './queries/PriceLevelQueries.service';
 import { PriceLevelAction } from './PriceLevels.types';
@@ -36,6 +43,13 @@ export class PriceLevelsController {
   @ApiOperation({ summary: 'Calculates the rates of document lines under a price level (or the contact\'s default one).' })
   resolve(@Body() dto: ResolvePricesDto) {
     return this.queries.resolve(dto);
+  }
+
+  @Get('reports/sales')
+  @RequirePermission(PriceLevelAction.View, AbilitySubject.PriceLevel)
+  @ApiOperation({ summary: 'Sales by price level: normal vs charged amounts per level, customer and item.' })
+  salesReport(@Query() query: PriceLevelSalesReportQueryDto) {
+    return this.queries.salesReport(query);
   }
 
   @Get(':id')

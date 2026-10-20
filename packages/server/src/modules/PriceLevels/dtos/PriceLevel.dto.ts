@@ -182,3 +182,19 @@ export class AssignPriceLevelDto {
   @IsInt({ each: true })
   contactIds: number[];
 }
+
+export class PriceLevelSalesReportQueryDto {
+  @ApiProperty({ example: '2026-01-01' })
+  @IsDateString()
+  fromDate: string;
+
+  @ApiProperty({ example: '2026-12-31' })
+  @IsDateString()
+  toDate: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ToNumber()
+  @IsInt()
+  priceLevelId?: number;
+}

@@ -180,6 +180,19 @@ describe('Price levels (e2e)', () => {
       expect(sumCredits(legs)).toBeCloseTo(1613.94, 2);
     });
 
+    it('Sales by price level equals the sales on those invoices', async () => {
+      const res = await http()
+        .get('/price-levels/reports/sales')
+        .query({ fromDate: '2026-01-01', toDate: '2026-12-31', priceLevelId: wholesale.id })
+        .set(authHeaders())
+        .expect(200);
+      // The invoice above: 2 laptops at 764.99 (normal 900) and 4 ink at 20.99 (normal 25).
+      expect(res.body.total).toEqual({ normal_amount: 1900, charged_amount: 1613.94, difference: -286.06 });
+      expect(res.body.rows.map((r) => [r.item_id, r.quantity, r.charged_amount])).toEqual(
+        expect.arrayContaining([[laptop, 2, 1529.98], [ink, 4, 83.96]]),
+      );
+    });
+
     it('a document without a level has no normal price recorded', async () => {
       const created = await invoice({ entries: [{ index: 1, itemId: laptop, quantity: 1, rate: 900 }] }).expect(201);
       const saved = await http().get(`/sale-invoices/${created.body.id}`).set(authHeaders()).expect(200);
