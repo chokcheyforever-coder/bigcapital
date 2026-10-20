@@ -1,4 +1,4 @@
-import { cellAmount, headerMonth } from './BudgetSheet.service';
+import { cellAmount, csvSafe, csvUnsafe, headerMonth } from './BudgetSheet.service';
 
 describe('budget sheet parsing', () => {
   it('reads month headers in the usual spreadsheet forms', () => {
@@ -26,5 +26,24 @@ describe('budget sheet parsing', () => {
     expect(cellAmount(null)).toBeNull();
     // "1,5" is not a thousands separator: left as is, refused later as not an amount.
     expect(cellAmount('1,5')).toBe('1,5');
+  });
+});
+
+describe('CSV formula guard', () => {
+  it.each([
+    ['=HYPERLINK("http://x","y")', '\'=HYPERLINK("http://x","y")'],
+    ['+cmd|calc', "'+cmd|calc"],
+    ['-2+3', "'-2+3"],
+    ['@SUM(A1)', "'@SUM(A1)"],
+    ['Rent', 'Rent'],
+    ['', ''],
+  ])('%s', (text, escaped) => {
+    expect(csvSafe(text)).toBe(escaped);
+    expect(csvUnsafe(escaped)).toBe(text);
+  });
+
+  it('leaves numbers alone', () => {
+    expect(csvSafe(-1250.5)).toBe(-1250.5);
+    expect(csvUnsafe("'It's fine")).toBe("'It's fine");
   });
 });

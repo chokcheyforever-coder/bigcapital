@@ -69,9 +69,20 @@ export function cellAmount(cell: unknown): number | string | null {
   return /^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(text) ? text.replace(/,/g, '') : text;
 }
 
+/**
+ * Text that a spreadsheet would run as a formula when it opens a CSV file
+ * ("=HYPERLINK(...)", "+cmd|..."): prefixed with an apostrophe, which Excel,
+ * LibreOffice and Sheets show as plain text. Numbers are left alone.
+ */
+export const csvSafe = (cell: unknown) => (typeof cell === 'string' && /^[=+\-@\t\r]/.test(cell) ? `'${cell}` : cell);
+
+/** Undoes csvSafe on import, so an exported file imports unchanged. */
+export const csvUnsafe = (text: string) => (/^'[=+\-@\t\r]/.test(text) ? text.slice(1) : text);
+
 /** An array of rows as a CSV or single-sheet XLSX file. */
 export function writeSheet(aoa: unknown[][], format: SheetFormat, baseName: string, sheetName: string) {
-  const sheet = XLSX.utils.aoa_to_sheet(aoa);
+  // XLSX keeps text cells as text; only CSV needs the formula guard.
+  const sheet = XLSX.utils.aoa_to_sheet(format === 'csv' ? aoa.map((row) => row.map(csvSafe)) : aoa);
   if (format === 'csv') {
     return { body: Buffer.from(XLSX.utils.sheet_to_csv(sheet), 'utf8'), filename: `${baseName}.csv`, contentType: 'text/csv; charset=utf-8' };
   }
@@ -209,7 +220,7 @@ export class BudgetSheetService {
       const get = (c: number) => (c >= 0 ? cells[c] : null);
       const text = (c: number) => {
         const v = get(c);
-        return v === null || v === undefined || String(v).trim() === '' ? null : String(v).trim();
+        return v === null || v === undefined || String(v).trim() === '' ? null : csvUnsafe(String(v).trim());
       };
       const code = text(cCode);
       const name = text(cName);

@@ -8,6 +8,7 @@ import { SystemMigrateRollbackCommand } from './commands/SystemMigrateRollback.c
 import { SystemMigrateMakeCommand } from './commands/SystemMigrateMake.command';
 import { TenantsMigrateLatestCommand } from './commands/TenantsMigrateLatest.command';
 import { TenantsMigrateRollbackCommand } from './commands/TenantsMigrateRollback.command';
+import { TenantsMigrateDownCommand } from './commands/TenantsMigrateDown.command';
 import { TenantsMigrateMakeCommand } from './commands/TenantsMigrateMake.command';
 import { TenantsListCommand } from './commands/TenantsList.command';
 import { SystemSeedLatestCommand } from './commands/SystemSeedLatest.command';
@@ -32,6 +33,7 @@ import { AnalyticsCoreModule } from '../Analytics/AnalyticsCore.module';
     SystemMigrateMakeCommand,
     TenantsMigrateLatestCommand,
     TenantsMigrateRollbackCommand,
+    TenantsMigrateDownCommand,
     TenantsMigrateMakeCommand,
     TenantsListCommand,
     SystemSeedLatestCommand,

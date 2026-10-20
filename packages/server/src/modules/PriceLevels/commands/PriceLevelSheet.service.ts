@@ -6,7 +6,7 @@ import { UnitOfWork } from '@/modules/Tenancy/TenancyDB/UnitOfWork.service';
 import { AuditLogService } from '@/modules/AuditLogs/AuditLog.service';
 import { AbilitySubject } from '@/modules/Roles/Roles.types';
 import { TENANCY_DB_CONNECTION } from '@/modules/Tenancy/TenancyDB/TenancyDB.constants';
-import { cellAmount, SheetFormat, writeSheet } from '@/modules/Budgeting/commands/BudgetSheet.service';
+import { cellAmount, csvUnsafe, SheetFormat, writeSheet } from '@/modules/Budgeting/commands/BudgetSheet.service';
 import { PriceLevelValidator } from './PriceLevelValidator.service';
 import { PriceLevelQueriesService } from '../queries/PriceLevelQueries.service';
 import { ERRORS } from '../PriceLevels.types';
@@ -80,7 +80,7 @@ export class PriceLevelSheetService {
     const seen = new Set<string>();
     body.forEach((cells, index) => {
       const row = index + 2;
-      const text = (c: number) => (c >= 0 && cells[c] != null ? String(cells[c]).trim() : '');
+      const text = (c: number) => (c >= 0 && cells[c] != null ? csvUnsafe(String(cells[c]).trim()) : '');
       const priceCell = cellAmount(cPrice >= 0 ? cells[cPrice] : null);
       if (priceCell === null) return; // no price: the item keeps its normal price
       const code = text(cCode).toLowerCase();
