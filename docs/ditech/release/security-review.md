@@ -27,6 +27,7 @@ on. Upstream BigCapital code was only looked at where DiTech code calls it.
 | 7 | Info | SSO tokens: 256-bit random, single use (`GETDEL`), 60 s lifetime. Service API: bearer token compared in constant time. | No change. |
 | 8 | Info | Uploads: 2 MB limit, one file, `.csv/.xlsx/.xls` only, parsed in memory, all rows validated before anything is saved. | No change. |
 | 9 | Info | Budget e-mails: message text and link are HTML-escaped (`escapeHtml`, unit spec). The webapp's DiTech screens render no raw HTML. | No change. |
+| 11 | Info | Found by the load test: the default 100 kB JSON body limit refused budget saves of more than about 250 lines (413), below the API's own 5,000-line limit. | **Changed**: JSON and form bodies up to 10 MB (`main.ts`). Uploads keep their own 2 MB limit; request rate limits are unchanged. |
 | 10 | Info | Every DiTech route sits behind `AuthorizationGuard` + `PermissionGuard` with a declared permission (controller specs for Budgeting, Projects, Price levels); the plan gate (`FEATURE_ROUTES`) blocks the routes of features a plan does not include, checked on staging. | No change. |
 
 ## Out of scope, noted
