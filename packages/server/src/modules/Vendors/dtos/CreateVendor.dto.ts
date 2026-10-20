@@ -12,8 +12,12 @@ import {
 } from 'class-validator';
 import { ContactAddressDto } from '@/modules/Customers/dtos/ContactAddress.dto';
 import { IsOptional, ToNumber } from '@/common/decorators/Validators';
+import { PriceLevelIdField } from '@/modules/PriceLevels/dtos/PriceLevelIdField';
 
 export class CreateVendorDto extends ContactAddressDto {
+  @PriceLevelIdField()
+  priceLevelId?: number | null;
+
   @ApiProperty({ required: false, description: 'Vendor opening balance' })
   @IsOptional()
   @IsInt()

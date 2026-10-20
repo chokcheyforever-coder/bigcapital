@@ -2,8 +2,12 @@ import { IsBoolean, IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { ContactAddressDto } from './ContactAddress.dto';
 import { IsOptional } from '@/common/decorators/Validators';
+import { PriceLevelIdField } from '@/modules/PriceLevels/dtos/PriceLevelIdField';
 
 export class EditCustomerDto extends ContactAddressDto {
+  @PriceLevelIdField()
+  priceLevelId?: number | null;
+
   @ApiProperty({ required: true, description: 'Customer type' })
   @IsString()
   @IsNotEmpty()

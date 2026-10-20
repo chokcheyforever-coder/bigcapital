@@ -15,6 +15,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { PriceLevelIdField } from '@/modules/PriceLevels/dtos/PriceLevelIdField';
 
 enum DiscountType {
   Percentage = 'percentage',
@@ -127,6 +128,9 @@ class CommandSaleInvoiceDto {
   @IsInt()
   @ApiProperty({ description: 'Branch ID', required: false, example: 1 })
   branchId?: number;
+
+  @PriceLevelIdField()
+  priceLevelId?: number | null;
 
   @IsOptional()
   @ToNumber()

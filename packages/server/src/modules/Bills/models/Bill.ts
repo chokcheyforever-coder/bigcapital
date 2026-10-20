@@ -45,6 +45,8 @@ export class Bill extends TenantBaseModel {
   public adjustment: number;
 
   public branchId: number;
+
+  public priceLevelId!: number | null;
   public warehouseId: number;
   public projectId: number;
 

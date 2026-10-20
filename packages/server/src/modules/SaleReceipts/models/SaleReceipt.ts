@@ -52,6 +52,8 @@ export class SaleReceipt extends ExtendedModel {
   public adjustment!: number;
 
   public branchId!: number;
+
+  public priceLevelId!: number | null;
   public projectId!: number | null;
   public warehouseId!: number;
 

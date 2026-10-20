@@ -1,0 +1,80 @@
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCommonHeaders } from '@/common/decorators/ApiCommonHeaders';
+import { RequirePermission } from '@/modules/Roles/RequirePermission.decorator';
+import { PermissionGuard } from '@/modules/Roles/Permission.guard';
+import { AuthorizationGuard } from '@/modules/Roles/Authorization.guard';
+import { AbilitySubject } from '@/modules/Roles/Roles.types';
+import { AssignPriceLevelDto, CreatePriceLevelDto, EditPriceLevelDto, GetPriceLevelsQueryDto, ResolvePricesDto } from './dtos/PriceLevel.dto';
+import { PriceLevelCommandsService } from './commands/PriceLevelCommands.service';
+import { PriceLevelQueriesService } from './queries/PriceLevelQueries.service';
+import { PriceLevelAction } from './PriceLevels.types';
+
+@Controller('price-levels')
+@ApiTags('Price levels')
+@ApiCommonHeaders()
+@UseGuards(AuthorizationGuard, PermissionGuard)
+export class PriceLevelsController {
+  constructor(
+    private readonly commands: PriceLevelCommandsService,
+    private readonly queries: PriceLevelQueriesService,
+  ) {}
+
+  @Get()
+  @RequirePermission(PriceLevelAction.View, AbilitySubject.PriceLevel)
+  @ApiOperation({ summary: 'Retrieves the price levels (active ones by default).' })
+  getPriceLevels(@Query() filter: GetPriceLevelsQueryDto) {
+    return this.queries.getPriceLevels(filter);
+  }
+
+  /**
+   * Rates for document lines. Anyone who can create sales or purchase
+   * documents needs it, so it only requires being signed in to the company.
+   */
+  @Post('resolve')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Calculates the rates of document lines under a price level (or the contact\'s default one).' })
+  resolve(@Body() dto: ResolvePricesDto) {
+    return this.queries.resolve(dto);
+  }
+
+  @Get(':id')
+  @RequirePermission(PriceLevelAction.View, AbilitySubject.PriceLevel)
+  @ApiOperation({ summary: 'Retrieves a price level with its item prices and categories.' })
+  @ApiResponse({ status: 404, description: 'The price level was not found.' })
+  getPriceLevel(@Param('id', ParseIntPipe) id: number) {
+    return this.queries.getPriceLevel(id);
+  }
+
+  @Post()
+  @RequirePermission(PriceLevelAction.Create, AbilitySubject.PriceLevel)
+  @ApiOperation({ summary: 'Creates a price level.' })
+  async createPriceLevel(@Body() dto: CreatePriceLevelDto) {
+    const level = await this.commands.createPriceLevel(dto);
+    return this.queries.getPriceLevel(level.id);
+  }
+
+  @Put(':id')
+  @RequirePermission(PriceLevelAction.Edit, AbilitySubject.PriceLevel)
+  @ApiOperation({ summary: 'Edits a price level (also deactivates or reactivates it through `active`).' })
+  async editPriceLevel(@Param('id', ParseIntPipe) id: number, @Body() dto: EditPriceLevelDto) {
+    await this.commands.editPriceLevel(id, dto);
+    return this.queries.getPriceLevel(id);
+  }
+
+  @Post(':id/assign')
+  @HttpCode(200)
+  @RequirePermission(PriceLevelAction.Edit, AbilitySubject.PriceLevel)
+  @ApiOperation({ summary: 'Makes this the default price level of the given customers or vendors.' })
+  assign(@Param('id', ParseIntPipe) id: number, @Body() dto: AssignPriceLevelDto) {
+    return this.commands.assign(id, dto);
+  }
+
+  @Delete(':id')
+  @RequirePermission(PriceLevelAction.Delete, AbilitySubject.PriceLevel)
+  @ApiOperation({ summary: 'Deletes a price level that nothing uses.' })
+  async deletePriceLevel(@Param('id', ParseIntPipe) id: number) {
+    await this.commands.deletePriceLevel(id);
+    return { id, message: 'The price level has been deleted.' };
+  }
+}

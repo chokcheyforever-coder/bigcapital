@@ -44,6 +44,7 @@ export class EditVendorService {
       // Triggers `onVendorEditing` event.
       await this.eventPublisher.emitAsync(events.vendors.onEditing, {
         trx,
+        vendorId,
         vendorDTO,
       } as IVendorEventEditingPayload);
 

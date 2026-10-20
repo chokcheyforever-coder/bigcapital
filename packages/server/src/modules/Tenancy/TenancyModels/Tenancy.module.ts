@@ -25,6 +25,8 @@ import { BudgetOverride } from '@/modules/Budgeting/models/BudgetOverride.model'
 import { BudgetControlEvent } from '@/modules/Budgeting/models/BudgetControlEvent.model';
 import { BudgetNotification } from '@/modules/Budgeting/models/BudgetNotification.model';
 import { BudgetSetting } from '@/modules/Budgeting/models/BudgetSetting.model';
+import { PriceLevel } from '@/modules/PriceLevels/models/PriceLevel.model';
+import { PriceLevelItem } from '@/modules/PriceLevels/models/PriceLevelItem.model';
 import { SaleEstimate } from '@/modules/SaleEstimates/models/SaleEstimate';
 import { Customer } from '@/modules/Customers/models/Customer';
 import { Contact } from '@/modules/Contacts/models/Contact';
@@ -76,6 +78,8 @@ const models = [
   BudgetControlEvent,
   BudgetNotification,
   BudgetSetting,
+  PriceLevel,
+  PriceLevelItem,
   SaleEstimate,
   Customer,
   Contact,
