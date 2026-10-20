@@ -141,7 +141,10 @@ Sales by price level shows normal 1,900.00, charged 1,613.94, difference −286.
   unless unchanged). After saving, each line stores the item's normal price.
 - Sales by price level: delivered invoices and closed receipts less open
   credit notes, quantity × rate before line discounts, in the base currency.
-- Webapp: Items › Price levels (list, editor, assign, report), price level on
+- Excel/CSV: `GET /:id/export` (a level with no prices exports every item
+  with an empty price, as the template) and `POST /:id/import` (replaces the
+  prices; items by code, else name; all rows or none).
+- Webapp: Items › Price levels (list, editor, assign, report, export/import), price level on
   customer/vendor forms, price level in the top bar of the six document forms.
   Rates fill automatically; a typed rate is never overwritten.
 - Not in this release: a per-item currency picker in the editor (the API takes

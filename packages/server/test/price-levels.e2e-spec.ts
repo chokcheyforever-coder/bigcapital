@@ -84,6 +84,32 @@ describe('Price levels (e2e)', () => {
       expect(list.body).toEqual([expect.objectContaining({ id: perItem.body.id, item_prices_count: 4, contacts_count: 0 })]);
     });
 
+    it('imports and exports per-item prices (all rows or none)', async () => {
+      const level = (await createLevel({ method: 'per_item' }).expect(201)).body;
+      const csv = (rows: string[]) => Buffer.from(['Item code,Item name,From quantity,Price', ...rows].join('\n'), 'utf8');
+
+      const bad = await http()
+        .post(`/price-levels/${level.id}/import`)
+        .set(authHeaders())
+        .attach('file', csv([`,Printer ink ${run},1,9`, ',No such item,1,5']), 'prices.csv')
+        .expect(400);
+      expect(bad.body.errors[0].type).toBe('PRICE_LEVEL_INVALID');
+      expect((await http().get(`/price-levels/${level.id}`).set(authHeaders()).expect(200)).body.items).toEqual([]);
+
+      const ok = await http()
+        .post(`/price-levels/${level.id}/import`)
+        .set(authHeaders())
+        .attach('file', csv([`,Printer ink ${run},1,9`, `,Printer ink ${run},20,7.5`, `,Laptop ${run},,`]), 'prices.csv')
+        .expect(200);
+      expect(ok.body).toEqual({ imported: 2 });
+      const saved = (await http().get(`/price-levels/${level.id}`).set(authHeaders()).expect(200)).body;
+      expect(saved.items.map((i) => [i.item_id, i.min_quantity, i.price])).toEqual([[ink, 1, 9], [ink, 20, 7.5]]);
+
+      const exported = await http().get(`/price-levels/${level.id}/export`).query({ format: 'csv' }).set(authHeaders()).expect(200);
+      expect(exported.text.split('\n')[0]).toContain('Item code,Item name,From quantity,Price,Normal price');
+      expect(exported.text).toContain(`Printer ink ${run},20,7.5,25`);
+    });
+
     it('refuses bad levels', async () => {
       const name = `Dup ${run}`;
       await createLevel({ name, method: 'percentage', percentage: 5 }).expect(201);

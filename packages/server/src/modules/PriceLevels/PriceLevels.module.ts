@@ -9,6 +9,7 @@ import { PriceLevelCommandsService } from './commands/PriceLevelCommands.service
 import { PriceLevelValidator } from './commands/PriceLevelValidator.service';
 import { PriceLevelQueriesService } from './queries/PriceLevelQueries.service';
 import { PriceLevelDocumentsSubscriber } from './subscribers/PriceLevelDocuments.subscriber';
+import { PriceLevelSheetService } from './commands/PriceLevelSheet.service';
 
 @Module({
   imports: [TenancyModule, TenancyDatabaseModule, AuditLogsModule],
@@ -17,6 +18,7 @@ import { PriceLevelDocumentsSubscriber } from './subscribers/PriceLevelDocuments
     PriceLevelCommandsService,
     PriceLevelValidator,
     PriceLevelQueriesService,
+    PriceLevelSheetService,
     PriceLevelDocumentsSubscriber,
     AuthorizationGuard,
     PermissionGuard,

@@ -1,5 +1,24 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  Res,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { Response } from 'express';
+import { ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ApiCommonHeaders } from '@/common/decorators/ApiCommonHeaders';
 import { RequirePermission } from '@/modules/Roles/RequirePermission.decorator';
 import { PermissionGuard } from '@/modules/Roles/Permission.guard';
@@ -15,7 +34,18 @@ import {
 } from './dtos/PriceLevel.dto';
 import { PriceLevelCommandsService } from './commands/PriceLevelCommands.service';
 import { PriceLevelQueriesService } from './queries/PriceLevelQueries.service';
+import { PriceLevelSheetService } from './commands/PriceLevelSheet.service';
+import { MAX_IMPORT_BYTES } from '@/modules/Budgeting/commands/BudgetSheet.service';
 import { PriceLevelAction } from './PriceLevels.types';
+
+const importUpload = {
+  storage: memoryStorage(),
+  limits: { fileSize: MAX_IMPORT_BYTES, files: 1 },
+  fileFilter: (_req: unknown, file: Express.Multer.File, cb: (error: Error | null, accept: boolean) => void) => {
+    const ok = /\.(csv|xlsx|xls)$/i.test(file.originalname);
+    cb(ok ? null : new BadRequestException('Upload a .csv or .xlsx file.'), ok);
+  },
+};
 
 @Controller('price-levels')
 @ApiTags('Price levels')
@@ -25,6 +55,7 @@ export class PriceLevelsController {
   constructor(
     private readonly commands: PriceLevelCommandsService,
     private readonly queries: PriceLevelQueriesService,
+    private readonly sheets: PriceLevelSheetService,
   ) {}
 
   @Get()
@@ -74,6 +105,29 @@ export class PriceLevelsController {
   async editPriceLevel(@Param('id', ParseIntPipe) id: number, @Body() dto: EditPriceLevelDto) {
     await this.commands.editPriceLevel(id, dto);
     return this.queries.getPriceLevel(id);
+  }
+
+  @Get(':id/export')
+  @RequirePermission(PriceLevelAction.View, AbilitySubject.PriceLevel)
+  @ApiQuery({ name: 'format', enum: ['xlsx', 'csv'], required: false })
+  @ApiOperation({ summary: 'Downloads a per-item level\'s prices as Excel or CSV (every item with an empty price when it has none yet).' })
+  async exportPrices(@Param('id', ParseIntPipe) id: number, @Query('format') format: string, @Res() res: Response) {
+    const file = await this.sheets.exportLevel(id, format === 'csv' ? 'csv' : 'xlsx');
+    res.setHeader('Content-Type', file.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${file.filename.replace(/[^\w.-]/g, '_')}"`);
+    res.send(file.body);
+  }
+
+  @Post(':id/import')
+  @HttpCode(200)
+  @RequirePermission(PriceLevelAction.Edit, AbilitySubject.PriceLevel)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
+  @ApiOperation({ summary: 'Replaces a per-item level\'s prices from an Excel/CSV file: all rows or none.' })
+  @UseInterceptors(FileInterceptor('file', importUpload))
+  importPrices(@Param('id', ParseIntPipe) id: number, @UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('Attach the file as "file".');
+    return this.sheets.importLevel(id, file.buffer);
   }
 
   @Post(':id/assign')

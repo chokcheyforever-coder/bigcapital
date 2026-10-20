@@ -1,5 +1,6 @@
 // @ts-nocheck
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
   Button,
@@ -36,6 +37,8 @@ import { useApiFetcher } from '@/hooks/useRequest';
 import { PriceLevelFormDialog } from './PriceLevelFormDialog';
 import { AssignPriceLevelDialog } from './AssignPriceLevelDialog';
 import { PriceLevelSalesReportDialog } from './PriceLevelSalesReportDialog';
+import { useBudgetFiles } from '@/ditech/budgeting/files';
+import { priceLevelsKeys } from '@/hooks/query/price-levels';
 import { describeLevel, usePriceLevelsEnabled } from './hooks';
 
 const DELETE_ERRORS = {
@@ -56,9 +59,18 @@ const COLUMNS = [
   { id: 'status', Header: 'Status', accessor: statusAccessor, width: 80 },
 ];
 
-function PriceLevelActionsMenu({ payload: { onEdit, onAssign, onToggle, onDelete }, row: { original } }) {
+function PriceLevelActionsMenu({ payload: { onEdit, onAssign, onToggle, onDelete, onExport, onImport }, row: { original } }) {
   return (
     <Menu>
+      {original.method === 'per_item' && (
+        <>
+          <MenuItem icon={'export'} text={'Export prices (Excel)'} onClick={safeCallback(onExport, original)} />
+          <Can I={PriceLevelAction.Edit} a={AbilitySubject.PriceLevel}>
+            <MenuItem icon={'import'} text={'Import prices…'} onClick={safeCallback(onImport, original)} />
+          </Can>
+          <MenuDivider />
+        </>
+      )}
       <Can I={PriceLevelAction.Edit} a={AbilitySubject.PriceLevel}>
         <MenuItem icon={<Icon icon="pen-18" />} text={'Edit price level'} onClick={safeCallback(onEdit, original)} />
         {original.active && (
@@ -93,6 +105,10 @@ export function PriceLevelsPage() {
   const [assigning, setAssigning] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [reportOpen, setReportOpen] = useState(false);
+  const { download, upload } = useBudgetFiles();
+  const queryClient = useQueryClient();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const importTarget = useRef(null);
 
   const query = { active, ...(search.trim() ? { search: search.trim() } : {}) };
   const { data: levels = [], isLoading, isFetching } = usePriceLevels(query, { enabled });
@@ -139,6 +155,26 @@ export function PriceLevelsPage() {
       AppToaster.show({ message: level.active ? 'The price level has been deactivated.' : 'The price level has been activated.', intent: Intent.SUCCESS });
     } catch {
       AppToaster.show({ message: 'Something went wrong.', intent: Intent.DANGER });
+    }
+  };
+
+  const exportPrices = (level) =>
+    download(`/api/price-levels/${level.id}/export?format=xlsx`, `price-level-${level.id}.xlsx`).catch(() =>
+      AppToaster.show({ message: 'The export failed.', intent: Intent.DANGER }),
+    );
+
+  const importPrices = async (file: File) => {
+    const level = importTarget.current;
+    if (!level || !file) return;
+    const res = await upload(`/api/price-levels/${level.id}/import`, file);
+    if (res.ok) {
+      AppToaster.show({ message: `${res.body?.imported ?? 0} prices imported into ${level.name}.`, intent: Intent.SUCCESS });
+      queryClient.invalidateQueries({ queryKey: priceLevelsKeys.all() });
+      queryClient.invalidateQueries({ queryKey: priceLevelsKeys.detail(level.id) });
+    } else {
+      const error = res.body?.errors?.[0];
+      const rows = (error?.data?.rows ?? []).slice(0, 3).map((r) => `row ${r.row}: ${r.message}`).join('; ');
+      AppToaster.show({ message: `${error?.message ?? 'The import failed.'}${rows ? ` (${rows})` : ''}`, intent: Intent.DANGER, timeout: 10000 });
     }
   };
 
@@ -216,6 +252,11 @@ export function PriceLevelsPage() {
                 onAssign: (l) => setAssigning(l),
                 onToggle: toggleActive,
                 onDelete: (l) => setDeleting(l),
+                onExport: exportPrices,
+                onImport: (l) => {
+                  importTarget.current = l;
+                  fileInput.current?.click();
+                },
               }}
             />
           )}
@@ -225,6 +266,17 @@ export function PriceLevelsPage() {
       <PriceLevelFormDialog isOpen={!!editing} levelId={editing?.id ?? null} onClose={() => setEditing(null)} />
       <AssignPriceLevelDialog level={assigning} onClose={() => setAssigning(null)} />
       <PriceLevelSalesReportDialog isOpen={reportOpen} onClose={() => setReportOpen(false)} />
+      <input
+        ref={fileInput}
+        type="file"
+        accept=".xlsx,.xls,.csv"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = '';
+          if (file) importPrices(file);
+        }}
+      />
 
       <Alert
         isOpen={!!deleting}
