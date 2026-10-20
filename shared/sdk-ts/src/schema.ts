@@ -2844,6 +2844,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/price-levels/reports/sales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sales by price level: normal vs charged amounts per level, customer and item. */
+        get: operations["PriceLevelsController_salesReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/price-levels/{id}": {
         parameters: {
             query?: never;
@@ -25025,6 +25042,32 @@ export interface operations {
                 "application/json": components["schemas"]["ResolvePricesDto"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PriceLevelsController_salesReport: {
+        parameters: {
+            query: {
+                fromDate: string;
+                toDate: string;
+                priceLevelId?: number;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
