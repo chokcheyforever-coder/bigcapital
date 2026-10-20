@@ -1315,6 +1315,17 @@ export const getDashboardRoutes = () => [
     pageTitle: 'Projects',
     subscriptionActive: [SUBSCRIPTION_TYPE.MAIN],
   },
+  // 103 DiTech: price levels.
+  {
+    path: '/price-levels',
+    component: lazy(() =>
+      import('@/ditech/pricing/PriceLevelsPage').then((m) => ({
+        default: m.PriceLevelsPage,
+      })),
+    ),
+    pageTitle: 'Price levels',
+    subscriptionActive: [SUBSCRIPTION_TYPE.MAIN],
+  },
   // 103 DiTech: budgeting. Fixed paths before /budgets/:id.
   {
     path: '/budgets/dashboard',

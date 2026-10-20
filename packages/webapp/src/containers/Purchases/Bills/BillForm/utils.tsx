@@ -52,6 +52,7 @@ export type BillFormEntry = {
 
 export type BillFormValues = {
   vendorId: string | number;
+  priceLevelId?: number | null;
   billNumber: string;
   billDate: string;
   dueDate: string;
@@ -89,6 +90,7 @@ export const defaultBillEntry: BillFormEntry = {
 // Default bill.
 export const defaultBill: BillFormValues = {
   vendorId: '',
+  priceLevelId: null,
   billNumber: '',
   billDate: moment(new Date()).format('YYYY-MM-DD'),
   dueDate: moment(new Date()).format('YYYY-MM-DD'),

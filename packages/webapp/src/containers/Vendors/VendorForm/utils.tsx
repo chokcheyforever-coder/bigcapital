@@ -48,6 +48,7 @@ export type VendorFormValues = {
   shippingAddressPhone: string;
 
   currencyCode: string;
+  priceLevelId?: number | null;
 
   openingBalance: string | number;
   openingBalanceAt: string;
@@ -88,6 +89,7 @@ export const defaultInitialValues: VendorFormValues = {
   shippingAddressPhone: '',
 
   currencyCode: '',
+  priceLevelId: null,
 
   openingBalance: '',
   openingBalanceAt: moment(new Date()).format('YYYY-MM-DD'),
@@ -129,6 +131,7 @@ export const transformFormToCreateRequest = (
   values: VendorFormValues,
 ): CreateVendorBody => ({
   currencyCode: values.currencyCode,
+  priceLevelId: values.priceLevelId ?? null,
   active: parseBoolean(values.active, true),
   openingBalanceExchangeRate: toNumber(values.openingBalanceExchangeRate) ?? 1,
 
@@ -172,6 +175,7 @@ export const transformFormToEditRequest = (
   values: VendorFormValues,
 ): EditVendorBody => ({
   active: parseBoolean(values.active, true),
+  priceLevelId: values.priceLevelId ?? null,
 
   salutation: values.salutation,
   firstName: values.firstName,

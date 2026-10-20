@@ -39,6 +39,7 @@ export type EstimateEntry = {
 
 export type EstimateFormValues = {
   customerId: string | number;
+  priceLevelId?: number | null;
   estimateDate: string;
   expirationDate: string;
   estimateNumber: string;
@@ -80,6 +81,7 @@ const defaultEstimateEntryReq = {
 
 export const defaultEstimate: EstimateFormValues = {
   customerId: '',
+  priceLevelId: null,
   estimateDate: moment(new Date()).format('YYYY-MM-DD'),
   expirationDate: moment(new Date()).format('YYYY-MM-DD'),
   estimateNumber: '',

@@ -24,6 +24,7 @@ export const AbilitySubject = {
   AuditLog: 'AuditLog',
   Project: 'Project',
   Budget: 'Budget',
+  PriceLevel: 'PriceLevel',
 } as const;
 
 export const ItemAction = {
@@ -192,6 +193,13 @@ export const TaxRateAction = {
 } as const;
 
 export const ProjectAction = {
+  View: 'View',
+  Create: 'Create',
+  Edit: 'Edit',
+  Delete: 'Delete',
+} as const;
+
+export const PriceLevelAction = {
   View: 'View',
   Create: 'Create',
   Edit: 'Edit',

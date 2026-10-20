@@ -39,6 +39,7 @@ export type VendorCreditEntry = {
 
 export type VendorCreditFormValues = {
   vendorId: string | number;
+  priceLevelId?: number | null;
   vendorCreditNumber: string;
   vendorCreditNumberManually: string | boolean;
   vendorCreditDate: string;
@@ -71,6 +72,7 @@ export const defaultVendorCreditEntry: VendorCreditEntry = {
 // Default vendor credit note.
 export const defaultVendorCredit: VendorCreditFormValues = {
   vendorId: '',
+  priceLevelId: null,
   vendorCreditNumber: '',
   vendorCreditNumberManually: false,
   open: '',

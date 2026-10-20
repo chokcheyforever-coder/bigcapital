@@ -21,6 +21,8 @@ import {
 } from '@/components';
 import { Features } from '@/constants';
 import { useFeatureCan } from '@/hooks/state';
+import { DocumentPriceLevel } from '@/ditech/pricing/DocumentPriceLevel';
+import { usePriceLevelsEnabled } from '@/ditech/pricing/hooks';
 
 /**
  * Estimate form topbar .
@@ -37,7 +39,14 @@ export function EstimtaeFormTopBar() {
   useSetPrimaryBranchToForm();
 
   // Can't display the navigation bar if warehouses or branches feature is not enabled.
-  if (!featureCan(Features.Warehouses) && !featureCan(Features.Branches)) {
+  const isPriceLevelsEnabled = usePriceLevelsEnabled();
+  const { isNewMode } = useEstimateFormContext();
+
+  if (
+    !featureCan(Features.Warehouses) &&
+    !featureCan(Features.Branches) &&
+    !isPriceLevelsEnabled
+  ) {
     return null;
   }
 
@@ -53,6 +62,15 @@ export function EstimtaeFormTopBar() {
         <FeatureCan feature={Features.Warehouses}>
           <EstimateFormSelectWarehouse />
         </FeatureCan>
+        <DocumentPriceLevel
+          type={'sales'}
+          contactField={'customerId'}
+          dateField={'estimateDate'}
+          isNewMode={isNewMode}
+          divider={
+            featureCan(Features.Warehouses) || featureCan(Features.Branches)
+          }
+        />
       </NavbarGroup>
     </FormTopbar>
   );

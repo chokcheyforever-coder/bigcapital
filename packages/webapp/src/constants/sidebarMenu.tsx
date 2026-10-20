@@ -18,6 +18,7 @@ import {
   ManualJournalAction,
   ProjectAction,
   BudgetAction,
+  PriceLevelAction,
   ExpenseAction,
   CashflowAction,
   PreferencesAbility,
@@ -100,6 +101,15 @@ export const SidebarMenu: SidebarMenuItem[] = [
                 permission: {
                   subject: AbilitySubject.Item,
                   ability: ItemAction.View,
+                },
+              },
+              {
+                text: 'Price levels',
+                href: '/price-levels',
+                type: ISidebarMenuItemType.Link,
+                permission: {
+                  subject: AbilitySubject.PriceLevel,
+                  ability: PriceLevelAction.View,
                 },
               },
               {
