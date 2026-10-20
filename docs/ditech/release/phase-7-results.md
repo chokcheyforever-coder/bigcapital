@@ -65,4 +65,4 @@ migrations down), 1 test added, 1 low risk accepted, 1 limit raised.
 
 - Owner approval for the production deploy.
 - Native Khmer review of the user guide.
-- Clean up staging test companies (pool1 at 102 / 150).
+- Clean up staging test companies (pool1: just over 100 of 150).
