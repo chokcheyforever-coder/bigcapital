@@ -147,9 +147,12 @@ export class ExciseTaxService {
     for (const kind of Object.keys(PAYABLE_ACCOUNTS) as ExciseTaxKind[]) {
       accounts[kind] = (await this.findOrCreatePayable(kind, trx)).id;
     }
-    await this.codeModel()
-      .query(trx)
-      .insert(DEFAULT_EXCISE_TAX_CODES.map((c) => ({ ...c, accountId: accounts[c.kind], active: true })) as any);
+    // One by one: objection's batch insert is not supported on MySQL.
+    for (const c of DEFAULT_EXCISE_TAX_CODES) {
+      await this.codeModel()
+        .query(trx)
+        .insert({ ...c, accountId: accounts[c.kind], active: true } as any);
+    }
   }
 
   private async findOrCreatePayable(kind: ExciseTaxKind, trx?: Knex.Transaction) {
