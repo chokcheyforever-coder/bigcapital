@@ -38,13 +38,23 @@ export class TaxDocumentPdfService {
    * `amounts` are in the document currency: total payable and tax in it.
    */
   async attributes(doc: DocType, id: number, amounts: { total: number; tax: number }): Promise<ComplianceAttributes | undefined> {
+    return (await this.explain(doc, id, amounts)).attributes;
+  }
+
+  /** The attributes, or why there are none (profile off, document not found). */
+  async explain(doc: DocType, id: number, amounts: { total: number; tax: number }): Promise<{ attributes?: ComplianceAttributes; reason?: string }> {
     const profile = await this.profiles.get();
-    if (!profile.enabled) return undefined;
+    if (!profile.enabled) return { reason: 'profile_off' };
     const knex = this.tenantKnex();
     const row = await knex(TABLES[doc])
       .where('id', id)
       .first('customer_id', 'document_kind', 'khr_rate', 'khr_rate_source', 'khr_rate_date', 'currency_code');
-    if (!row) return undefined;
+    if (!row) return { reason: `not_found:${TABLES[doc]}:${id}` };
+    return { attributes: await this.build(doc, row, profile, amounts) };
+  }
+
+  private async build(doc: DocType, row: any, profile: Awaited<ReturnType<TaxProfileService['get']>>, amounts: { total: number; tax: number }): Promise<ComplianceAttributes> {
+    const knex = this.tenantKnex();
     const get = (camel: string, snake: string) => row[camel] ?? row[snake];
     const contact = await knex('contacts')
       .where('id', get('customerId', 'customer_id'))

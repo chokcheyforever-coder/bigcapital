@@ -51,6 +51,7 @@ export class TaxComplianceController {
   async document(@Param('type') type: string, @Param('id', ParseIntPipe) id: number, @Query('total') total?: string, @Query('tax') tax?: string) {
     const types: Record<string, 'SaleInvoice' | 'SaleReceipt' | 'CreditNote'> = { 'sale-invoices': 'SaleInvoice', 'sale-receipts': 'SaleReceipt', 'credit-notes': 'CreditNote' };
     if (!types[type]) throw new BadRequestException('type must be sale-invoices, sale-receipts or credit-notes');
-    return (await this.documents.attributes(types[type], id, { total: Number(total ?? 0), tax: Number(tax ?? 0) })) ?? {};
+    const out = await this.documents.explain(types[type], id, { total: Number(total ?? 0), tax: Number(tax ?? 0) });
+    return out.attributes ?? { reason: out.reason };
   }
 }
