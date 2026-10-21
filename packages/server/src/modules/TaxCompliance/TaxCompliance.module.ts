@@ -7,12 +7,13 @@ import { PermissionGuard } from '../Roles/Permission.guard';
 import { TaxComplianceController } from './TaxCompliance.controller';
 import { TaxProfileService } from './TaxProfile.service';
 import { TaxDocumentPdfService } from './TaxDocumentPdf.service';
+import { ExciseTaxService } from './ExciseTax.service';
 import { TaxDocumentsSubscriber } from './subscribers/TaxDocuments.subscriber';
 
 @Module({
   imports: [TenancyModule, TenancyDatabaseModule, AuditLogsModule],
   controllers: [TaxComplianceController],
-  providers: [TaxProfileService, TaxDocumentPdfService, TaxDocumentsSubscriber, AuthorizationGuard, PermissionGuard],
-  exports: [TaxProfileService, TaxDocumentPdfService],
+  providers: [TaxProfileService, TaxDocumentPdfService, ExciseTaxService, TaxDocumentsSubscriber, AuthorizationGuard, PermissionGuard],
+  exports: [TaxProfileService, TaxDocumentPdfService, ExciseTaxService],
 })
 export class TaxComplianceModule {}

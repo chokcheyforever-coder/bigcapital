@@ -30,6 +30,8 @@ export class SaleInvoiceTransformer extends Transformer {
       'discountPercentageFormatted',
       'adjustmentFormatted',
       'taxes',
+      'exciseAmountFormatted',
+      'exciseTaxes',
       'entries',
       'attachments',
     ];
@@ -221,12 +223,49 @@ export class SaleInvoiceTransformer extends Transformer {
   };
 
   /**
+   * 103 DiTech: Specific/Accommodation Tax + PLT formatted.
+   * @param {SaleInvoice} invoice
+   * @returns {string}
+   */
+  protected exciseAmountFormatted = (invoice: SaleInvoice): string => {
+    return this.formatNumber(Number(invoice.exciseAmount) || 0, {
+      currencyCode: invoice.currencyCode,
+    });
+  };
+
+  /**
+   * 103 DiTech: the taxes charged before VAT, one line per code and rate.
+   * @param {SaleInvoice} invoice
+   */
+  protected exciseTaxes = (invoice: SaleInvoice) => {
+    const lines = new Map<string, { code: string; name: string; nameKm: string | null; rate: number; amount: number }>();
+    for (const entry of invoice.entries ?? []) {
+      const parts = [
+        { code: (entry as any).specificTaxCode, rate: entry.specificTaxRate, amount: entry.specificTaxAmount },
+        { code: (entry as any).pltCode, rate: entry.pltRate, amount: entry.pltAmount },
+      ];
+      for (const part of parts) {
+        if (!part.amount) continue;
+        const key = `${part.code?.code ?? '?'}@${Number(part.rate)}`;
+        const line = lines.get(key) ?? { code: part.code?.code ?? '', name: part.code?.name ?? '', nameKm: part.code?.nameKm ?? null, rate: Number(part.rate), amount: 0 };
+        line.amount += part.amount;
+        lines.set(key, line);
+      }
+    }
+    return [...lines.values()].map((line) => ({
+      ...line,
+      amountFormatted: this.formatNumber(line.amount, { currencyCode: invoice.currencyCode }),
+    }));
+  };
+
+  /**
    * Retrieve the taxes lines of sale invoice.
    * @param {ISaleInvoice} invoice
    */
   protected taxes = (invoice: SaleInvoice) => {
     return this.item(invoice.taxes, new SaleInvoiceTaxEntryTransformer(), {
-      subtotal: invoice.subtotal,
+      // 103 DiTech: VAT is charged on the Specific Tax and PLT too.
+      subtotal: invoice.subtotal + (Number(invoice.exciseAmount) || 0),
       isInclusiveTax: invoice.isInclusiveTax,
       currencyCode: invoice.currencyCode,
     });

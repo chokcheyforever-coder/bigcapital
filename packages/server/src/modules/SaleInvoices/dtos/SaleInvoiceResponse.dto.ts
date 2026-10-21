@@ -187,6 +187,27 @@ export class SaleInvoiceResponseDto {
   taxAmountWithheld?: number;
 
   @ApiProperty({
+    description: '103 DiTech: Specific/Accommodation Tax and Public Lighting Tax of the lines (charged before VAT)',
+    example: 35,
+    required: false,
+  })
+  exciseAmount?: number;
+
+  @ApiProperty({
+    description: 'Formatted Specific/Accommodation Tax and PLT',
+    example: '$35.00',
+    required: false,
+  })
+  exciseAmountFormatted?: string;
+
+  @ApiProperty({
+    description: 'The taxes charged before VAT, one line per code and rate',
+    required: false,
+    example: [{ code: 'ST-ALCOHOL', name: 'Specific Tax – wine and spirits', nameKm: 'អាករពិសេស – ស្រា', rate: 35, amount: 35, amountFormatted: '$35.00' }],
+  })
+  exciseTaxes?: Array<{ code: string; name: string; nameKm: string | null; rate: number; amount: number; amountFormatted: string }>;
+
+  @ApiProperty({
     description: 'The balance of the invoice',
     example: 1000,
   })

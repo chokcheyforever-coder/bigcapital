@@ -12,6 +12,8 @@ import { SaveTaxProfileDto } from './dtos/TaxProfile.dto';
 import { DocumentPreviewDto } from './dtos/DocumentPreview.dto';
 import { TaxProfileService } from './TaxProfile.service';
 import { TaxDocumentPdfService } from './TaxDocumentPdf.service';
+import { ExciseTaxService } from './ExciseTax.service';
+import { EditExciseTaxCodeDto, SetExciseTaxCodeItemsDto } from './dtos/ExciseTaxCode.dto';
 
 @Controller('tax-compliance')
 @ApiTags('Tax compliance')
@@ -21,6 +23,7 @@ export class TaxComplianceController {
   constructor(
     private readonly profiles: TaxProfileService,
     private readonly documents: TaxDocumentPdfService,
+    private readonly excise: ExciseTaxService,
   ) {}
 
   /** Anyone preparing documents needs to know whether tax documents are on. */
@@ -83,5 +86,26 @@ export class TaxComplianceController {
     if (!types[type]) throw new BadRequestException('type must be sale-invoices, sale-receipts or credit-notes');
     const out = await this.documents.explain(types[type], id, { total: Number(total ?? 0), tax: Number(tax ?? 0) });
     return out.attributes ?? { reason: out.reason };
+  }
+
+  /** Specific Tax, Accommodation Tax and PLT codes with their items (created on first use). */
+  @Get('excise-codes')
+  @ApiOperation({ summary: 'Lists the taxes charged before VAT (Specific Tax, Accommodation Tax, Public Lighting Tax) and their items.' })
+  exciseCodes() {
+    return this.excise.list();
+  }
+
+  @Put('excise-codes/:id')
+  @RequirePermission(PreferencesAction.Mutate, AbilitySubject.Preferences)
+  @ApiOperation({ summary: 'Edits a tax code: rate, base percentage, payable account, active.' })
+  editExciseCode(@Param('id', ParseIntPipe) id: number, @Body() dto: EditExciseTaxCodeDto) {
+    return this.excise.edit(id, dto);
+  }
+
+  @Put('excise-codes/:id/items')
+  @RequirePermission(PreferencesAction.Mutate, AbilitySubject.Preferences)
+  @ApiOperation({ summary: 'Sets the items charged this tax (replaces the list).' })
+  setExciseCodeItems(@Param('id', ParseIntPipe) id: number, @Body() dto: SetExciseTaxCodeItemsDto) {
+    return this.excise.setItems(id, dto.itemIds);
   }
 }

@@ -23,7 +23,7 @@ export interface ComplianceProps {
   seller: ComplianceParty;
   buyer: ComplianceParty;
   labels: Record<string, string>;
-  khr?: { label: string; rate: string; source: string; date: string; subtotal: string; tax: string; total: string };
+  khr?: { label: string; rate: string; source: string; date: string; subtotal: string; tax: string; total: string; excise?: string };
   signatory?: { name?: string | null; title?: string | null };
 }
 
@@ -89,6 +89,7 @@ export function ComplianceKhrBox({ compliance }: { compliance: ComplianceProps }
         {[khr.source, khr.date].filter(Boolean).join(' · ')}
       </x.div>
       {row(compliance.labels.khrSubtotal, khr.subtotal)}
+      {khr.excise ? row(compliance.labels.khrExcise ?? 'Specific Tax & PLT', khr.excise) : null}
       {row(compliance.labels.khrTax, khr.tax)}
       {row(compliance.labels.khrTotal, khr.total, true)}
     </x.div>

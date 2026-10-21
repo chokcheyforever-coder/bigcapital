@@ -17,6 +17,7 @@ import { assocItemEntriesDefaultIndex } from '@/utils/associate-item-entries-ind
 import { formatDateFields } from '@/utils/format-date-fields';
 import { ItemEntriesTaxTransactions } from '@/modules/TaxRates/ItemEntriesTaxTransactions.service';
 import { TenancyContext } from '@/modules/Tenancy/TenancyContext.service';
+import { ExciseTaxService } from '@/modules/TaxCompliance/ExciseTax.service';
 import {
   CreateSaleInvoiceDto,
   EditSaleInvoiceDto,
@@ -44,6 +45,7 @@ export class CommandSaleInvoiceDTOTransformer {
     private taxDTOTransformer: ItemEntriesTaxTransactions,
     private brandingTemplatesTransformer: BrandingTemplateDTOTransformer,
     private tenancyContext: TenancyContext,
+    private exciseTax: ExciseTaxService,
   ) {}
 
   /**
@@ -79,6 +81,12 @@ export class CommandSaleInvoiceDTOTransformer {
       ...entry,
     }));
     const asyncEntries = await composeAsync(
+      // 103 DiTech: Specific/Accommodation Tax and PLT rates from the items.
+      (entries) =>
+        this.exciseTax.assocExciseToEntries(
+          entries,
+          saleInvoiceDTO.isInclusiveTax,
+        ),
       // Associate tax rate from tax id to entries.
       this.taxDTOTransformer.assocTaxRateFromTaxIdToEntries,
       // Associate tax rate id from tax code to entries.
@@ -130,9 +138,10 @@ export class CommandSaleInvoiceDTOTransformer {
       ),
     )(initialDTO);
 
-    return R.compose(this.taxDTOTransformer.assocTaxAmountWithheldFromEntries)(
-      initialAsyncDTO,
-    );
+    return R.compose(
+      this.taxDTOTransformer.assocTaxAmountWithheldFromEntries,
+      this.assocExciseAmountFromEntries,
+    )(initialAsyncDTO);
   }
 
   /**
@@ -149,6 +158,19 @@ export class CommandSaleInvoiceDTOTransformer {
         isInclusiveTax: saleInvoiceDTO.isInclusiveTax,
       });
     });
+  };
+
+  /**
+   * Sums the lines' Specific/Accommodation Tax and PLT (103 DiTech).
+   * @param {SaleInvoice} model
+   * @returns {SaleInvoice}
+   */
+  private assocExciseAmountFromEntries = (model: SaleInvoice) => {
+    model.exciseAmount = sumBy(
+      model.entries,
+      (entry) => ItemEntry.fromJson(entry).exciseAmount,
+    );
+    return model;
   };
 
   /**

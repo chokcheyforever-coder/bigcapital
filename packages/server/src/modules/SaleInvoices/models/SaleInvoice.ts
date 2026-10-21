@@ -27,6 +27,8 @@ import { SaleInvoiceDefaultViews } from '../constants';
 @InjectModelDefaultViews(SaleInvoiceDefaultViews)
 export class SaleInvoice extends TenantBaseModel {
   public taxAmountWithheld: number;
+  /** 103 DiTech: Specific/Accommodation Tax + PLT of the lines (charged before VAT). */
+  public exciseAmount: number;
   public balance: number;
   public paymentAmount: number;
   public exchangeRate: number;
@@ -219,8 +221,15 @@ export class SaleInvoice extends TenantBaseModel {
     const totalTax = this.isInclusiveTax
       ? 0
       : defaultTo(0, this.taxAmountWithheld);
+    const exciseAmount = Number(defaultTo(this.exciseAmount, 0)) || 0;
 
-    return this.subtotal - this.discountAmount + adjustmentAmount + totalTax;
+    return (
+      this.subtotal -
+      this.discountAmount +
+      adjustmentAmount +
+      totalTax +
+      exciseAmount
+    );
   }
 
   /**

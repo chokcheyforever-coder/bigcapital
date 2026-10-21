@@ -146,6 +146,33 @@ export class InvoiceGL {
   }
 
   /**
+   * 103 DiTech: the Specific/Accommodation Tax and PLT of a line, credited to
+   * each code's payable account (the tax payable account when a code has none).
+   * @param {ItemEntry} entry - Item entry.
+   * @param {number} index - Index.
+   * @returns {ILedgerEntry[]}
+   */
+  private getInvoiceExciseEntries(entry: ItemEntry, index: number): ILedgerEntry[] {
+    const commonEntry = this.invoiceGLCommonEntry;
+    const parts = [
+      { amount: entry.specificTaxAmount, accountId: (entry as any).specificTaxCode?.accountId },
+      { amount: entry.pltAmount, accountId: (entry as any).pltCode?.accountId },
+    ];
+    return parts
+      .filter((part) => part.amount > 0)
+      .map((part, partIndex) => ({
+        ...commonEntry,
+        credit: part.amount * this.saleInvoice.exchangeRate,
+        accountId: part.accountId || this.taxPayableAccountId,
+        note: entry.description,
+        index: index * 2 + partIndex + 1,
+        indexGroup: 20,
+        itemId: entry.itemId,
+        accountNormal: AccountNormal.CREDIT,
+      }));
+  }
+
+  /**
    * Retrieves the invoice discount GL entry.
    * @returns {ILedgerEntry}
    */
@@ -190,10 +217,14 @@ export class InvoiceGL {
     const taxEntries = this.saleInvoice.entries
       .filter((entry) => entry.taxAmount > 0)
       .map((entry, index) => this.getInvoiceTaxEntry(entry, index));
+    const exciseEntries = this.saleInvoice.entries.flatMap((entry, index) =>
+      this.getInvoiceExciseEntries(entry, index),
+    );
 
     return [
       this.invoiceReceivableEntry,
       ...creditEntries,
+      ...exciseEntries,
       ...taxEntries,
       this.invoiceDiscountEntry,
       this.adjustmentEntry,
