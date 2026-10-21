@@ -221,7 +221,7 @@ export class SaleInvoice extends TenantBaseModel {
     const totalTax = this.isInclusiveTax
       ? 0
       : defaultTo(0, this.taxAmountWithheld);
-    const exciseAmount = Number(defaultTo(this.exciseAmount, 0)) || 0;
+    const exciseAmount = Number(defaultTo(0, this.exciseAmount)) || 0;
 
     return (
       this.subtotal -

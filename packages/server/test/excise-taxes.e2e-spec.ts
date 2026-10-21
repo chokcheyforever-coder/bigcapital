@@ -67,7 +67,7 @@ describe('Specific Tax and PLT (e2e)', () => {
     const list = await codes();
     expect(list.map((c) => c.kind)).toEqual(expect.arrayContaining(['specific', 'accommodation', 'plt']));
     expect(list.every((c) => c.account_id)).toBe(true);
-    expect(wine).toMatchObject({ rate: 35, base_percent: 100, item_ids: [itemId] });
+    expect(list.find((c) => c.id === wine.id)).toMatchObject({ rate: 35, base_percent: 100, item_ids: [itemId] });
   });
 
   it('charges Specific Tax and PLT before VAT and posts them to their accounts', async () => {
@@ -101,14 +101,18 @@ describe('Specific Tax and PLT (e2e)', () => {
   it('keeps the rates an invoice was saved with when a code changes', async () => {
     const id = (await createInvoice().expect(201)).body.id;
     await http().put(`/tax-compliance/excise-codes/${wine.id}`).set(authHeaders()).send({ rate: 50 }).expect(200);
+    try {
+      const before = (await http().get(`/sale-invoices/${id}`).set(authHeaders()).expect(200)).body;
+      expect(Number(before.total)).toBeCloseTo(305.91, 2);
 
-    const before = (await http().get(`/sale-invoices/${id}`).set(authHeaders()).expect(200)).body;
-    expect(Number(before.total)).toBeCloseTo(305.91, 2);
-
-    // A new invoice uses the new rate: 200 + 100 + 9 + 30.9
-    const after = (await createInvoice().expect(201)).body.id;
-    const invoice = (await http().get(`/sale-invoices/${after}`).set(authHeaders()).expect(200)).body;
-    expect(Number(invoice.total)).toBeCloseTo(339.9, 2);
+      // A new invoice uses the new rate: 200 + 100 + 9 + 30.9
+      const after = (await createInvoice().expect(201)).body.id;
+      const invoice = (await http().get(`/sale-invoices/${after}`).set(authHeaders()).expect(200)).body;
+      expect(Number(invoice.total)).toBeCloseTo(339.9, 2);
+    } finally {
+      // Retries run the other tests again: leave the rate as they expect it.
+      await http().put(`/tax-compliance/excise-codes/${wine.id}`).set(authHeaders()).send({ rate: 35 }).expect(200);
+    }
   });
 
   it('refuses tax-inclusive prices for items with these taxes', async () => {
