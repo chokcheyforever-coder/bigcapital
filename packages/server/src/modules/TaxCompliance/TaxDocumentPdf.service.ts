@@ -58,7 +58,8 @@ export class TaxDocumentPdfService {
     const get = (camel: string, snake: string) => row[camel] ?? row[snake];
     const contact = await knex('contacts')
       .where('id', get('customerId', 'customer_id'))
-      .first('display_name', 'display_name_km', 'tax_number', 'billing_address_1', 'billing_address_2', 'billing_address_city', 'billing_address_country', 'billing_address_km');
+      // camelCase: the identifier mapper turns billingAddress1 into BILLING_ADDRESS1 (snake_case "billing_address_1" would not match).
+      .first('displayName', 'displayNameKm', 'taxNumber', 'billingAddress1', 'billingAddress2', 'billingAddressCity', 'billingAddressCountry', 'billingAddressKm');
     const c = (camel: string, snake: string) => (contact ? contact[camel] ?? contact[snake] : null);
     const metadata = await this.tenancyContext.getTenantMetadata();
     const lang = profile.documentLanguage;
@@ -86,7 +87,7 @@ export class TaxDocumentPdfService {
         : undefined;
 
     const labels = Object.fromEntries(Object.entries(LABELS).map(([k, v]) => [k, label(v, lang)]));
-    const address = [c('billingAddress1', 'billing_address_1'), c('billingAddress2', 'billing_address_2'), c('billingAddressCity', 'billing_address_city'), c('billingAddressCountry', 'billing_address_country')]
+    const address = [c('billingAddress1', 'billingAddress1'), c('billingAddress2', 'billingAddress2'), c('billingAddressCity', 'billingAddressCity'), c('billingAddressCountry', 'billingAddressCountry')]
       .filter(Boolean)
       .join(', ');
     return {
