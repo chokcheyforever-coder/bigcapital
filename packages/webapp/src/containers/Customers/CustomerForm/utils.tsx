@@ -50,6 +50,10 @@ export type CustomerFormValues = {
 
   currencyCode: string;
   priceLevelId?: number | null;
+  taxNumber?: string;
+  registeredTaxpayer?: boolean;
+  displayNameKm?: string;
+  billingAddressKm?: string;
 
   openingBalance: string | number;
   openingBalanceAt: string;
@@ -92,6 +96,10 @@ export const defaultInitialValues: CustomerFormValues = {
 
   currencyCode: '',
   priceLevelId: null,
+  taxNumber: '',
+  registeredTaxpayer: false,
+  displayNameKm: '',
+  billingAddressKm: '',
 
   openingBalance: '',
   openingBalanceAt: moment(new Date()).format('YYYY-MM-DD'),
@@ -134,6 +142,10 @@ export const transformFormToCreateRequest = (
   customerType: values.customerType,
   currencyCode: values.currencyCode,
   priceLevelId: values.priceLevelId ?? null,
+  taxNumber: values.taxNumber?.trim() || null,
+  registeredTaxpayer: !!values.registeredTaxpayer,
+  displayNameKm: values.displayNameKm?.trim() || null,
+  billingAddressKm: values.billingAddressKm?.trim() || null,
   displayName: values.displayName,
   active: parseBoolean(values.active, true),
 
@@ -180,6 +192,10 @@ export const transformFormToEditRequest = (
   displayName: values.displayName,
   active: parseBoolean(values.active, true),
   priceLevelId: values.priceLevelId ?? null,
+  taxNumber: values.taxNumber?.trim() || null,
+  registeredTaxpayer: !!values.registeredTaxpayer,
+  displayNameKm: values.displayNameKm?.trim() || null,
+  billingAddressKm: values.billingAddressKm?.trim() || null,
 
   salutation: values.salutation,
   firstName: values.firstName,

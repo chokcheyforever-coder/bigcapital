@@ -55,9 +55,10 @@ PaperTemplate.BigTitle = ({ title }: PaperTemplateBigTitleProps) => {
     <x.h1
       fontSize={'30px'}
       margin={0}
-      lineHeight={1}
+      lineHeight={1.2}
       fontWeight={500}
       color={'#333'}
+      whiteSpace={'pre-line'}
     >
       {title}
     </x.h1>
@@ -109,6 +110,7 @@ PaperTemplate.Table = ({ columns, data }: PaperTemplateTableProps) => {
 
         thead th {
           font-weight: 400;
+          white-space: pre-line;
           border-bottom: 1px solid #000;
           padding: 2px 10px;
           color: #333;
@@ -220,7 +222,9 @@ PaperTemplate.TotalLine = ({
       })}
       style={style}
     >
-      <x.div min-w="160px">{label}</x.div>
+      <x.div min-w="160px" whiteSpace={'pre-line'}>
+        {label}
+      </x.div>
       <x.div flex={'1 1 auto'} textAlign={'right'}>
         {amount}
       </x.div>
@@ -279,7 +283,7 @@ PaperTemplate.TermsItem = ({
 }) => {
   return (
     <Group spacing={12}>
-      <x.div minWidth={'120px'} color={'#333'}>
+      <x.div minWidth={'120px'} color={'#333'} whiteSpace={'pre-line'}>
         {label}
       </x.div>
       <x.div>{children}</x.div>

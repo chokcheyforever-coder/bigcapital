@@ -47,9 +47,11 @@ import { MailNotificationModule } from '../MailNotification/MailNotification.mod
 import { MailModule } from '../Mail/Mail.module';
 import { TenancyModule } from '../Tenancy/Tenancy.module';
 import { SendCreditNoteMailQueue } from './types/CreditNotes.types';
+import { TaxComplianceModule } from '@/modules/TaxCompliance/TaxCompliance.module';
 
 @Module({
   imports: [
+    TaxComplianceModule,
     TenancyModule,
     ItemsModule,
     BranchesModule,

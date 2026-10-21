@@ -16,6 +16,7 @@ import {
   DefaultPdfTemplateAddressBilledTo,
   DefaultPdfTemplateAddressBilledFrom,
 } from './_constants';
+import { ComplianceKhrBox, ComplianceParties, ComplianceProps, ComplianceSignatures } from './Compliance';
 
 interface InvoiceLine {
   item?: string;
@@ -120,6 +121,9 @@ export interface InvoicePaperTemplateProps extends PaperTemplateProps {
 
   lines?: Array<InvoiceLine>;
   taxes?: Array<InvoiceTaxLine>;
+
+  /** 103 DiTech: Cambodian tax document (title, TINs, riel, Khmer/English labels, signatures). */
+  compliance?: ComplianceProps;
 }
 
 export function InvoicePaperTemplate({
@@ -211,8 +215,12 @@ export function InvoicePaperTemplate({
   statementLabel = 'Statement',
   showStatement = true,
   statement = DefaultPdfTemplateStatement,
+  compliance,
   ...props
 }: InvoicePaperTemplateProps) {
+  // A tax document prints its own title and bilingual labels.
+  const L = compliance?.labels;
+  const title = compliance ? [compliance.title, compliance.subtitle].filter(Boolean).join('\n') : 'Invoice';
   return (
     <PaperTemplate
       primaryColor={primaryColor}
@@ -222,21 +230,21 @@ export function InvoicePaperTemplate({
       <Stack spacing={24}>
         <Group align="start" spacing={10}>
           <Stack flex={1}>
-            <PaperTemplate.BigTitle title={'Invoice'} />
+            <PaperTemplate.BigTitle title={title} />
 
             <PaperTemplate.TermsList>
               {showInvoiceNumber && (
-                <PaperTemplate.TermsItem label={invoiceNumberLabel}>
+                <PaperTemplate.TermsItem label={L?.invoiceNumber ?? invoiceNumberLabel}>
                   {invoiceNumber}
                 </PaperTemplate.TermsItem>
               )}
               {showDateIssue && (
-                <PaperTemplate.TermsItem label={dateIssueLabel}>
+                <PaperTemplate.TermsItem label={L?.dateIssue ?? dateIssueLabel}>
                   {dateIssue}
                 </PaperTemplate.TermsItem>
               )}
               {showDueDate && (
-                <PaperTemplate.TermsItem label={dueDateLabel}>
+                <PaperTemplate.TermsItem label={L?.dueDate ?? dueDateLabel}>
                   {dueDate}
                 </PaperTemplate.TermsItem>
               )}
@@ -248,6 +256,9 @@ export function InvoicePaperTemplate({
           )}
         </Group>
 
+        {compliance ? (
+          <ComplianceParties compliance={compliance} />
+        ) : (
         <PaperTemplate.AddressesGroup>
           {showCompanyAddress && (
             <PaperTemplate.Address>
@@ -261,12 +272,13 @@ export function InvoicePaperTemplate({
             </PaperTemplate.Address>
           )}
         </PaperTemplate.AddressesGroup>
+        )}
 
         <Stack spacing={0}>
           <PaperTemplate.Table
             columns={[
               {
-                label: lineItemLabel,
+                label: L?.item ?? lineItemLabel,
                 accessor: (data) => (
                   <Stack spacing={2}>
                     <Text>{data.item}</Text>
@@ -278,25 +290,25 @@ export function InvoicePaperTemplate({
                 thStyle: { width: '60%' },
               },
               {
-                label: lineQuantityLabel,
+                label: L?.quantity ?? lineQuantityLabel,
                 accessor: 'quantity',
                 align: 'right',
               },
-              { label: lineRateLabel, accessor: 'rate', align: 'right' },
+              { label: L?.rate ?? lineRateLabel, accessor: 'rate', align: 'right' },
               {
                 label: lineDiscountLabel,
                 accessor: 'discount',
                 align: 'right',
                 visible: showLineDiscount,
               },
-              { label: lineTotalLabel, accessor: 'total', align: 'right' },
+              { label: L?.total ?? lineTotalLabel, accessor: 'total', align: 'right' },
             ]}
             data={lines}
           />
           <PaperTemplate.Totals>
             {showSubtotal && (
               <PaperTemplate.TotalLine
-                label={subtotalLabel}
+                label={L?.subtotal ?? subtotalLabel}
                 amount={subtotal}
                 border={PaperTemplateTotalBorder.Gray}
               />
@@ -326,7 +338,7 @@ export function InvoicePaperTemplate({
             )}
             {showTotal && (
               <PaperTemplate.TotalLine
-                label={totalLabel}
+                label={L?.grandTotal ?? totalLabel}
                 amount={total}
                 border={PaperTemplateTotalBorder.Dark}
                 style={{ fontWeight: 500 }}
@@ -334,19 +346,20 @@ export function InvoicePaperTemplate({
             )}
             {showPaymentMade && (
               <PaperTemplate.TotalLine
-                label={paymentMadeLabel}
+                label={L?.paymentMade ?? paymentMadeLabel}
                 amount={paymentMade}
               />
             )}
             {showDueAmount && (
               <PaperTemplate.TotalLine
-                label={dueAmountLabel}
+                label={L?.dueAmount ?? dueAmountLabel}
                 amount={dueAmount}
                 border={PaperTemplateTotalBorder.Dark}
                 style={{ fontWeight: 500 }}
               />
             )}
           </PaperTemplate.Totals>
+          {compliance && <ComplianceKhrBox compliance={compliance} />}
         </Stack>
 
         <Stack spacing={0}>
@@ -362,6 +375,8 @@ export function InvoicePaperTemplate({
             </PaperTemplate.Statement>
           )}
         </Stack>
+
+        {compliance && <ComplianceSignatures compliance={compliance} />}
       </Stack>
     </PaperTemplate>
   );

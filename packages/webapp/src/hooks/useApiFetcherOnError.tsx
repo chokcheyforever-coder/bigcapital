@@ -3,6 +3,7 @@ import { useAuthActions, useSetGlobalErrors } from './state';
 import type { ApiError } from 'openapi-typescript-fetch';
 import { PLAN_ERROR_CODES } from '@/ditech/plan';
 import { showBudgetControlError } from '@/ditech/budgeting/controlErrors';
+import { showTaxComplianceError } from '@/ditech/compliance/complianceErrors';
 
 /**
  * Returns a stable callback that translates SDK fetcher rejections into
@@ -39,6 +40,7 @@ export function useApiFetcherOnError() {
       }
       if (status === 400 && Array.isArray(data?.errors)) {
         showBudgetControlError(data.errors);
+        showTaxComplianceError(data.errors);
         const lockedError = data.errors.find(
           (e: { type?: string }) => e.type === 'TRANSACTIONS_DATE_LOCKED',
         );

@@ -6,6 +6,7 @@ export * from './components/ReceiptPaperTemplate';
 export * from './components/PaymentReceivedPaperTemplate';
 export * from './components/FinancialSheetTemplate';
 export * from './components/ExportResourceTableTemplate';
+export * from './components/Compliance';
 
 export * from './renders/render-invoice-paper-template';
 export * from './renders/render-credit-note-paper-template';

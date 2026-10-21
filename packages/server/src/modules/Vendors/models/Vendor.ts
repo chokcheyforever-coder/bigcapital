@@ -33,6 +33,10 @@ export class Vendor extends TenantBaseModel {
   balance: number;
   currencyCode: string;
   priceLevelId!: number | null;
+  taxNumber!: string | null;
+  registeredTaxpayer!: boolean;
+  displayNameKm!: string | null;
+  billingAddressKm!: string | null;
 
   openingBalance: number;
   openingBalanceExchangeRate: number;

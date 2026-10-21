@@ -237,6 +237,8 @@ export interface InvoicePdfTax {
 }
 
 export interface InvoicePdfTemplateAttributes {
+  /** 103 DiTech: Cambodian tax document block (TaxDocumentPdfService). */
+  compliance?: any;
   primaryColor: string;
   secondaryColor: string;
 

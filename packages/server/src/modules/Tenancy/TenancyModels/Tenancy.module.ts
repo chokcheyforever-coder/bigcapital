@@ -27,6 +27,7 @@ import { BudgetNotification } from '@/modules/Budgeting/models/BudgetNotificatio
 import { BudgetSetting } from '@/modules/Budgeting/models/BudgetSetting.model';
 import { PriceLevel } from '@/modules/PriceLevels/models/PriceLevel.model';
 import { PriceLevelItem } from '@/modules/PriceLevels/models/PriceLevelItem.model';
+import { TaxProfile } from '@/modules/TaxCompliance/models/TaxProfile.model';
 import { SaleEstimate } from '@/modules/SaleEstimates/models/SaleEstimate';
 import { Customer } from '@/modules/Customers/models/Customer';
 import { Contact } from '@/modules/Contacts/models/Contact';
@@ -80,6 +81,7 @@ const models = [
   BudgetSetting,
   PriceLevel,
   PriceLevelItem,
+  TaxProfile,
   SaleEstimate,
   Customer,
   Contact,

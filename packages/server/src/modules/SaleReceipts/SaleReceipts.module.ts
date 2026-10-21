@@ -51,10 +51,12 @@ import { SaleReceiptCostGLEntriesSubscriber } from './subscribers/SaleReceiptCos
 import { SaleReceiptCostGLEntries } from './SaleReceiptCostGLEntries';
 import { BulkDeleteSaleReceiptsService } from './BulkDeleteSaleReceipts.service';
 import { ValidateBulkDeleteSaleReceiptsService } from './ValidateBulkDeleteSaleReceipts.service';
+import { TaxComplianceModule } from '@/modules/TaxCompliance/TaxCompliance.module';
 
 @Module({
   controllers: [SaleReceiptsController],
   imports: [
+    TaxComplianceModule,
     TenancyModule,
     ItemsModule,
     ChromiumlyTenancyModule,

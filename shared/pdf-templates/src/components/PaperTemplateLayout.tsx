@@ -57,7 +57,8 @@ body{
   -webkit-tap-highlight-color: transparent;
 }
 body, h1, h2, h3, h4, h5, h6{
-  font-family: "Open Sans", sans-serif;
+  /* 103 DiTech: Khmer text falls back to Kantumruy Pro / Noto Sans Khmer. */
+  font-family: "Open Sans", "Kantumruy Pro", "Noto Sans Khmer", sans-serif;
   font-optical-sizing: auto;
   font-style: normal;
 }

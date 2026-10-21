@@ -3,10 +3,23 @@ import { IsEmail, IsString, IsBoolean } from 'class-validator';
 import { IsOptional } from '@/common/decorators/Validators';
 import { ApiProperty } from '@nestjs/swagger';
 import { PriceLevelIdField } from '@/modules/PriceLevels/dtos/PriceLevelIdField';
+import { KhmerAddressField, KhmerNameField, RegisteredTaxpayerField, TaxNumberField } from '@/modules/TaxCompliance/dtos/ContactTaxFields';
 
 export class EditVendorDto extends ContactAddressDto {
   @PriceLevelIdField()
   priceLevelId?: number | null;
+
+  @TaxNumberField()
+  taxNumber?: string | null;
+
+  @RegisteredTaxpayerField()
+  registeredTaxpayer?: boolean;
+
+  @KhmerNameField()
+  displayNameKm?: string | null;
+
+  @KhmerAddressField()
+  billingAddressKm?: string | null;
 
   @ApiProperty({ required: false, description: 'Vendor salutation' })
   @IsOptional()

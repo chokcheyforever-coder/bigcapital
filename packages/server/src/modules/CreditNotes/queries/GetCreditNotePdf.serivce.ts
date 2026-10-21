@@ -10,6 +10,7 @@ import { PdfTemplateModel } from '@/modules/PdfTemplate/models/PdfTemplate';
 import { CreditNotePdfTemplateAttributes } from '../types/CreditNotes.types';
 import { events } from '@/common/events/events';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
+import { TaxDocumentPdfService } from '@/modules/TaxCompliance/TaxDocumentPdf.service';
 
 @Injectable()
 export class GetCreditNotePdf {
@@ -26,6 +27,7 @@ export class GetCreditNotePdf {
     private readonly getCreditNoteService: GetCreditNoteService,
     private readonly creditNoteBrandingTemplate: CreditNoteBrandingTemplate,
     private readonly eventPublisher: EventEmitter2,
+    private readonly taxDocumentPdf: TaxDocumentPdfService,
 
     @Inject(CreditNote.name)
     private readonly creditNoteModel: TenantModelProxy<typeof CreditNote>,
@@ -121,6 +123,10 @@ export class GetCreditNotePdf {
     return {
       ...brandingTemplate.attributes,
       ...transformCreditNoteToPdfTemplate(creditNote),
+      compliance: await this.taxDocumentPdf.attributes('CreditNote', creditNoteId, {
+        total: Number((creditNote as any).amount ?? (creditNote as any).total ?? 0),
+        tax: 0,
+      }),
     };
   }
 }

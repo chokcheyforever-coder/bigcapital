@@ -16,9 +16,13 @@ import {
   DefaultPdfTemplateAddressBilledTo,
   DefaultPdfTemplateAddressBilledFrom,
 } from './_constants';
+import { ComplianceKhrBox, ComplianceParties, ComplianceProps, ComplianceSignatures } from './Compliance';
 import { theme } from '../constants';
 
 export interface ReceiptPaperTemplateProps extends PaperTemplateProps {
+  /** 103 DiTech: Cambodian tax document (title, TINs, riel, Khmer/English labels, signatures). */
+  compliance?: ComplianceProps;
+
   // # Company logo
   showCompanyLogo?: boolean;
   companyLogoUri?: string;
@@ -171,22 +175,25 @@ export function ReceiptPaperTemplate({
   // # Line Discount
   lineDiscountLabel = 'Discount',
   showLineDiscount = false,
+  compliance,
 }: ReceiptPaperTemplateProps) {
+  const L = compliance?.labels;
+  const title = compliance ? [compliance.title, compliance.subtitle].filter(Boolean).join('\n') : 'Receipt';
   return (
     <PaperTemplate primaryColor={primaryColor} secondaryColor={secondaryColor}>
       <Stack spacing={24}>
         <Group align={'start'} spacing={10}>
           <Stack flex={1}>
-            <PaperTemplate.BigTitle title={'Receipt'} />
+            <PaperTemplate.BigTitle title={title} />
 
             <PaperTemplate.TermsList>
               {showReceiptNumber && (
-                <PaperTemplate.TermsItem label={receiptNumberLabel}>
+                <PaperTemplate.TermsItem label={L?.receiptNumber ?? receiptNumberLabel}>
                   {receiptNumebr}
                 </PaperTemplate.TermsItem>
               )}
               {showReceiptDate && (
-                <PaperTemplate.TermsItem label={receiptDateLabel}>
+                <PaperTemplate.TermsItem label={L?.dateIssue ?? receiptDateLabel}>
                   {receiptDate}
                 </PaperTemplate.TermsItem>
               )}
@@ -198,6 +205,9 @@ export function ReceiptPaperTemplate({
           )}
         </Group>
 
+        {compliance ? (
+          <ComplianceParties compliance={compliance} />
+        ) : (
         <PaperTemplate.AddressesGroup>
           {showCompanyAddress && (
             <PaperTemplate.Address>
@@ -212,12 +222,13 @@ export function ReceiptPaperTemplate({
             </PaperTemplate.Address>
           )}
         </PaperTemplate.AddressesGroup>
+        )}
 
         <Stack spacing={0}>
           <PaperTemplate.Table
             columns={[
               {
-                label: lineItemLabel,
+                label: L?.item ?? lineItemLabel,
                 accessor: (data) => (
                   <Stack spacing={2}>
                     <Text>{data.item}</Text>
@@ -231,22 +242,22 @@ export function ReceiptPaperTemplate({
                 ),
                 thStyle: { width: '60%' },
               },
-              { label: lineQuantityLabel, accessor: 'quantity' },
-              { label: lineRateLabel, accessor: 'rate', align: 'right' },
+              { label: L?.quantity ?? lineQuantityLabel, accessor: 'quantity' },
+              { label: L?.rate ?? lineRateLabel, accessor: 'rate', align: 'right' },
               {
                 label: lineDiscountLabel,
                 accessor: 'discount',
                 align: 'right',
                 visible: showLineDiscount,
               },
-              { label: lineTotalLabel, accessor: 'total', align: 'right' },
+              { label: L?.total ?? lineTotalLabel, accessor: 'total', align: 'right' },
             ]}
             data={lines}
           />
           <PaperTemplate.Totals>
             {showSubtotal && (
               <PaperTemplate.TotalLine
-                label={subtotalLabel}
+                label={L?.subtotal ?? subtotalLabel}
                 amount={subtotal}
                 border={PaperTemplateTotalBorder.Gray}
                 style={{ fontWeight: 500 }}
@@ -266,13 +277,14 @@ export function ReceiptPaperTemplate({
             )}
             {showTotal && (
               <PaperTemplate.TotalLine
-                label={totalLabel}
+                label={L?.totalInclTax ?? totalLabel}
                 amount={total}
                 border={PaperTemplateTotalBorder.Dark}
                 style={{ fontWeight: 500 }}
               />
             )}
           </PaperTemplate.Totals>
+          {compliance && <ComplianceKhrBox compliance={compliance} />}
         </Stack>
 
         <Stack spacing={0}>
@@ -288,6 +300,8 @@ export function ReceiptPaperTemplate({
             </PaperTemplate.Statement>
           )}
         </Stack>
+
+        {compliance && <ComplianceSignatures compliance={compliance} />}
       </Stack>
     </PaperTemplate>
   );

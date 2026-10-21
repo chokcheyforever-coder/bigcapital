@@ -26,6 +26,7 @@ import { Features } from '@/constants';
 import { useDateInputFormatter } from '@/hooks';
 import { useCurrentOrganizationBaseCurrency } from '@/hooks/query';
 import { ContactPriceLevelField } from '@/ditech/pricing/ContactPriceLevelField';
+import { ContactTaxFields } from '@/ditech/compliance/ContactTaxFields';
 
 export function VendorFormFinancialSection() {
   const { currencies, vendorId, branches } = useVendorFormContext();
@@ -54,6 +55,7 @@ export function VendorFormFinancialSection() {
       </FFormGroup>
 
       <ContactPriceLevelField type={'purchase'} />
+      <ContactTaxFields />
 
       <VendorOpeningBalanceField />
       <VendorOpeningBalanceExchangeRateField />

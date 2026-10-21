@@ -109,6 +109,8 @@ export interface GetCreditNotesResponse {
 }
 
 export interface CreditNotePdfTemplateAttributes {
+  /** 103 DiTech: Cambodian tax document block (TaxDocumentPdfService). */
+  compliance?: any;
   // # Primary color
   primaryColor: string;
   secondaryColor: string;
