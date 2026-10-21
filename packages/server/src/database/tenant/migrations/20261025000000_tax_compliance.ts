@@ -6,7 +6,7 @@
  * type that was issued (VAT invoice / commercial invoice) with the riel rate
  * used for its KHR amounts.
  */
-const DOCUMENT_TABLES = ['sales_invoices', 'sales_receipts', 'credit_notes'];
+const TAX_DOCUMENT_TABLES = ['sales_invoices', 'sales_receipts', 'credit_notes'];
 
 exports.up = async (knex) => {
   await knex.schema.createTable('tax_profile', (table) => {
@@ -31,7 +31,7 @@ exports.up = async (knex) => {
     table.string('display_name_km', 255).nullable();
     table.text('billing_address_km').nullable();
   });
-  for (const name of DOCUMENT_TABLES) {
+  for (const name of TAX_DOCUMENT_TABLES) {
     await knex.schema.table(name, (table) => {
       table.string('document_kind', 20).nullable(); // vat_invoice | commercial_invoice
       table.decimal('khr_rate', 15, 6).nullable();
@@ -42,7 +42,7 @@ exports.up = async (knex) => {
 };
 
 exports.down = async (knex) => {
-  for (const name of DOCUMENT_TABLES) {
+  for (const name of TAX_DOCUMENT_TABLES) {
     await knex.schema.table(name, (table) => {
       table.dropColumn('document_kind');
       table.dropColumn('khr_rate');

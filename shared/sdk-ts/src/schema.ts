@@ -1057,6 +1057,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tax-compliance/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retrieves the company tax profile (Cambodian tax documents). */
+        get: operations["TaxComplianceController_getProfile"];
+        /** Saves the company tax profile. */
+        put: operations["TaxComplianceController_saveProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tax-compliance/khr-rate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The riel rate a document of this currency and date would print. */
+        get: operations["TaxComplianceController_khrRate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/audit-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List financial audit log entries for the tenant. */
+        get: operations["AuditLogsController_getAuditLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/pdf-templates": {
         parameters: {
             query?: never;
@@ -1943,23 +1995,6 @@ export interface paths {
         post?: never;
         /** Deletes a project that no transaction uses. */
         delete: operations["ProjectsController_deleteProject"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/audit-logs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List financial audit log entries for the tenant. */
-        get: operations["AuditLogsController_getAuditLogs"];
-        put?: never;
-        post?: never;
-        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2875,6 +2910,40 @@ export interface paths {
         post?: never;
         /** Deletes a price level that nothing uses. */
         delete: operations["PriceLevelsController_deletePriceLevel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/price-levels/{id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Downloads a per-item level's prices as Excel or CSV (every item with an empty price when it has none yet). */
+        get: operations["PriceLevelsController_exportPrices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/price-levels/{id}/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Replaces a per-item level's prices from an Excel/CSV file: all rows or none. */
+        post: operations["PriceLevelsController_importPrices"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -8600,6 +8669,39 @@ export interface components {
              */
             notification_key?: "details" | "reminder";
         };
+        GdtRateDto: {
+            /** @example 2026-09 */
+            month: string;
+            /** @example 4105 */
+            rate: number;
+        };
+        SaveTaxProfileDto: {
+            /** @description Print Cambodian tax documents (VAT / commercial invoices, KHR amounts, Khmer labels) and check them before issue */
+            enabled: boolean;
+            /** @example K001-123456789 */
+            tin?: string;
+            /** @enum {string} */
+            taxpayerSize?: "small" | "medium" | "large";
+            vatRegistered: boolean;
+            companyNameKm?: string;
+            addressKm?: string;
+            /** @description English address as printed (empty = the organization address) */
+            addressEn?: string;
+            /**
+             * @default km_en
+             * @enum {string}
+             */
+            documentLanguage: "km_en" | "km" | "en";
+            /**
+             * @default nbc_daily
+             * @enum {string}
+             */
+            rateSource: "nbc_daily" | "gdt_monthly";
+            /** @description GDT monthly USD/KHR rates; a document uses the previous month */
+            gdtRates?: components["schemas"]["GdtRateDto"][];
+            signatoryName?: string;
+            signatoryTitle?: string;
+        };
         CreatePdfTemplateDto: Record<string, never>;
         EditPdfTemplateDto: Record<string, never>;
         UploadAttachmentDto: {
@@ -11567,6 +11669,17 @@ export interface components {
              */
             priceLevelId?: number | null;
             /**
+             * @description TIN (VATTIN)
+             * @example K001-123456789
+             */
+            taxNumber?: string | null;
+            /** @description Registered taxpayer (gets VAT invoices) */
+            registeredTaxpayer?: boolean;
+            /** @description Name in Khmer */
+            displayNameKm?: string | null;
+            /** @description Billing address in Khmer */
+            billingAddressKm?: string | null;
+            /**
              * @description Customer type
              * @example business
              */
@@ -11689,6 +11802,17 @@ export interface components {
              * @example 1
              */
             priceLevelId?: number | null;
+            /**
+             * @description TIN (VATTIN)
+             * @example K001-123456789
+             */
+            taxNumber?: string | null;
+            /** @description Registered taxpayer (gets VAT invoices) */
+            registeredTaxpayer?: boolean;
+            /** @description Name in Khmer */
+            displayNameKm?: string | null;
+            /** @description Billing address in Khmer */
+            billingAddressKm?: string | null;
             /** @description Customer type */
             customerType: string;
             /** @description Salutation */
@@ -11831,6 +11955,17 @@ export interface components {
              * @example 1
              */
             priceLevelId?: number | null;
+            /**
+             * @description TIN (VATTIN)
+             * @example K001-123456789
+             */
+            taxNumber?: string | null;
+            /** @description Registered taxpayer (gets VAT invoices) */
+            registeredTaxpayer?: boolean;
+            /** @description Name in Khmer */
+            displayNameKm?: string | null;
+            /** @description Billing address in Khmer */
+            billingAddressKm?: string | null;
             /** @description Vendor opening balance */
             openingBalance?: number;
             /**
@@ -11916,6 +12051,17 @@ export interface components {
              * @example 1
              */
             priceLevelId?: number | null;
+            /**
+             * @description TIN (VATTIN)
+             * @example K001-123456789
+             */
+            taxNumber?: string | null;
+            /** @description Registered taxpayer (gets VAT invoices) */
+            registeredTaxpayer?: boolean;
+            /** @description Name in Khmer */
+            displayNameKm?: string | null;
+            /** @description Billing address in Khmer */
+            billingAddressKm?: string | null;
             /** @description Vendor salutation */
             salutation?: string;
             /** @description Vendor first name */
@@ -21287,6 +21433,114 @@ export interface operations {
             };
         };
     };
+    TaxComplianceController_getProfile: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TaxComplianceController_saveProfile: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveTaxProfileDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    TaxComplianceController_khrRate: {
+        parameters: {
+            query?: {
+                currency?: string;
+                date?: string;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuditLogsController_getAuditLogs: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                subject?: Record<string, never>[][];
+                action?: Record<string, never>[][];
+                /** @description System user id */
+                userId?: number;
+                /** @description ISO date (inclusive), start of day */
+                from?: string;
+                /** @description ISO date (inclusive), end of day */
+                to?: string;
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetAuditLogsResponseDto"];
+                };
+            };
+        };
+    };
     PdfTemplatesController_getPdfTemplates: {
         parameters: {
             query: {
@@ -23258,41 +23512,6 @@ export interface operations {
             };
         };
     };
-    AuditLogsController_getAuditLogs: {
-        parameters: {
-            query?: {
-                page?: number;
-                pageSize?: number;
-                subject?: Record<string, never>[][];
-                action?: Record<string, never>[][];
-                /** @description System user id */
-                userId?: number;
-                /** @description ISO date (inclusive), start of day */
-                from?: string;
-                /** @description ISO date (inclusive), end of day */
-                to?: string;
-            };
-            header: {
-                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
-                Authorization: string;
-                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
-                "organization-id": string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GetAuditLogsResponseDto"];
-                };
-            };
-        };
-    };
     BudgetReportsController_getReport: {
         parameters: {
             query: {
@@ -25145,6 +25364,63 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PriceLevelsController_exportPrices: {
+        parameters: {
+            query?: {
+                format?: "xlsx" | "csv";
+            };
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PriceLevelsController_importPrices: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Value must be 'Bearer <token>' where <token> is an API key prefixed with 'bc_' or a JWT token. */
+                Authorization: string;
+                /** @description Required if Authorization is a JWT token. The organization ID to operate within. */
+                "organization-id": string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file?: string;
+                };
+            };
+        };
         responses: {
             200: {
                 headers: {
