@@ -53,6 +53,42 @@ export class TaxDocumentPdfService {
     return { attributes: await this.build(doc, row, profile, amounts) };
   }
 
+  /**
+   * Sample block for the designer's preview: the company's real profile, a
+   * sample registered buyer and today's rate on 1,000 of the base currency
+   * with 10% VAT. Undefined when tax documents are off.
+   */
+  async sample(): Promise<ComplianceAttributes | undefined> {
+    const profile = await this.profiles.get();
+    if (!profile.enabled) return undefined;
+    const metadata = await this.tenancyContext.getTenantMetadata();
+    const currency = metadata?.baseCurrency ?? 'USD';
+    const today = moment().format('YYYY-MM-DD');
+    const rate = await this.profiles.khrRate(currency, today, profile);
+    const lang = profile.documentLanguage;
+    const total = 1100;
+    const tax = 100;
+    return {
+      language: lang,
+      title: label(TITLES.vat_invoice, lang),
+      seller: { name: metadata?.name ?? '', nameKm: profile.companyNameKm, address: profile.addressEn, addressKm: profile.addressKm, tin: profile.tin },
+      buyer: { name: 'Sample Customer Co., Ltd.', nameKm: 'ក្រុមហ៊ុន គំរូ', address: 'Phnom Penh', addressKm: 'ភ្នំពេញ', tin: 'K001-000000000' },
+      labels: Object.fromEntries(Object.entries(LABELS).map(([k, v]) => [k, label(v, lang)])),
+      khr: rate
+        ? {
+            label: label(LABELS.khr, lang),
+            rate: `1 ${currency} = ${riel(rate.rate)}`,
+            source: label(RATE_SOURCE_LABELS[rate.source], lang),
+            date: rate.date,
+            subtotal: riel(toKhr(total - tax, rate.rate)),
+            tax: riel(toKhr(tax, rate.rate)),
+            total: riel(toKhr(total, rate.rate)),
+          }
+        : undefined,
+      signatory: { name: profile.signatoryName, title: profile.signatoryTitle },
+    };
+  }
+
   private async build(doc: DocType, row: any, profile: Awaited<ReturnType<TaxProfileService['get']>>, amounts: { total: number; tax: number }): Promise<ComplianceAttributes> {
     const knex = this.tenantKnex();
     const get = (camel: string, snake: string) => row[camel] ?? row[snake];

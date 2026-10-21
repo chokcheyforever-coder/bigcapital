@@ -6,6 +6,9 @@ import {
 export interface InvoiceCustomizeState extends BrandingState {}
 
 export interface InvoiceCustomizeFormValues extends BrandingTemplateValues {
+  // 103 DiTech: block layout (DocumentLayout from @bigcapital/pdf-templates).
+  layout?: any;
+
   // Colors
   primaryColor?: string;
   secondaryColor?: string;

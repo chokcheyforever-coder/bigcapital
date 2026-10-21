@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { isEmpty } from 'lodash';
 import {
   PaperTemplate,
@@ -17,6 +18,8 @@ import {
   DefaultPdfTemplateAddressBilledFrom,
 } from './_constants';
 import { ComplianceKhrBox, ComplianceParties, ComplianceProps, ComplianceSignatures } from './Compliance';
+import { DocumentLayout, effectiveLayout } from './DocumentLayout';
+import { CustomText, PlainSignatures } from './LayoutBlocks';
 
 interface InvoiceLine {
   item?: string;
@@ -124,6 +127,9 @@ export interface InvoicePaperTemplateProps extends PaperTemplateProps {
 
   /** 103 DiTech: Cambodian tax document (title, TINs, riel, Khmer/English labels, signatures). */
   compliance?: ComplianceProps;
+
+  /** 103 DiTech: block order and visibility from the designer (Branding › Customize › Layout). */
+  layout?: Partial<DocumentLayout> | null;
 }
 
 export function InvoicePaperTemplate({
@@ -216,49 +222,75 @@ export function InvoicePaperTemplate({
   showStatement = true,
   statement = DefaultPdfTemplateStatement,
   compliance,
+  layout,
   ...props
 }: InvoicePaperTemplateProps) {
   // A tax document prints its own title and bilingual labels.
   const L = compliance?.labels;
   const title = compliance ? [compliance.title, compliance.subtitle].filter(Boolean).join('\n') : 'Invoice';
-  return (
-    <PaperTemplate
-      primaryColor={primaryColor}
-      secondaryColor={secondaryColor}
-      {...props}
-    >
-      <Stack spacing={24}>
-        <Group align="start" spacing={10}>
-          <Stack flex={1}>
-            <PaperTemplate.BigTitle title={title} />
+  // 103 DiTech: blocks and columns in the order the designer saved; required
+  // ones stay on for a tax document. Without a saved layout: the default order.
+  const view = effectiveLayout(layout, !!compliance);
+  const columnVisible = (id: string) => view.columns.find((c) => c.id === id)?.visible !== false;
 
-            <PaperTemplate.TermsList>
-              {showInvoiceNumber && (
-                <PaperTemplate.TermsItem label={L?.invoiceNumber ?? invoiceNumberLabel}>
-                  {invoiceNumber}
-                </PaperTemplate.TermsItem>
-              )}
-              {showDateIssue && (
-                <PaperTemplate.TermsItem label={L?.dateIssue ?? dateIssueLabel}>
-                  {dateIssue}
-                </PaperTemplate.TermsItem>
-              )}
-              {showDueDate && (
-                <PaperTemplate.TermsItem label={L?.dueDate ?? dueDateLabel}>
-                  {dueDate}
-                </PaperTemplate.TermsItem>
-              )}
-            </PaperTemplate.TermsList>
-          </Stack>
+  type TableColumn = Parameters<typeof PaperTemplate.Table>[0]['columns'][number];
+  const columnDefs: Record<string, TableColumn> = {
+    item: {
+      label: L?.item ?? lineItemLabel,
+      accessor: (data: Record<string, any>) => (
+        <Stack spacing={2}>
+          <Text>{data.item}</Text>
+          <Text color={'#5f6b7c'} fontSize={12}>
+            {data.description}
+          </Text>
+        </Stack>
+      ),
+      thStyle: { width: '60%' },
+    },
+    quantity: { label: L?.quantity ?? lineQuantityLabel, accessor: 'quantity', align: 'right' },
+    rate: { label: L?.rate ?? lineRateLabel, accessor: 'rate', align: 'right' },
+    // Without a saved layout the discount column follows the template switch.
+    discount: { label: lineDiscountLabel, accessor: 'discount', align: 'right', visible: layout ? columnVisible('discount') : showLineDiscount },
+    total: { label: L?.total ?? lineTotalLabel, accessor: 'total', align: 'right' },
+  };
+  const columns = view.columns
+    .filter((c) => c.id === 'discount' || c.visible)
+    .map((c) => columnDefs[c.id]);
 
-          {companyLogoUri && showCompanyLogo && (
-            <PaperTemplate.Logo logoUri={companyLogoUri} />
-          )}
-        </Group>
+  const renderers: Record<string, () => ReactNode> = {
+    header: () => (
+      <Group align="start" spacing={10}>
+        <Stack flex={1}>
+          <PaperTemplate.BigTitle title={title} />
 
-        {compliance ? (
-          <ComplianceParties compliance={compliance} />
-        ) : (
+          <PaperTemplate.TermsList>
+            {showInvoiceNumber && (
+              <PaperTemplate.TermsItem label={L?.invoiceNumber ?? invoiceNumberLabel}>
+                {invoiceNumber}
+              </PaperTemplate.TermsItem>
+            )}
+            {showDateIssue && (
+              <PaperTemplate.TermsItem label={L?.dateIssue ?? dateIssueLabel}>
+                {dateIssue}
+              </PaperTemplate.TermsItem>
+            )}
+            {showDueDate && (
+              <PaperTemplate.TermsItem label={L?.dueDate ?? dueDateLabel}>
+                {dueDate}
+              </PaperTemplate.TermsItem>
+            )}
+          </PaperTemplate.TermsList>
+        </Stack>
+
+        {companyLogoUri && showCompanyLogo && (
+          <PaperTemplate.Logo logoUri={companyLogoUri} />
+        )}
+      </Group>
+    ),
+    parties: () =>
+      compliance ? (
+        <ComplianceParties compliance={compliance} />
+      ) : (
         <PaperTemplate.AddressesGroup>
           {showCompanyAddress && (
             <PaperTemplate.Address>
@@ -272,111 +304,119 @@ export function InvoicePaperTemplate({
             </PaperTemplate.Address>
           )}
         </PaperTemplate.AddressesGroup>
+      ),
+    lines: () => <PaperTemplate.Table columns={columns} data={lines} />,
+    totals: () => (
+      <PaperTemplate.Totals>
+        {showSubtotal && (
+          <PaperTemplate.TotalLine
+            label={L?.subtotal ?? subtotalLabel}
+            amount={subtotal}
+            border={PaperTemplateTotalBorder.Gray}
+          />
+        )}
+        {showDiscount && !isEmpty(discount) && (
+          <PaperTemplate.TotalLine
+            label={L?.discount ?? discountLabel}
+            amount={discount}
+          />
+        )}
+        {showAdjustment && !isEmpty(adjustment) && (
+          <PaperTemplate.TotalLine
+            label={adjustmentLabel}
+            amount={adjustment}
+          />
+        )}
+        {showTaxes && (
+          <>
+            {taxes.map((tax, index) => (
+              <PaperTemplate.TotalLine
+                key={index}
+                label={tax.label}
+                amount={tax.amount}
+              />
+            ))}
+          </>
+        )}
+        {showTotal && (
+          <PaperTemplate.TotalLine
+            label={L?.grandTotal ?? totalLabel}
+            amount={total}
+            border={PaperTemplateTotalBorder.Dark}
+            style={{ fontWeight: 500 }}
+          />
+        )}
+        {showPaymentMade && (
+          <PaperTemplate.TotalLine
+            label={L?.paymentMade ?? paymentMadeLabel}
+            amount={paymentMade}
+          />
+        )}
+        {showDueAmount && (
+          <PaperTemplate.TotalLine
+            label={L?.dueAmount ?? dueAmountLabel}
+            amount={dueAmount}
+            border={PaperTemplateTotalBorder.Dark}
+            style={{ fontWeight: 500 }}
+          />
+        )}
+      </PaperTemplate.Totals>
+    ),
+    khr: () => (compliance ? <ComplianceKhrBox compliance={compliance} /> : null),
+    notes: () => (
+      <Stack spacing={0}>
+        {showTermsConditions && termsConditions && (
+          <PaperTemplate.Statement label={termsConditionsLabel}>
+            {termsConditions}
+          </PaperTemplate.Statement>
         )}
 
-        <Stack spacing={0}>
-          <PaperTemplate.Table
-            columns={[
-              {
-                label: L?.item ?? lineItemLabel,
-                accessor: (data) => (
-                  <Stack spacing={2}>
-                    <Text>{data.item}</Text>
-                    <Text color={'#5f6b7c'} fontSize={12}>
-                      {data.description}
-                    </Text>
-                  </Stack>
-                ),
-                thStyle: { width: '60%' },
-              },
-              {
-                label: L?.quantity ?? lineQuantityLabel,
-                accessor: 'quantity',
-                align: 'right',
-              },
-              { label: L?.rate ?? lineRateLabel, accessor: 'rate', align: 'right' },
-              {
-                label: lineDiscountLabel,
-                accessor: 'discount',
-                align: 'right',
-                visible: showLineDiscount,
-              },
-              { label: L?.total ?? lineTotalLabel, accessor: 'total', align: 'right' },
-            ]}
-            data={lines}
-          />
-          <PaperTemplate.Totals>
-            {showSubtotal && (
-              <PaperTemplate.TotalLine
-                label={L?.subtotal ?? subtotalLabel}
-                amount={subtotal}
-                border={PaperTemplateTotalBorder.Gray}
-              />
-            )}
-            {showDiscount && !isEmpty(discount) && (
-              <PaperTemplate.TotalLine
-                label={L?.discount ?? discountLabel}
-                amount={discount}
-              />
-            )}
-            {showAdjustment && !isEmpty(adjustment) && (
-              <PaperTemplate.TotalLine
-                label={adjustmentLabel}
-                amount={adjustment}
-              />
-            )}
-            {showTaxes && (
-              <>
-                {taxes.map((tax, index) => (
-                  <PaperTemplate.TotalLine
-                    key={index}
-                    label={tax.label}
-                    amount={tax.amount}
-                  />
-                ))}
-              </>
-            )}
-            {showTotal && (
-              <PaperTemplate.TotalLine
-                label={L?.grandTotal ?? totalLabel}
-                amount={total}
-                border={PaperTemplateTotalBorder.Dark}
-                style={{ fontWeight: 500 }}
-              />
-            )}
-            {showPaymentMade && (
-              <PaperTemplate.TotalLine
-                label={L?.paymentMade ?? paymentMadeLabel}
-                amount={paymentMade}
-              />
-            )}
-            {showDueAmount && (
-              <PaperTemplate.TotalLine
-                label={L?.dueAmount ?? dueAmountLabel}
-                amount={dueAmount}
-                border={PaperTemplateTotalBorder.Dark}
-                style={{ fontWeight: 500 }}
-              />
-            )}
-          </PaperTemplate.Totals>
-          {compliance && <ComplianceKhrBox compliance={compliance} />}
-        </Stack>
+        {showStatement && statement && (
+          <PaperTemplate.Statement label={statementLabel}>
+            {statement}
+          </PaperTemplate.Statement>
+        )}
+      </Stack>
+    ),
+    // Without a tax profile, signature lines only print when a layout asks for them.
+    signatures: () =>
+      compliance ? (
+        <ComplianceSignatures compliance={compliance} />
+      ) : layout ? (
+        <PlainSignatures />
+      ) : null,
+    text1: () => <CustomText text={view.blocks.find((b) => b.id === 'text1')?.text} />,
+    text2: () => <CustomText text={view.blocks.find((b) => b.id === 'text2')?.text} />,
+  };
 
-        <Stack spacing={0}>
-          {showTermsConditions && termsConditions && (
-            <PaperTemplate.Statement label={termsConditionsLabel}>
-              {termsConditions}
-            </PaperTemplate.Statement>
-          )}
+  // Lines, totals and the riel box sit together when they follow each other.
+  const TIGHT = new Set(['lines', 'totals', 'khr']);
+  const groups: string[][] = [];
+  for (const block of view.blocks.filter((b) => b.visible)) {
+    const last = groups[groups.length - 1];
+    if (last && TIGHT.has(block.id) && TIGHT.has(last[last.length - 1])) last.push(block.id);
+    else groups.push([block.id]);
+  }
 
-          {showStatement && statement && (
-            <PaperTemplate.Statement label={statementLabel}>
-              {statement}
-            </PaperTemplate.Statement>
-          )}
-        </Stack>
-
-        {compliance && <ComplianceSignatures compliance={compliance} />}
+  return (
+    <PaperTemplate
+      primaryColor={primaryColor}
+      secondaryColor={secondaryColor}
+      {...(layout ? { fontSize: `${view.fontSize}px` } : {})}
+      {...props}
+    >
+      <Stack spacing={24}>
+        {groups.map((group) =>
+          group.length > 1 ? (
+            <Stack spacing={0} key={group.join('-')}>
+              {group.map((id) => (
+                <Box key={id}>{renderers[id]?.()}</Box>
+              ))}
+            </Stack>
+          ) : (
+            <Box key={group[0]}>{renderers[group[0]]?.()}</Box>
+          ),
+        )}
       </Stack>
     </PaperTemplate>
   );

@@ -62,6 +62,9 @@ export const initialValues = {
   // Statement
   statementLabel: 'Statement',
   showStatement: true,
+
+  // 103 DiTech: block layout from the Layout tab (null = default order).
+  layout: null as any,
 };
 
 export const fieldsGroups = [

@@ -45,10 +45,15 @@ export class SaleInvoicePdfTemplate {
       ...template.attributes,
       companyLogoUri: template.companyLogoUri,
     };
-    const attributes = mergePdfTemplateWithDefaultAttributes(
-      brandingTemplateAttrs,
-      organizationBrandingAttrs,
-    );
+    const attributes = {
+      ...mergePdfTemplateWithDefaultAttributes(
+        brandingTemplateAttrs,
+        organizationBrandingAttrs,
+      ),
+      // 103 DiTech: the designer's block layout (not one of the default
+      // attributes the merge keeps).
+      layout: template.attributes?.layout ?? null,
+    };
     return {
       ...template,
       attributes,
