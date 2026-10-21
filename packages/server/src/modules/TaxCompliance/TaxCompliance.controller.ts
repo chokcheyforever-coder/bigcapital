@@ -1,4 +1,5 @@
-import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, Put, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { renderInvoicePaperTemplateHtml } from '@bigcapital/pdf-templates';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import * as moment from 'moment';
 import { ApiCommonHeaders } from '@/common/decorators/ApiCommonHeaders';
@@ -8,6 +9,7 @@ import { AuthorizationGuard } from '@/modules/Roles/Authorization.guard';
 import { AbilitySubject } from '@/modules/Roles/Roles.types';
 import { PreferencesAction } from '@/modules/Settings/Settings.types';
 import { SaveTaxProfileDto } from './dtos/TaxProfile.dto';
+import { DocumentPreviewDto } from './dtos/DocumentPreview.dto';
 import { TaxProfileService } from './TaxProfile.service';
 import { TaxDocumentPdfService } from './TaxDocumentPdf.service';
 
@@ -43,6 +45,27 @@ export class TaxComplianceController {
     const profile = await this.profiles.get();
     const day = /^\d{4}-\d{2}-\d{2}$/.test(date ?? '') ? date! : moment().format('YYYY-MM-DD');
     return (await this.profiles.khrRate(currency || 'USD', day, profile)) ?? { rate: null };
+  }
+
+  /** Sample tax document block for the invoice designer's preview (empty when the profile is off). */
+  @Get('sample')
+  @ApiOperation({ summary: 'A sample tax document block in the company language, with today\'s riel rate.' })
+  async sample() {
+    return (await this.documents.sample()) ?? {};
+  }
+
+  /**
+   * The designer's live preview: the invoice template rendered by the same
+   * code as the PDF, with sample lines and, when tax documents are on, a sample
+   * tax block. The webapp shows it in a frame.
+   */
+  @Post('preview/invoice')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Renders an invoice preview (HTML) from branding attributes being edited.' })
+  async previewInvoice(@Body() dto: DocumentPreviewDto) {
+    const compliance = await this.documents.sample();
+    const { compliance: _ignored, ...attributes } = dto.attributes ?? {};
+    return { htmlContent: renderInvoicePaperTemplateHtml({ ...attributes, ...(compliance ? { compliance } : {}) } as any) };
   }
 
   /** What a document's PDF prints as a tax document (empty when the profile is off). */

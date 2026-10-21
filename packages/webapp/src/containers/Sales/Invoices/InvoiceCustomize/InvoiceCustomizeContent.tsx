@@ -14,6 +14,8 @@ import { useDrawerContext } from '@/components/Drawer/DrawerProvider';
 import { BrandingTemplateForm } from '@/containers/BrandingTemplates/BrandingTemplateForm';
 import { useIsTemplateNamedFilled } from '@/containers/BrandingTemplates/utils';
 import { useDrawerActions } from '@/hooks/state';
+import { DocumentLayoutFields } from '@/ditech/designer/DocumentLayoutFields';
+import { DocumentServerPreview } from '@/ditech/designer/DocumentServerPreview';
 
 const InvoiceCustomizePaymentPreview = lazy(() =>
   import('./InvoiceCustomizePaymentPreview').then((module) => ({
@@ -24,12 +26,6 @@ const InvoiceCustomizePaymentPreview = lazy(() =>
 const InvoiceCustomizeMailReceiptPreview = lazy(() =>
   import('./InvoiceCustomizeMailReceiptPreview').then((module) => ({
     default: module.InvoiceCustomizeMailReceiptPreview,
-  })),
-);
-
-const InvoiceCustomizePdfPreview = lazy(() =>
-  import('./InvoiceCustomizePdfPreview').then((module) => ({
-    default: module.InvoiceCustomizePdfPreview,
   })),
 );
 
@@ -79,7 +75,8 @@ function InvoiceCustomizeFormContent() {
             title={'PDF document'}
             panel={
               <Suspense fallback={<Spinner />}>
-                <InvoiceCustomizePdfPreview />
+                {/* 103 DiTech: rendered by the server, exactly as printed. */}
+                <DocumentServerPreview resource={'invoice'} />
               </Suspense>
             }
           />
@@ -114,6 +111,14 @@ function InvoiceCustomizeFormContent() {
         tabProps={{ disabled: !isTemplateNameFilled }}
       >
         <InvoiceCustomizeContentFields />
+      </ElementCustomize.FieldsTab>
+
+      <ElementCustomize.FieldsTab
+        id={'layout'}
+        label={'Layout'}
+        tabProps={{ disabled: !isTemplateNameFilled }}
+      >
+        <DocumentLayoutFields />
       </ElementCustomize.FieldsTab>
     </ElementCustomizeContent>
   );
