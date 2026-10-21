@@ -29,6 +29,10 @@ async function bootstrap() {
   const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS ?? 0);
   if (trustProxyHops > 0) app.set('trust proxy', trustProxyHops);
   app.setGlobalPrefix('/api');
+  // 103 DiTech: the default 100 kB JSON limit refused budget saves of more than
+  // ~250 lines (a pasted grid); the budget API accepts 5,000 lines per request.
+  app.useBodyParser('json', { limit: '10mb' });
+  app.useBodyParser('urlencoded', { limit: '10mb', extended: true });
 
   // create and mount the middleware manually here
   app.use(new ClsMiddleware({}).use);
