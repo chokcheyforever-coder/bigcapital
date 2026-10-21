@@ -1,11 +1,6 @@
-import { useFormikContext } from 'formik';
 import { initialValues } from './constants';
 import { ReceiptCustomizeFieldsContent } from './ReceiptCustomizeFieldsContent';
 import { ReceiptCustomizeGeneralField } from './ReceiptCustomizeFieldsGeneral';
-import {
-  ReceiptPaperTemplate,
-  ReceiptPaperTemplateProps,
-} from './ReceiptPaperTemplate';
 import { EstimateBrandingState, ReceiptCustomizeValues } from './types';
 import { Box } from '@/components';
 import { useDrawerContext } from '@/components/Drawer/DrawerProvider';
@@ -15,8 +10,9 @@ import {
   ElementCustomize,
   ElementCustomizeContent,
 } from '@/containers/ElementCustomize/ElementCustomize';
-import { useElementCustomizeContext } from '@/containers/ElementCustomize/ElementCustomizeProvider';
 import { useDrawerActions } from '@/hooks/state';
+import { DocumentLayoutFields } from '@/ditech/designer/DocumentLayoutFields';
+import { DocumentServerPreview } from '@/ditech/designer/DocumentServerPreview';
 
 export function ReceiptCustomizeContent() {
   const { payload, name } = useDrawerContext();
@@ -45,8 +41,9 @@ function ReceiptCustomizeFormContent() {
   return (
     <ElementCustomizeContent>
       <ElementCustomize.PaperTemplate>
-        <Box overflow="auto" flex="1 1" px={4} py={6}>
-          <ReceiptPaperTemplateFormConnected />
+        {/* 103 DiTech: rendered by the server, exactly as printed. */}
+        <Box overflow="auto" flex="1 1">
+          <DocumentServerPreview resource={'receipt'} />
         </Box>
       </ElementCustomize.PaperTemplate>
 
@@ -61,18 +58,14 @@ function ReceiptCustomizeFormContent() {
       >
         <ReceiptCustomizeFieldsContent />
       </ElementCustomize.FieldsTab>
+
+      <ElementCustomize.FieldsTab
+        id={'layout'}
+        label={'Layout'}
+        tabProps={{ disabled: !isTemplateNameFilled }}
+      >
+        <DocumentLayoutFields />
+      </ElementCustomize.FieldsTab>
     </ElementCustomizeContent>
   );
-}
-
-function ReceiptPaperTemplateFormConnected() {
-  const { values } = useFormikContext<ReceiptCustomizeValues>();
-  const { brandingState } = useElementCustomizeContext();
-
-  const mergedProps: ReceiptPaperTemplateProps = {
-    ...brandingState,
-    ...values,
-  };
-
-  return <ReceiptPaperTemplate {...mergedProps} />;
 }
