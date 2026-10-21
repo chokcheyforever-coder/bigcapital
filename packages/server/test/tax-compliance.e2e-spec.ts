@@ -110,6 +110,9 @@ describe('Tax compliance (e2e)', () => {
   it('prints the title, both TINs, riel amounts and signatures', async () => {
     const registered = await customer({ taxNumber: 'K001-300000003', registeredTaxpayer: true });
     const id = (await invoice(registered).expect(201)).body.id;
+    const block = await http().get(`/tax-compliance/documents/sale-invoices/${id}`).query({ total: 200, tax: 0 }).set(authHeaders()).expect(200);
+    expect(block.body).toMatchObject({ title: 'វិក្កយបត្រអាករ\nVAT Invoice', seller: { tin: 'K001-100000001' }, buyer: { tin: 'K001-300000003' } });
+    expect(block.body.khr).toMatchObject({ total: '820,000 ៛' });
     const res = await http().get(`/sale-invoices/${id}`).set(authHeaders()).set('accept', 'application/json+html').expect(200);
     const html: string = res.body.html_content ?? res.body.htmlContent;
     expect(html).toContain('វិក្កយបត្រអាករ');
