@@ -265,7 +265,7 @@ export function ReceiptPaperTemplate({
             )}
             {showDiscount && discount && (
               <PaperTemplate.TotalLine
-                label={discountLabel}
+                label={L?.discount ?? discountLabel}
                 amount={discount}
               />
             )}

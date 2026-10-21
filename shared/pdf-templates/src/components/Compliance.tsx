@@ -43,7 +43,7 @@ function Party({ heading, party, tinLabel, language }: { heading: string; party:
       {(showEn || !party.addressKm) && party.address && <x.div>{party.address}</x.div>}
       {party.tin && (
         <x.div mt={'4px'}>
-          <x.span color={muted}>{tinLabel.replace('\n', ' / ')}: </x.span>
+          <x.span color={muted}>{tinLabel.split('\n')[language === 'km' ? 0 : tinLabel.split('\n').length - 1]}: </x.span>
           <x.span fontWeight={600}>{party.tin}</x.span>
         </x.div>
       )}
