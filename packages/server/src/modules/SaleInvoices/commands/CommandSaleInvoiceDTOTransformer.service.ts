@@ -82,7 +82,9 @@ export class CommandSaleInvoiceDTOTransformer {
     }));
     const asyncEntries = await composeAsync(
       // 103 DiTech: Specific/Accommodation Tax and PLT rates from the items.
-      (entries) =>
+      // Must be an async function: async/compose treats plain functions as
+      // callback-style and would wait forever.
+      async (entries) =>
         this.exciseTax.assocExciseToEntries(
           entries,
           saleInvoiceDTO.isInclusiveTax,
