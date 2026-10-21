@@ -233,10 +233,11 @@ export function InvoicePaperTemplate({
   const view = effectiveLayout(layout, !!compliance);
   const columnVisible = (id: string) => view.columns.find((c) => c.id === id)?.visible !== false;
 
-  const columnDefs = {
+  type TableColumn = Parameters<typeof PaperTemplate.Table>[0]['columns'][number];
+  const columnDefs: Record<string, TableColumn> = {
     item: {
       label: L?.item ?? lineItemLabel,
-      accessor: (data) => (
+      accessor: (data: Record<string, any>) => (
         <Stack spacing={2}>
           <Text>{data.item}</Text>
           <Text color={'#5f6b7c'} fontSize={12}>
