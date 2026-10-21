@@ -1,6 +1,6 @@
 # Cambodia invoice and tax compliance + invoice designer: plan (DRAFT)
 
-Status: decisions taken 2026-10-21 (§6); waiting for the go-ahead to build.
+Status: part A built 2026-10-21 (§7); B (designer) and C (tax reports) to come.
 Not legal advice: the rules below come from secondary sources (law-firm and
 tax-firm summaries); confirm the final field list with a Cambodian tax adviser
 or the GDT before release.
@@ -130,3 +130,36 @@ the major tools (QuickBooks, Xero, Zoho) also use sections, not free canvas.
 2. Designer: **block-based drag and drop with a compliance lock**.
 3. Documents: **Khmer above English** by default; a company can switch to Khmer only or English only.
 4. Riel: **subtotal, VAT and total in KHR**, with the rate, its source and date.
+
+## 7. Part A as built (2026-10-21)
+
+- **Off by default.** Nothing changes for a company until Preferences ›
+  Tax compliance is switched on.
+- Migration `20261025000000_tax_compliance`: `tax_profile` (single row);
+  `contacts.tax_number`, `registered_taxpayer`, `display_name_km`,
+  `billing_address_km`; on `sales_invoices`, `sales_receipts`, `credit_notes`:
+  `document_kind`, `khr_rate`, `khr_rate_source`, `khr_rate_date`.
+- `modules/TaxCompliance`: `calc/compliance.ts` (document kind, issue checks,
+  rates, Khmer/English titles and labels; spec), `TaxProfileService`
+  (`GET/PUT /api/tax-compliance/profile`, Preferences permission to save;
+  `GET /api/tax-compliance/khr-rate`), `TaxDocumentsSubscriber`,
+  `TaxDocumentPdfService`.
+- Issuing = delivering an invoice, closing a receipt, opening a credit note.
+  Refused (400, `SELLER_TIN_MISSING`, `BUYER_TIN_MISSING`, `KHR_RATE_MISSING`)
+  until valid. Drafts are never blocked. Deleting an issued document:
+  `TAX_DOCUMENT_ISSUED` (cancel with a credit note).
+- Kind and riel rate are written on save and frozen once the document is
+  issued, so a reprint is identical.
+- Riel rate: GDT monthly (previous month, entered in the profile, USD only)
+  or NBC daily (MEF API, the rate of the day the document is saved).
+- Receipts have no tax lines in BigCapital: they always print as commercial
+  invoices (with "Receipt" under the title); a VAT invoice for a cash sale is
+  an invoice plus a payment. Credit notes print as credit notes.
+- PDFs: `shared/pdf-templates/src/components/Compliance.tsx` (parties with
+  TIN, riel box, signatures) used by the invoice, receipt and credit note
+  templates when the server passes `compliance`; Khmer fonts Kantumruy Pro /
+  Noto Sans Khmer.
+
+Not yet: Public Lighting / Specific / Accommodation tax lines (needs tax
+types with their own order of calculation), numbering-gap warnings, the
+designer (B), tax reports (C).
