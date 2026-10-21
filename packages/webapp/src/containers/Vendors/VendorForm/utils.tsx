@@ -49,6 +49,10 @@ export type VendorFormValues = {
 
   currencyCode: string;
   priceLevelId?: number | null;
+  taxNumber?: string;
+  registeredTaxpayer?: boolean;
+  displayNameKm?: string;
+  billingAddressKm?: string;
 
   openingBalance: string | number;
   openingBalanceAt: string;
@@ -90,6 +94,10 @@ export const defaultInitialValues: VendorFormValues = {
 
   currencyCode: '',
   priceLevelId: null,
+  taxNumber: '',
+  registeredTaxpayer: false,
+  displayNameKm: '',
+  billingAddressKm: '',
 
   openingBalance: '',
   openingBalanceAt: moment(new Date()).format('YYYY-MM-DD'),
@@ -132,6 +140,10 @@ export const transformFormToCreateRequest = (
 ): CreateVendorBody => ({
   currencyCode: values.currencyCode,
   priceLevelId: values.priceLevelId ?? null,
+  taxNumber: values.taxNumber?.trim() || null,
+  registeredTaxpayer: !!values.registeredTaxpayer,
+  displayNameKm: values.displayNameKm?.trim() || null,
+  billingAddressKm: values.billingAddressKm?.trim() || null,
   active: parseBoolean(values.active, true),
   openingBalanceExchangeRate: toNumber(values.openingBalanceExchangeRate) ?? 1,
 
@@ -176,6 +188,10 @@ export const transformFormToEditRequest = (
 ): EditVendorBody => ({
   active: parseBoolean(values.active, true),
   priceLevelId: values.priceLevelId ?? null,
+  taxNumber: values.taxNumber?.trim() || null,
+  registeredTaxpayer: !!values.registeredTaxpayer,
+  displayNameKm: values.displayNameKm?.trim() || null,
+  billingAddressKm: values.billingAddressKm?.trim() || null,
 
   salutation: values.salutation,
   firstName: values.firstName,

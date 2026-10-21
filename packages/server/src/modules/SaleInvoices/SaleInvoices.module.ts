@@ -68,9 +68,11 @@ import { SaleInvoicesImportable } from './commands/SaleInvoicesImportable';
 import { PaymentLinksModule } from '../PaymentLinks/PaymentLinks.module';
 import { BulkDeleteSaleInvoicesService } from './BulkDeleteSaleInvoices.service';
 import { ValidateBulkDeleteSaleInvoicesService } from './ValidateBulkDeleteSaleInvoices.service';
+import { TaxComplianceModule } from '@/modules/TaxCompliance/TaxCompliance.module';
 
 @Module({
   imports: [
+    TaxComplianceModule,
     TenancyModule,
     TenancyDatabaseModule,
     PdfTemplatesModule,

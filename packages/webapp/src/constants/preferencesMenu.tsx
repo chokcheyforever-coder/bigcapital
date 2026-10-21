@@ -14,6 +14,11 @@ export const PreferencesMenu: PreferencesMenuItem[] = [
     disabled: false,
     href: '/preferences/branding',
   },
+  {
+    text: 'Tax compliance',
+    disabled: false,
+    href: '/preferences/tax-compliance',
+  },
   // {
   //   text: 'Billing',
   //   href: '/preferences/billing',

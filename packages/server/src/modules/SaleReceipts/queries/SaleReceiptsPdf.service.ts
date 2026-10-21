@@ -10,6 +10,7 @@ import { ISaleReceiptBrandingTemplateAttributes } from '../types/SaleReceipts.ty
 import { events } from '@/common/events/events';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 import { renderReceiptPaperTemplateHtml } from '@bigcapital/pdf-templates';
+import { TaxDocumentPdfService } from '@/modules/TaxCompliance/TaxDocumentPdf.service';
 
 @Injectable()
 export class SaleReceiptsPdfService {
@@ -27,6 +28,7 @@ export class SaleReceiptsPdfService {
     private readonly getSaleReceiptService: GetSaleReceipt,
     private readonly saleReceiptBrandingTemplate: SaleReceiptBrandingTemplate,
     private readonly eventPublisher: EventEmitter2,
+    private readonly taxDocumentPdf: TaxDocumentPdfService,
 
     @Inject(SaleReceipt.name)
     private readonly saleReceiptModel: TenantModelProxy<typeof SaleReceipt>,
@@ -110,6 +112,10 @@ export class SaleReceiptsPdfService {
     return {
       ...brandingTemplate.attributes,
       ...transformReceiptToBrandingTemplateAttributes(saleReceipt),
+      compliance: await this.taxDocumentPdf.attributes('SaleReceipt', saleReceipt.id, {
+        total: Number((saleReceipt as any).total ?? 0),
+        tax: 0,
+      }),
     };
   }
 }

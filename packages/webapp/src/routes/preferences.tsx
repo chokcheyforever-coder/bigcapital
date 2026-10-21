@@ -22,6 +22,16 @@ export const getPreferenceRoutes = () => [
     ),
     exact: true,
   },
+  // 103 DiTech: Cambodian tax documents.
+  {
+    path: `${BASE_URL}/tax-compliance`,
+    component: lazy(() =>
+      import('@/ditech/compliance/TaxCompliancePage').then((m) => ({
+        default: m.TaxCompliancePage,
+      })),
+    ),
+    exact: true,
+  },
   {
     path: `${BASE_URL}/users`,
     component: lazy(() =>
