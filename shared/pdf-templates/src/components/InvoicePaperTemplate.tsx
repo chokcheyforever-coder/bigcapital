@@ -315,7 +315,7 @@ export function InvoicePaperTemplate({
             )}
             {showDiscount && !isEmpty(discount) && (
               <PaperTemplate.TotalLine
-                label={discountLabel}
+                label={L?.discount ?? discountLabel}
                 amount={discount}
               />
             )}

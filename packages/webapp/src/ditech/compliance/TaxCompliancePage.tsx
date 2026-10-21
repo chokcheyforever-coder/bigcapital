@@ -101,7 +101,8 @@ function TaxCompliancePageInner({ changePreferencesPageTitle }) {
       }
     >
       {({ values, setFieldValue, isSubmitting }) => (
-        <Form style={{ maxWidth: 720 }} data-testid="tax-compliance-form">
+        <Form style={{ maxWidth: 760 }} data-testid="tax-compliance-form" className={'ditech-tax-form'}>
+          <style>{'.ditech-tax-form .bp4-form-group.bp4-inline > label.bp4-label { min-width: 200px; }'}</style>
           <Stack spacing={14}>
             <Callout intent={Intent.PRIMARY} icon={'info-sign'}>
               Prints invoices, receipts and credit notes as Cambodian tax documents (Prakas 723): VAT invoice or commercial
