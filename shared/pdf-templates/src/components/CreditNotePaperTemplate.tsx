@@ -274,6 +274,7 @@ export function CreditNotePaperTemplate({
               {termsConditions}
             </PaperTemplate.Statement>
           )}
+        </Stack>
           ),
           signatures: () => (compliance ? <ComplianceSignatures compliance={compliance} /> : layout ? <PlainSignatures /> : null),
           text1: () => <CustomText text={view.blocks.find((b) => b.id === 'text1')?.text} />,
