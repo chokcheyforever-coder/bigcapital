@@ -21,7 +21,8 @@ const COLORS = { bar: '#c5d5ea', line: '#2965cc', dashed: '#d9822b', axis: '#ccc
  */
 export function BudgetChart({ points, height = 180, testId }: { points: ChartPoint[]; height?: number; testId?: string }) {
   const width = 640;
-  const pad = { top: 10, right: 8, bottom: 22, left: 8 };
+  // Left padding holds the value scale.
+  const pad = { top: 10, right: 8, bottom: 22, left: 52 };
   const values = points.flatMap((p) => [p.bar, p.line, p.dashed]).filter((v): v is number => v !== null && v !== undefined);
   const max = Math.max(0, ...values);
   const min = Math.min(0, ...values);
@@ -46,6 +47,16 @@ export function BudgetChart({ points, height = 180, testId }: { points: ChartPoi
   return (
     <div data-testid={testId}>
     <svg viewBox={`0 0 ${width} ${height}`} width="100%" role="img" aria-label="Budget and actual by month" style={{ maxWidth: width }}>
+      {[max, 0, min]
+        .filter((v, i, all) => all.indexOf(v) === i)
+        .map((v) => (
+          <g key={`s${v}`}>
+            {v !== 0 && <line x1={pad.left} x2={width - pad.right} y1={y(v)} y2={y(v)} stroke={COLORS.axis} strokeDasharray="2 4" opacity={0.6} />}
+            <text x={pad.left - 6} y={y(v) + 3} textAnchor="end" fontSize={10} fill="#738091">
+              {Math.round(v).toLocaleString()}
+            </text>
+          </g>
+        ))}
       <line x1={pad.left} x2={width - pad.right} y1={y(0)} y2={y(0)} stroke={COLORS.axis} />
       {points.map((p, i) =>
         p.bar === null || p.bar === undefined ? null : (

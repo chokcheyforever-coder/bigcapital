@@ -150,6 +150,12 @@ export function BudgetDashboardPage() {
                           {data.monthly[0]?.netIncome && <th colSpan={2} style={{ textAlign: 'center' }}>Net income</th>}
                           <th colSpan={2} style={{ textAlign: 'center' }}>Running total</th>
                         </tr>
+                        <tr>
+                          <th />
+                          {Array.from({ length: Object.keys(data.monthly[0]?.groups ?? {}).length + (data.monthly[0]?.netIncome ? 1 : 0) + 1 }).map((_, i) => (
+                            <BudgetActualHeader key={i} />
+                          ))}
+                        </tr>
                       </thead>
                       <tbody>
                         {data.monthly.map((m) => (
@@ -164,9 +170,11 @@ export function BudgetDashboardPage() {
                         ))}
                       </tbody>
                     </HTMLTable>
-                    <p className={Classes.TEXT_MUTED} style={{ fontSize: 12 }}>
-                      Each pair is budget / actual. {data.budget.type === 'balance_sheet' ? 'Balance sheet figures are month-end balances.' : ''}
-                    </p>
+                    {data.budget.type === 'balance_sheet' ? (
+                      <p className={Classes.TEXT_MUTED} style={{ fontSize: 12 }}>
+                        Balance sheet figures are month-end balances.
+                      </p>
+                    ) : null}
                   </Section>
 
                   <Columns>
@@ -250,6 +258,17 @@ const sumGroups = (groups: Record<string, { budget: number; actual: number | nul
     (a, g) => ({ budget: a.budget + g.budget, actual: g.actual === null || a.actual === null ? null : a.actual + g.actual }),
     { budget: 0, actual: 0 },
   );
+
+function BudgetActualHeader() {
+  return (
+    <>
+      <th style={{ textAlign: 'right', fontWeight: 400 }} className={Classes.TEXT_MUTED}>
+        Budget
+      </th>
+      <th style={{ textAlign: 'right', fontWeight: 400 }}>Actual</th>
+    </>
+  );
+}
 
 function BudgetActual({ budget, actual, money }) {
   return (
