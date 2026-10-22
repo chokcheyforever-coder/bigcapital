@@ -19,7 +19,7 @@ export function WhtCodesSection() {
   const accountName = (id) => accounts.find((a) => a.id === id)?.name ?? '—';
 
   return (
-    <div style={{ maxWidth: 960, marginTop: 32 }} data-testid="wht-codes">
+    <div style={{ maxWidth: 1010, margin: '32px 0 0', padding: '0 25px 20px' }} data-testid="wht-codes">
       <h3 style={{ margin: '0 0 10px' }}>Withholding tax</h3>
       <Stack spacing={10}>
         <Callout icon={'info-sign'}>
