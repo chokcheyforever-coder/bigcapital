@@ -42,6 +42,7 @@ import { ProjectsModule } from '../Projects/Projects.module';
 import { BudgetingModule } from '../Budgeting/Budgeting.module';
 import { PriceLevelsModule } from '../PriceLevels/PriceLevels.module';
 import { TaxComplianceModule } from '../TaxCompliance/TaxCompliance.module';
+import { TaxReturnsModule } from '../TaxReturns/TaxReturns.module';
 import { WarehousesModule } from '../Warehouses/Warehouses.module';
 import { SerializeInterceptor } from '@/common/interceptors/serialize.interceptor';
 import { ToJsonInterceptor } from '@/common/interceptors/to-json.interceptor';
@@ -214,6 +215,7 @@ import { AppThrottleModule } from './AppThrottle.module';
     BudgetingModule,
     PriceLevelsModule,
     TaxComplianceModule,
+    TaxReturnsModule,
     WarehousesModule,
     WarehousesTransfersModule,
     CustomersModule,
