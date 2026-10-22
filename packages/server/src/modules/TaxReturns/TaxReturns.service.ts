@@ -277,6 +277,8 @@ export class TaxReturnsService {
     const date = moment(`${month}-01`).endOf('month').format('YYYY-MM-DD');
     const journal = await this.createJournal.makeJournalEntries({
       date: date as any,
+      // The journal validator requires a number even with auto-increment on.
+      journalNumber: `TOI-PREPAY-${month}`,
       reference: `TOI-PREPAY-${month}`,
       description: `Prepayment of tax on income ${sheet.prepayment.rate}% of ${month} turnover (${sheet.prepayment.turnover.toFixed(2)})`,
       publish: true,
