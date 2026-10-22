@@ -241,9 +241,11 @@ table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:5p
     if ((await this.codeModel().query(trx).resultSize()) > 0) return;
     let account = await this.accountModel().query(trx).findOne({ slug: PAYABLE_ACCOUNT.slug });
     if (!account) {
+      // In the base currency: journals reject accounts without a currency.
+      const metadata = await this.tenancyContext.getTenantMetadata();
       account = await this.accountModel()
         .query(trx)
-        .insertAndFetch({ ...PAYABLE_ACCOUNT, accountType: 'tax-payable', description: '', active: true, index: 1, predefined: false } as any);
+        .insertAndFetch({ ...PAYABLE_ACCOUNT, accountType: 'tax-payable', currencyCode: metadata?.baseCurrency, description: '', active: true, index: 1, predefined: false } as any);
     }
     // One by one: objection's batch insert is not supported on MySQL.
     for (const c of DEFAULT_WHT_CODES) {
