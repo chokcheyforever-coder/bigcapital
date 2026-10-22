@@ -6,6 +6,9 @@ import {
 export interface EstimateBrandingState extends BrandingState {}
 
 export interface ReceiptCustomizeValues extends BrandingTemplateValues {
+  // 103 DiTech: block layout (DocumentLayout).
+  layout?: any;
+
   // Colors
   primaryColor?: string;
   secondaryColor?: string;

@@ -15,6 +15,8 @@ import {
   DefaultPdfTemplateAddressBilledFrom,
 } from './_constants';
 import { ComplianceKhrBox, ComplianceParties, ComplianceProps, ComplianceSignatures } from './Compliance';
+import { DocumentLayout, effectiveLayout } from './DocumentLayout';
+import { CustomText, layoutColumns, LayoutStack, PlainSignatures } from './LayoutBlocks';
 
 interface CreditNoteLine {
   item?: string;
@@ -27,6 +29,9 @@ interface CreditNoteLine {
 export interface CreditNotePaperTemplateProps extends PaperTemplateProps {
   /** 103 DiTech: Cambodian tax document (title, TINs, riel, Khmer/English labels, signatures). */
   compliance?: ComplianceProps;
+
+  /** 103 DiTech: block order and visibility from the designer. */
+  layout?: Partial<DocumentLayout> | null;
 
   primaryColor?: string;
   secondaryColor?: string;
@@ -148,17 +153,49 @@ export function CreditNotePaperTemplate({
     },
   ],
   compliance,
+  layout,
   ...props
 }: CreditNotePaperTemplateProps) {
   const L = compliance?.labels;
   const title = compliance ? [compliance.title, compliance.subtitle].filter(Boolean).join('\n') : 'Credit Note';
+  // 103 DiTech: blocks and columns in the designer's order (required ones stay
+  // on for a tax document); without a saved layout: the original order.
+  const view = effectiveLayout(layout, !!compliance);
+  type TableColumn = Parameters<typeof PaperTemplate.Table>[0]['columns'][number];
+  const baseColumns: TableColumn[] = [
+              {
+                label: L?.item ?? lineItemLabel,
+                accessor: (data: Record<string, any>) => (
+                  <Stack spacing={2}>
+                    <Text>{data.item}</Text>
+                    {data.description && (
+                      <Text color={'#5f6b7c'} fontSize={12}>
+                        {data.description}
+                      </Text>
+                    )}
+                  </Stack>
+                ),
+                thStyle: { width: '60%' },
+              },
+              {
+                label: L?.quantity ?? lineQuantityLabel,
+                accessor: 'quantity',
+                align: 'right',
+              },
+              { label: L?.rate ?? lineRateLabel, accessor: 'rate', align: 'right' },
+              { label: L?.total ?? lineTotalLabel, accessor: 'total', align: 'right' },
+];
+  const columns = layoutColumns(view, ['item', 'quantity', 'rate', 'total'], baseColumns, !!layout);
   return (
     <PaperTemplate
       primaryColor={primaryColor}
       secondaryColor={secondaryColor}
       {...props}
-    >
-      <Stack spacing={24}>
+     {...(layout ? { fontSize: `${view.fontSize}px` } : {})}>
+      <LayoutStack
+        view={view}
+        renderers={{
+          header: () => (
         <Group align="start" spacing={10}>
           <Stack flex={1}>
             <PaperTemplate.BigTitle title={title} />
@@ -181,7 +218,9 @@ export function CreditNotePaperTemplate({
             <PaperTemplate.Logo logoUri={companyLogoUri} />
           )}
         </Group>
-
+          ),
+          parties: () => (
+            <>
         {compliance ? (
           <ComplianceParties compliance={compliance} />
         ) : (
@@ -199,34 +238,10 @@ export function CreditNotePaperTemplate({
           )}
         </PaperTemplate.AddressesGroup>
         )}
-
-        <Stack spacing={0}>
-          <PaperTemplate.Table
-            columns={[
-              {
-                label: L?.item ?? lineItemLabel,
-                accessor: (data) => (
-                  <Stack spacing={2}>
-                    <Text>{data.item}</Text>
-                    {data.description && (
-                      <Text color={'#5f6b7c'} fontSize={12}>
-                        {data.description}
-                      </Text>
-                    )}
-                  </Stack>
-                ),
-                thStyle: { width: '60%' },
-              },
-              {
-                label: L?.quantity ?? lineQuantityLabel,
-                accessor: 'quantity',
-                align: 'right',
-              },
-              { label: L?.rate ?? lineRateLabel, accessor: 'rate', align: 'right' },
-              { label: L?.total ?? lineTotalLabel, accessor: 'total', align: 'right' },
-            ]}
-            data={lines}
-          />
+            </>
+          ),
+          lines: () => <PaperTemplate.Table columns={columns} data={lines} />,
+          totals: () => (
           <PaperTemplate.Totals>
             {showSubtotal && (
               <PaperTemplate.TotalLine
@@ -244,9 +259,9 @@ export function CreditNotePaperTemplate({
               />
             )}
           </PaperTemplate.Totals>
-          {compliance && <ComplianceKhrBox compliance={compliance} />}
-        </Stack>
-
+          ),
+          khr: () => (compliance ? <ComplianceKhrBox compliance={compliance} /> : null),
+          notes: () => (
         <Stack spacing={0}>
           {showCustomerNote && customerNote && (
             <PaperTemplate.Statement label={customerNoteLabel}>
@@ -260,9 +275,12 @@ export function CreditNotePaperTemplate({
             </PaperTemplate.Statement>
           )}
         </Stack>
-
-        {compliance && <ComplianceSignatures compliance={compliance} />}
-      </Stack>
+          ),
+          signatures: () => (compliance ? <ComplianceSignatures compliance={compliance} /> : layout ? <PlainSignatures /> : null),
+          text1: () => <CustomText text={view.blocks.find((b) => b.id === 'text1')?.text} />,
+          text2: () => <CustomText text={view.blocks.find((b) => b.id === 'text2')?.text} />,
+        }}
+      />
     </PaperTemplate>
   );
 }

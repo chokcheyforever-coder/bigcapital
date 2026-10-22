@@ -86,6 +86,22 @@ describe('Invoice designer (e2e)', () => {
     expect(html).not.toContain('QTY-MARK');
   });
 
+  it('receipts and credit notes follow the layout too', async () => {
+    for (const document of ['receipt', 'credit-note']) {
+      const res = await http()
+        .post(`/tax-compliance/preview/${document}`)
+        .set(authHeaders())
+        .send({ attributes: { ...attributes, layout } })
+        .expect(200);
+      const html: string = res.body.html_content ?? res.body.htmlContent;
+      expect(html).toContain('Pay to ABA 000 111 222');
+      expect(before(html, 'TERMS-MARK', 'ITEM-MARK')).toBe(true);
+      expect(before(html, 'AMOUNT-MARK', 'ITEM-MARK')).toBe(true);
+      expect(html).not.toContain('QTY-MARK');
+    }
+    await http().post('/tax-compliance/preview/bill').set(authHeaders()).send({ attributes: {} }).expect(400);
+  });
+
   describe('with Cambodian tax documents on', () => {
     beforeAll(async () => {
       await http()

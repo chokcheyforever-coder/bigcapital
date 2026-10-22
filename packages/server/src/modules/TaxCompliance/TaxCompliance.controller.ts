@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { renderInvoicePaperTemplateHtml } from '@bigcapital/pdf-templates';
+import { renderCreditNotePaperTemplateHtml, renderInvoicePaperTemplateHtml, renderReceiptPaperTemplateHtml } from '@bigcapital/pdf-templates';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import * as moment from 'moment';
 import { ApiCommonHeaders } from '@/common/decorators/ApiCommonHeaders';
@@ -59,13 +59,20 @@ export class TaxComplianceController {
    * code as the PDF, with sample lines and, when tax documents are on, a sample
    * tax block. The webapp shows it in a frame.
    */
-  @Post('preview/invoice')
+  @Post('preview/:document')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Renders an invoice preview (HTML) from branding attributes being edited.' })
-  async previewInvoice(@Body() dto: DocumentPreviewDto) {
-    const compliance = await this.documents.sample();
+  @ApiOperation({ summary: 'Renders a document preview (HTML) from branding attributes being edited: invoice, receipt or credit-note.' })
+  async preview(@Param('document') document: string, @Body() dto: DocumentPreviewDto) {
+    const renderers: Record<string, (props: any) => string> = {
+      invoice: renderInvoicePaperTemplateHtml,
+      receipt: renderReceiptPaperTemplateHtml,
+      'credit-note': renderCreditNotePaperTemplateHtml,
+    };
+    const render = renderers[document];
+    if (!render) throw new BadRequestException('document must be invoice, receipt or credit-note');
+    const compliance = await this.documents.sample(document as 'invoice' | 'receipt' | 'credit-note');
     const { compliance: _ignored, ...attributes } = dto.attributes ?? {};
-    return { htmlContent: renderInvoicePaperTemplateHtml({ ...attributes, ...(compliance ? { compliance } : {}) } as any) };
+    return { htmlContent: render({ ...attributes, ...(compliance ? { compliance } : {}) } as any) };
   }
 
   /** What a document's PDF prints as a tax document (empty when the profile is off). */

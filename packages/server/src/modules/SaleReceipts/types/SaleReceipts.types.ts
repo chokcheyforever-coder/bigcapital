@@ -91,6 +91,8 @@ export interface ISaleReceiptMailPresend {
 export interface ISaleReceiptBrandingTemplateAttributes {
   /** 103 DiTech: Cambodian tax document block (TaxDocumentPdfService). */
   compliance?: any;
+  /** 103 DiTech: designer block layout. */
+  layout?: any;
   primaryColor: string;
   secondaryColor: string;
   showCompanyLogo: boolean;

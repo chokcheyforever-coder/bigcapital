@@ -58,7 +58,7 @@ export class TaxDocumentPdfService {
    * sample registered buyer and today's rate on 1,000 of the base currency
    * with 10% VAT. Undefined when tax documents are off.
    */
-  async sample(): Promise<ComplianceAttributes | undefined> {
+  async sample(document: 'invoice' | 'receipt' | 'credit-note' = 'invoice'): Promise<ComplianceAttributes | undefined> {
     const profile = await this.profiles.get();
     if (!profile.enabled) return undefined;
     const metadata = await this.tenancyContext.getTenantMetadata();
@@ -70,7 +70,9 @@ export class TaxDocumentPdfService {
     const tax = 100;
     return {
       language: lang,
-      title: label(TITLES.vat_invoice, lang),
+      // Receipts print as commercial invoices (no tax lines); credit notes as credit notes.
+      title: label(document === 'credit-note' ? TITLES.credit_note : document === 'receipt' ? TITLES.commercial_invoice : TITLES.vat_invoice, lang),
+      subtitle: document === 'receipt' ? label(TITLES.receipt, lang) : undefined,
       seller: { name: metadata?.name ?? '', nameKm: profile.companyNameKm, address: profile.addressEn, addressKm: profile.addressKm, tin: profile.tin },
       buyer: { name: 'Sample Customer Co., Ltd.', nameKm: 'ក្រុមហ៊ុន គំរូ', address: 'Phnom Penh', addressKm: 'ភ្នំពេញ', tin: 'K001-000000000' },
       labels: Object.fromEntries(Object.entries(LABELS).map(([k, v]) => [k, label(v, lang)])),

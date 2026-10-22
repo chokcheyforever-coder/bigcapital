@@ -6,6 +6,9 @@ import {
 export interface CreditNoteBrandingState extends BrandingState {}
 
 export interface CreditNoteCustomizeValues extends BrandingTemplateValues {
+  // 103 DiTech: block layout (DocumentLayout).
+  layout?: any;
+
   // Colors
   primaryColor?: string;
   secondaryColor?: string;

@@ -1,6 +1,6 @@
 // @ts-nocheck
 // 103 DiTech: the designer preview, rendered by the server with the same
-// template and code as the PDF (POST /api/tax-compliance/preview/invoice), so
+// template and code as the PDF (POST /api/tax-compliance/preview/:document), so
 // what is shown is what prints. Updates shortly after each change.
 import { useEffect, useState } from 'react';
 import { Spinner } from '@blueprintjs/core';
@@ -8,7 +8,7 @@ import { useFormikContext } from 'formik';
 import { useAuthOrganizationId, useAuthToken } from '@/hooks/state';
 import { useElementCustomizeContext } from '@/containers/ElementCustomize/ElementCustomizeProvider';
 
-export function DocumentServerPreview({ resource = 'invoice' }: { resource?: 'invoice' }) {
+export function DocumentServerPreview({ resource = 'invoice' }: { resource?: 'invoice' | 'receipt' | 'credit-note' }) {
   const { values } = useFormikContext();
   const { brandingState } = useElementCustomizeContext();
   const token = useAuthToken();
