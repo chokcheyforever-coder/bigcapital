@@ -1,4 +1,5 @@
 import * as R from 'ramda';
+import { sumBy } from 'lodash';
 import { ILedger } from '@/modules/Ledger/types/Ledger.types';
 import { AccountNormal } from '@/modules/Accounts/Accounts.types';
 import { ILedgerEntry } from '@/modules/Ledger/types/Ledger.types';
@@ -47,7 +48,10 @@ export class ExpenseGL {
 
     return {
       ...commonEntry,
-      credit: this.expense.localAmount,
+      // 103 DiTech: the payment account pays the total less withholding tax.
+      credit:
+        this.expense.localAmount -
+        sumBy(this.getExpenseGLWithholdingEntries(), 'credit'),
       accountId: this.expense.paymentAccountId,
       accountNormal:
         this.expense?.paymentAccount?.accountNormal === 'debit'
@@ -81,6 +85,31 @@ export class ExpenseGL {
   );
 
   /**
+   * 103 DiTech: withholding tax in base currency.
+   */
+  private get whtLocalAmount(): number {
+    return (Number(this.expense.whtAmount) || 0) * this.expense.exchangeRate;
+  }
+
+  /**
+   * 103 DiTech: the withholding tax, credited to its code's payable account.
+   * @returns {ILedgerEntry[]}
+   */
+  private getExpenseGLWithholdingEntries = (): ILedgerEntry[] => {
+    const accountId = (this.expense as any).whtCode?.accountId;
+    if (!this.whtLocalAmount || !accountId) return [];
+    return [
+      {
+        ...this.getExpenseGLCommonEntry(),
+        credit: this.whtLocalAmount,
+        accountId,
+        accountNormal: AccountNormal.CREDIT,
+        index: 1,
+      } as ILedgerEntry,
+    ];
+  };
+
+  /**
    * Retrieves the expense GL entries.
    * @returns {ILedgerEntry[]}
    */
@@ -91,7 +120,11 @@ export class ExpenseGL {
     const categoryEntries = this.expense.categories.map((category, index) =>
       getCategoryEntry(category, index),
     );
-    return [paymentEntry, ...categoryEntries];
+    return [
+      paymentEntry,
+      ...this.getExpenseGLWithholdingEntries(),
+      ...categoryEntries,
+    ];
   };
 
   /**

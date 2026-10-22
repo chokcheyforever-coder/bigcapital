@@ -8,6 +8,7 @@ import { Expense } from '../models/Expense.model';
 import { assocItemEntriesDefaultIndex } from '@/utils/associate-item-entries-index';
 import { TenancyContext } from '@/modules/Tenancy/TenancyContext.service';
 import { CreateExpenseDto, EditExpenseDto } from '../dtos/Expense.dto';
+import { WithholdingTaxService } from '@/modules/TaxCompliance/WithholdingTax.service';
 
 @Injectable()
 export class ExpenseDTOTransformer {
@@ -18,6 +19,7 @@ export class ExpenseDTOTransformer {
   constructor(
     private readonly branchDTOTransform: BranchTransactionDTOTransformer,
     private readonly tenancyContext: TenancyContext,
+    private readonly withholdingTax: WithholdingTaxService,
   ) {}
 
   /**
@@ -76,7 +78,16 @@ export class ExpenseDTOTransformer {
       this.branchDTOTransform.transformDTO<Expense>,
     )(initialDTO);
 
-    return asyncDto as Expense;
+    // 103 DiTech: withholding tax on the expense (omitted code = the payee's
+    // usual code, null = none). The payment account pays the rest.
+    return Object.assign(
+      asyncDto,
+      await this.withholdingTax.resolve(
+        expenseDTO.whtCodeId,
+        expenseDTO.payeeId,
+        totalAmount,
+      ),
+    ) as Expense;
   }
 
   /**

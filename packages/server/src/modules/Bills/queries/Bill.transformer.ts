@@ -18,6 +18,8 @@ export class BillTransformer extends Transformer {
       'formattedPaymentAmount',
       'formattedBalance',
       'formattedDueAmount',
+      'whtAmountFormatted',
+      'payableAmountFormatted',
       'formattedExchangeRate',
       'subtotalFormatted',
       'subtotalLocalFormatted',
@@ -87,6 +89,29 @@ export class BillTransformer extends Transformer {
   protected formattedPaymentAmount = (bill: Bill): string => {
     return this.formatNumber(bill.paymentAmount, {
       currencyCode: bill.currencyCode,
+    });
+  };
+
+  /**
+   * 103 DiTech: withholding tax formatted.
+   * @param {Bill} bill
+   * @returns {string}
+   */
+  protected whtAmountFormatted = (bill: Bill): string => {
+    return this.formatNumber(Number(bill.whtAmount) || 0, {
+      currencyCode: bill.currencyCode,
+    });
+  };
+
+  /**
+   * 103 DiTech: what the vendor is owed (total less withholding tax), formatted.
+   * @param {Bill} bill
+   * @returns {string}
+   */
+  protected payableAmountFormatted = (bill: Bill): string => {
+    return this.formatNumber(bill.payableAmount, {
+      currencyCode: bill.currencyCode,
+      money: true,
     });
   };
 

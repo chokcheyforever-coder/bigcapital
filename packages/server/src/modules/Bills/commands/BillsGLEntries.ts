@@ -48,7 +48,8 @@ export class BillGLEntries {
     const bill = await this.billModel()
       .query(trx)
       .findById(billId)
-      .withGraphFetched('entries.item');
+      .withGraphFetched('entries.item')
+      .withGraphFetched('whtCode');
 
     // Retrieves the allocated landed costs of the bill entries.
     const itemAllocatedCosts =

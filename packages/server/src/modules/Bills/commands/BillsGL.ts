@@ -132,7 +132,8 @@ export class BillGL {
 
     return {
       ...commonJournalMeta,
-      credit: this.bill.totalLocal,
+      // 103 DiTech: the vendor is owed the total less withholding tax.
+      credit: this.bill.totalLocal - this.bill.whtAmountLocal,
       accountId: this.payableAccountId,
       contactId: this.bill.vendorId,
       accountNormal: AccountNormal.CREDIT,
@@ -211,6 +212,26 @@ export class BillGL {
   }
 
   /**
+   * 103 DiTech: the withholding tax, credited to its code's payable account
+   * (the tax payable account when the code has none).
+   * @returns {ILedgerEntry[]}
+   */
+  private get withholdingTaxEntries(): ILedgerEntry[] {
+    if (!this.bill.whtAmountLocal) return [];
+    return [
+      {
+        ...this.billCommonEntry,
+        credit: this.bill.whtAmountLocal,
+        accountId:
+          (this.bill as any).whtCode?.accountId || this.taxPayableAccountId,
+        accountNormal: AccountNormal.CREDIT,
+        index: 2,
+        indexGroup: 5,
+      },
+    ];
+  }
+
+  /**
    * Retrieves the given bill GL entries.
    * @returns {ILedgerEntry[]}
    */
@@ -226,6 +247,7 @@ export class BillGL {
 
     return [
       payableEntry,
+      ...this.withholdingTaxEntries,
       ...itemsEntries,
       ...landedCostEntries,
       ...this.getBillTaxEntries(),

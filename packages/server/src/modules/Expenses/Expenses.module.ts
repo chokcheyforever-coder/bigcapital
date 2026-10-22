@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { TaxComplianceModule } from '../TaxCompliance/TaxCompliance.module';
 import { CreateExpense } from './commands/CreateExpense.service';
 import { DeleteExpense } from './commands/DeleteExpense.service';
 import { EditExpense } from './commands/EditExpense.service';
@@ -22,7 +23,7 @@ import { BulkDeleteExpensesService } from './BulkDeleteExpenses.service';
 import { ValidateBulkDeleteExpensesService } from './ValidateBulkDeleteExpenses.service';
 
 @Module({
-  imports: [TenancyModule, LedgerModule, BranchesModule, DynamicListModule],
+  imports: [TenancyModule, LedgerModule, BranchesModule, DynamicListModule, TaxComplianceModule],
   controllers: [ExpensesController],
   exports: [CreateExpense, ExpensesExportable, ExpensesImportable, ExpenseGLEntriesService],
   providers: [

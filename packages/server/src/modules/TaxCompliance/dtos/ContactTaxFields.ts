@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsInt, IsString, MaxLength, ValidateIf } from 'class-validator';
 import { IsOptional } from '@/common/decorators/Validators';
 import { parseBoolean } from '@/utils/parse-boolean';
 
@@ -22,3 +22,11 @@ export const KhmerNameField = () =>
 
 export const KhmerAddressField = () =>
   applyDecorators(ApiProperty({ description: 'Billing address in Khmer', required: false, nullable: true }), IsOptional(), IsString(), MaxLength(1000));
+
+/** 103 DiTech part C2: the vendor's usual withholding tax code (null for none). */
+export const DefaultWhtCodeField = () =>
+  applyDecorators(
+    ApiProperty({ description: 'Usual withholding tax code of the vendor', required: false, nullable: true, example: 4 }),
+    ValidateIf((_, value) => value !== null && value !== undefined),
+    IsInt(),
+  );

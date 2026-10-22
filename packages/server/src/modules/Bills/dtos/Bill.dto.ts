@@ -1,3 +1,4 @@
+import { WhtCodeIdField } from '@/modules/TaxCompliance/dtos/WhtCode.dto';
 import { ToNumber } from '@/common/decorators/Validators';
 import { ItemEntryDto } from '@/modules/TransactionItemEntry/dto/ItemEntry.dto';
 import { Type, Transform } from 'class-transformer';
@@ -214,6 +215,9 @@ export class CommandBillDto {
   @ToNumber()
   @IsNumber()
   adjustment?: number;
+
+  @WhtCodeIdField()
+  whtCodeId?: number | null;
 }
 
 export class CreateBillDto extends CommandBillDto {}

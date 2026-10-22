@@ -29,6 +29,7 @@ import { PriceLevel } from '@/modules/PriceLevels/models/PriceLevel.model';
 import { PriceLevelItem } from '@/modules/PriceLevels/models/PriceLevelItem.model';
 import { TaxProfile } from '@/modules/TaxCompliance/models/TaxProfile.model';
 import { ExciseTaxCode } from '@/modules/TaxCompliance/models/ExciseTaxCode.model';
+import { WhtCode } from '@/modules/TaxCompliance/models/WhtCode.model';
 import { SaleEstimate } from '@/modules/SaleEstimates/models/SaleEstimate';
 import { Customer } from '@/modules/Customers/models/Customer';
 import { Contact } from '@/modules/Contacts/models/Contact';
@@ -84,6 +85,7 @@ const models = [
   PriceLevelItem,
   TaxProfile,
   ExciseTaxCode,
+  WhtCode,
   SaleEstimate,
   Customer,
   Contact,
