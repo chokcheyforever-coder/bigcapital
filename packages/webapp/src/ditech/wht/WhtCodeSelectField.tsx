@@ -6,7 +6,7 @@ import { FFormGroup } from '@/components';
 import { FSelect } from '@/components/Forms';
 import { useWhtCodes } from './useWhtCodes';
 
-export function WhtCodeSelectField({ name = 'whtCodeId', label = 'Withholding tax', inline = true, helperText = undefined }) {
+export function WhtCodeSelectField({ name = 'whtCodeId', label = 'Withholding tax', inline = true, helperText }) {
   const { data: codes = [] } = useWhtCodes();
   const items = useMemo(
     () => [
