@@ -27,6 +27,9 @@ export type ExpenseFormValues = {
   exchangeRate: number;
   categories: ExpenseEntry[];
   attachments: unknown[];
+  /** 103 DiTech: the vendor paid and the withholding tax code ('' = none). */
+  payeeId: string;
+  whtCodeId: string;
 };
 
 export type ExpenseSubmitPayload = {

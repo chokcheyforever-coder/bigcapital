@@ -1,4 +1,5 @@
-import { BadRequestException, Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Headers, HttpCode, Param, ParseIntPipe, Post, Put, Query, Res, UseGuards } from '@nestjs/common';
+import { Response } from 'express';
 import { renderCreditNotePaperTemplateHtml, renderInvoicePaperTemplateHtml, renderReceiptPaperTemplateHtml } from '@bigcapital/pdf-templates';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import * as moment from 'moment';
@@ -14,6 +15,9 @@ import { TaxProfileService } from './TaxProfile.service';
 import { TaxDocumentPdfService } from './TaxDocumentPdf.service';
 import { ExciseTaxService } from './ExciseTax.service';
 import { EditExciseTaxCodeDto, SetExciseTaxCodeItemsDto } from './dtos/ExciseTaxCode.dto';
+import { WithholdingTaxService } from './WithholdingTax.service';
+import { EditWhtCodeDto } from './dtos/WhtCode.dto';
+import { ChromiumlyTenancy } from '../ChromiumlyTenancy/ChromiumlyTenancy.service';
 
 @Controller('tax-compliance')
 @ApiTags('Tax compliance')
@@ -24,6 +28,8 @@ export class TaxComplianceController {
     private readonly profiles: TaxProfileService,
     private readonly documents: TaxDocumentPdfService,
     private readonly excise: ExciseTaxService,
+    private readonly wht: WithholdingTaxService,
+    private readonly chromium: ChromiumlyTenancy,
   ) {}
 
   /** Anyone preparing documents needs to know whether tax documents are on. */
@@ -107,5 +113,53 @@ export class TaxComplianceController {
   @ApiOperation({ summary: 'Sets the items charged this tax (replaces the list).' })
   setExciseCodeItems(@Param('id', ParseIntPipe) id: number, @Body() dto: SetExciseTaxCodeItemsDto) {
     return this.excise.setItems(id, dto.itemIds);
+  }
+
+  /** Withholding tax codes by payment type (created on first use). */
+  @Get('wht-codes')
+  @ApiOperation({ summary: 'Lists the withholding tax codes.' })
+  whtCodes() {
+    return this.wht.list();
+  }
+
+  @Put('wht-codes/:id')
+  @RequirePermission(PreferencesAction.Mutate, AbilitySubject.Preferences)
+  @ApiOperation({ summary: 'Edits a withholding tax code: rate, payable account, active.' })
+  editWhtCode(@Param('id', ParseIntPipe) id: number, @Body() dto: EditWhtCodeDto) {
+    return this.wht.edit(id, dto);
+  }
+
+  /** The month's tax withheld, by vendor and by payment type. */
+  @Get('wht')
+  @ApiQuery({ name: 'month', required: true, example: '2026-10' })
+  @ApiOperation({ summary: 'Withholding tax of a month: by vendor and code, with totals by code.' })
+  whtReport(@Query('month') month: string) {
+    return this.wht.report(this.month(month));
+  }
+
+  /** A vendor's certificate for the month: HTML, or PDF with accept: application/pdf. */
+  @Get('wht/certificate')
+  @ApiQuery({ name: 'vendorId', required: true, example: 12 })
+  @ApiQuery({ name: 'month', required: true, example: '2026-10' })
+  @ApiOperation({ summary: 'The withholding tax certificate of a vendor for a month.' })
+  async whtCertificate(
+    @Query('vendorId', ParseIntPipe) vendorId: number,
+    @Query('month') month: string,
+    @Headers('accept') accept: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const html = await this.wht.certificateHtml(vendorId, this.month(month));
+    if (accept?.includes('application/pdf')) {
+      const pdf = await this.chromium.convertHtmlContent(html);
+      res.set({ 'Content-Type': 'application/pdf', 'Content-Length': pdf.length, 'Content-Disposition': `attachment; filename="WHT-${vendorId}-${month}.pdf"` });
+      res.send(pdf);
+      return;
+    }
+    return { htmlContent: html };
+  }
+
+  private month(month: string) {
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month ?? '')) throw new BadRequestException('month must be YYYY-MM');
+    return month;
   }
 }

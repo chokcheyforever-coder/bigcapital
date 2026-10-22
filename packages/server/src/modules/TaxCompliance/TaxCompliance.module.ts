@@ -8,12 +8,14 @@ import { TaxComplianceController } from './TaxCompliance.controller';
 import { TaxProfileService } from './TaxProfile.service';
 import { TaxDocumentPdfService } from './TaxDocumentPdf.service';
 import { ExciseTaxService } from './ExciseTax.service';
+import { WithholdingTaxService } from './WithholdingTax.service';
+import { ChromiumlyTenancyModule } from '../ChromiumlyTenancy/ChromiumlyTenancy.module';
 import { TaxDocumentsSubscriber } from './subscribers/TaxDocuments.subscriber';
 
 @Module({
-  imports: [TenancyModule, TenancyDatabaseModule, AuditLogsModule],
+  imports: [TenancyModule, TenancyDatabaseModule, AuditLogsModule, ChromiumlyTenancyModule],
   controllers: [TaxComplianceController],
-  providers: [TaxProfileService, TaxDocumentPdfService, ExciseTaxService, TaxDocumentsSubscriber, AuthorizationGuard, PermissionGuard],
-  exports: [TaxProfileService, TaxDocumentPdfService, ExciseTaxService],
+  providers: [TaxProfileService, TaxDocumentPdfService, ExciseTaxService, WithholdingTaxService, TaxDocumentsSubscriber, AuthorizationGuard, PermissionGuard],
+  exports: [TaxProfileService, TaxDocumentPdfService, ExciseTaxService, WithholdingTaxService],
 })
 export class TaxComplianceModule {}

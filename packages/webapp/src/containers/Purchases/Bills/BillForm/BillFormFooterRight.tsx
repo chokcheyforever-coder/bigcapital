@@ -8,6 +8,7 @@ import {
   useBillPaidAmountFormatted,
   useBillSubtotalFormatted,
   useBillTotalFormatted,
+  useBillWithholding,
   type BillFormValues,
 } from './utils';
 import {
@@ -37,6 +38,7 @@ export function BillFormFooterRight() {
   const taxEntries = useBillAggregatedTaxRates();
   const discountAmount = useBillDiscountAmountFormatted();
   const adjustmentAmount = useBillAdjustmentAmountFormatted();
+  const withholding = useBillWithholding();
 
   return (
     <BillTotalLines labelColWidth={'180px'} amountColWidth={'180px'}>
@@ -75,6 +77,13 @@ export function BillFormFooterRight() {
         borderStyle={TotalLineBorderStyle.SingleDark}
         textStyle={TotalLineTextStyle.Bold}
       />
+      {withholding.code && (
+        <TotalLine
+          title={`Withholding tax [${withholding.code.rate}%]`}
+          value={`-${withholding.amountFormatted}`}
+          borderStyle={TotalLineBorderStyle.None}
+        />
+      )}
       <TotalLine
         title={'Paid Amount'}
         value={paidAmountFormatted}

@@ -13,7 +13,7 @@ import {
 import { ContactAddressDto } from '@/modules/Customers/dtos/ContactAddress.dto';
 import { IsOptional, ToNumber } from '@/common/decorators/Validators';
 import { PriceLevelIdField } from '@/modules/PriceLevels/dtos/PriceLevelIdField';
-import { KhmerAddressField, KhmerNameField, RegisteredTaxpayerField, TaxNumberField } from '@/modules/TaxCompliance/dtos/ContactTaxFields';
+import { DefaultWhtCodeField, KhmerAddressField, KhmerNameField, RegisteredTaxpayerField, TaxNumberField } from '@/modules/TaxCompliance/dtos/ContactTaxFields';
 
 export class CreateVendorDto extends ContactAddressDto {
   @PriceLevelIdField()
@@ -30,6 +30,9 @@ export class CreateVendorDto extends ContactAddressDto {
 
   @KhmerAddressField()
   billingAddressKm?: string | null;
+
+  @DefaultWhtCodeField()
+  defaultWhtCodeId?: number | null;
 
   @ApiProperty({ required: false, description: 'Vendor opening balance' })
   @IsOptional()

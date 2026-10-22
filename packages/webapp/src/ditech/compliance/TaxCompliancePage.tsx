@@ -11,6 +11,7 @@ import { FSelect } from '@/components/Forms';
 import { withDashboardActions } from '@/containers/Dashboard/withDashboardActions';
 import { useTaxApi } from './useTaxApi';
 import { ExciseTaxCodesSection } from '../excise/ExciseTaxCodesSection';
+import { WhtCodesSection } from '../wht/WhtCodesSection';
 
 const SIZES = [
   { value: 'small', label: 'Small taxpayer' },
@@ -193,6 +194,7 @@ function TaxCompliancePageInner({ changePreferencesPageTitle }) {
       )}
     </Formik>
     <ExciseTaxCodesSection />
+    <WhtCodesSection />
     </>
   );
 }

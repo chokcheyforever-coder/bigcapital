@@ -615,6 +615,16 @@ export const SidebarMenu: SidebarMenuItem[] = [
         text: <T id={'sidebar.reports'} />,
         type: ISidebarMenuItemType.Group,
         children: [
+          // 103 DiTech: monthly Cambodian tax figures.
+          {
+            text: 'Tax reports',
+            href: '/tax-reports',
+            type: ISidebarMenuItemType.Link,
+            permission: {
+              subject: AbilitySubject.Report,
+              ability: ReportsAction.READ_BALANCE_SHEET,
+            },
+          },
           {
             text: <T id={'sidebar.balance_sheet'} />,
             href: '/financial-reports/balance-sheet',

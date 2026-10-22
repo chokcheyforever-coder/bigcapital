@@ -1,3 +1,4 @@
+import { WhtCodeIdField } from '@/modules/TaxCompliance/dtos/WhtCode.dto';
 import { ToNumber } from '@/common/decorators/Validators';
 import { parseBoolean } from '@/utils/parse-boolean';
 import { ApiProperty } from '@nestjs/swagger';
@@ -142,6 +143,9 @@ export class CommandExpenseDto {
     example: 1,
   })
   payeeId?: number;
+
+  @WhtCodeIdField()
+  whtCodeId?: number | null;
 
   @ToNumber()
   @IsInt()

@@ -31,6 +31,10 @@ export class Expense extends TenantBaseModel {
   landedCostAmount!: number;
   allocatedCostAmount!: number;
   invoicedAmount: number;
+  /** 103 DiTech: withholding tax kept back from the payee (posted to WHT payable). */
+  whtCodeId!: number | null;
+  whtRate!: number | null;
+  whtAmount!: number;
   branchId!: number;
   createdAt!: Date;
 
@@ -211,7 +215,21 @@ export class Expense extends TenantBaseModel {
       MatchedBankTransaction,
     } = require('../../BankingMatching/models/MatchedBankTransaction');
 
+    const { WhtCode } = require('../../TaxCompliance/models/WhtCode.model');
+
     return {
+      /**
+       * 103 DiTech: the withholding tax code of the expense.
+       */
+      whtCode: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: WhtCode,
+        join: {
+          from: 'expenses_transactions.whtCodeId',
+          to: 'wht_codes.id',
+        },
+      },
+
       /**
        * Expense transaction may belongs to a payment account.
        */

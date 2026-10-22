@@ -35,6 +35,7 @@ export class Vendor extends TenantBaseModel {
   priceLevelId!: number | null;
   taxNumber!: string | null;
   registeredTaxpayer!: boolean;
+  defaultWhtCodeId!: number | null;
   displayNameKm!: string | null;
   billingAddressKm!: string | null;
 

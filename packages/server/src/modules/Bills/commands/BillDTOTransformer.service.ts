@@ -15,6 +15,7 @@ import { assocItemEntriesDefaultIndex } from '@/utils/associate-item-entries-ind
 import { TenancyContext } from '@/modules/Tenancy/TenancyContext.service';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 import { CreateBillDto } from '../dtos/Bill.dto';
+import { WithholdingTaxService } from '@/modules/TaxCompliance/WithholdingTax.service';
 
 @Injectable()
 export class BillDTOTransformer {
@@ -23,6 +24,7 @@ export class BillDTOTransformer {
     private warehouseDTOTransform: WarehouseTransactionDTOTransform,
     private taxDTOTransformer: ItemEntriesTaxTransactions,
     private tenancyContext: TenancyContext,
+    private withholdingTax: WithholdingTaxService,
 
     @Inject(ItemEntry.name)
     private itemEntryModel: TenantModelProxy<typeof ItemEntry>,
@@ -105,10 +107,29 @@ export class BillDTOTransformer {
       this.warehouseDTOTransform.transformDTO<Bill>,
     )(initialDTO);
 
-    return R.compose(
+    const model = R.compose(
       // Associates tax amount withheld to the model.
       this.taxDTOTransformer.assocTaxAmountWithheldFromEntries,
     )(asyncDto) as Bill;
+
+    // 103 DiTech: withholding tax on the amount excluding VAT, after the
+    // discount. An edit that does not send a code keeps the bill's code.
+    const requestedWht =
+      billDTO.whtCodeId !== undefined
+        ? billDTO.whtCodeId
+        : oldBill
+          ? (oldBill.whtCodeId ?? null)
+          : undefined;
+    const draft = Bill.fromJson({ ...model, entries: [] } as any);
+    const whtBase = Math.max(
+      (Number(draft.subtotalExcludingTax) || 0) -
+        (Number(draft.discountAmount) || 0),
+      0,
+    );
+    return Object.assign(
+      model,
+      await this.withholdingTax.resolve(requestedWht, vendor.id, whtBase),
+    );
   }
 
   /**

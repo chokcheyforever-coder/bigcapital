@@ -26,6 +26,7 @@ export class GetBill {
       .withGraphFetched('vendor')
       .withGraphFetched('entries.item')
       .withGraphFetched('branch')
+      .withGraphFetched('whtCode')
       .withGraphFetched('taxes.taxRate')
       .withGraphFetched('attachments');
 

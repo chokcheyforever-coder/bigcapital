@@ -9,6 +9,8 @@ import React from 'react';
 import intl from 'react-intl-universal';
 import styled from 'styled-components';
 import { useBillFormContext } from './BillFormProvider';
+import { WhtCodeSelectField } from '@/ditech/wht/WhtCodeSelectField';
+import { whtCodeToForm } from '@/ditech/wht/useWhtCodes';
 import { BillExchangeRateInputField } from './components';
 import { vendorsFieldShouldUpdate, type BillFormValues } from './utils';
 import { Stack, FormattedMessage as T } from '@/components';
@@ -120,6 +122,9 @@ function BillFormHeader() {
       >
         <FInputGroup name={'referenceNo'} />
       </FFormGroup>
+
+      {/* ------- 103 DiTech: withholding tax ------- */}
+      <WhtCodeSelectField />
     </Stack>
   );
 }
@@ -150,6 +155,11 @@ function BillFormVendorField() {
           onItemChange={(contact: VendorOption) => {
             setFieldValue('vendorId', contact.id);
             setFieldValue('currencyCode', contact?.currencyCode);
+            // 103 DiTech: the vendor's usual withholding tax.
+            setFieldValue(
+              'whtCodeId',
+              whtCodeToForm((contact as any)?.defaultWhtCodeId),
+            );
           }}
           allowCreate={true}
           fastField={true}

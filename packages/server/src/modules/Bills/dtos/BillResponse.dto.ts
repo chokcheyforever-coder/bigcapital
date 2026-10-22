@@ -158,6 +158,24 @@ export class BillResponseDto {
   })
   taxAmountWithheld?: number;
 
+  @ApiProperty({ description: '103 DiTech: withholding tax code', required: false, nullable: true, example: 4 })
+  whtCodeId?: number | null;
+
+  @ApiProperty({ description: '103 DiTech: withholding tax rate (percent)', required: false, nullable: true, example: 15 })
+  whtRate?: number | null;
+
+  @ApiProperty({ description: '103 DiTech: withholding tax kept back from the vendor', required: false, example: 15 })
+  whtAmount?: number;
+
+  @ApiProperty({ description: '103 DiTech: what the vendor is owed (total less withholding tax)', required: false, example: 85 })
+  payableAmount?: number;
+
+  @ApiProperty({ required: false, example: '$15.00' })
+  whtAmountFormatted?: string;
+
+  @ApiProperty({ required: false, example: '$85.00' })
+  payableAmountFormatted?: string;
+
   @ApiProperty({
     description: 'The balance of the bill',
     example: 1000,

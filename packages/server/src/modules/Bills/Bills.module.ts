@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { TaxComplianceModule } from '../TaxCompliance/TaxCompliance.module';
 import { BillsApplication } from './Bills.application';
 import { CreateBill } from './commands/CreateBill.service';
 import { DeleteBill } from './commands/DeleteBill.service';
@@ -36,6 +37,7 @@ import { ValidateBulkDeleteBillsService } from './ValidateBulkDeleteBills.servic
 @Module({
   imports: [
     TenancyModule,
+    TaxComplianceModule,
     FeaturesModule,
     BillLandedCostsIntegrationModule,
     LedgerModule,

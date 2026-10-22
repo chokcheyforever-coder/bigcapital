@@ -1,4 +1,5 @@
 import { useFormikContext } from 'formik';
+import { whtCodeToForm, whtCodeToRequest } from '@/ditech/wht/useWhtCodes';
 import { first } from 'lodash';
 import moment from 'moment';
 import React from 'react';
@@ -53,6 +54,8 @@ export type VendorFormValues = {
   registeredTaxpayer?: boolean;
   displayNameKm?: string;
   billingAddressKm?: string;
+  /** 103 DiTech: usual withholding tax code id ('' = none). */
+  defaultWhtCodeId?: string;
 
   openingBalance: string | number;
   openingBalanceAt: string;
@@ -98,6 +101,7 @@ export const defaultInitialValues: VendorFormValues = {
   registeredTaxpayer: false,
   displayNameKm: '',
   billingAddressKm: '',
+  defaultWhtCodeId: '',
 
   openingBalance: '',
   openingBalanceAt: moment(new Date()).format('YYYY-MM-DD'),
@@ -122,6 +126,7 @@ export const transformVendorToForm = (
   ({
     ...transformToForm(vendor ?? {}, defaults),
     active: vendor?.active ?? defaults.active,
+    defaultWhtCodeId: whtCodeToForm((vendor as any)?.defaultWhtCodeId),
   }) as VendorFormValues;
 
 /**
@@ -144,6 +149,7 @@ export const transformFormToCreateRequest = (
   registeredTaxpayer: !!values.registeredTaxpayer,
   displayNameKm: values.displayNameKm?.trim() || null,
   billingAddressKm: values.billingAddressKm?.trim() || null,
+  ...({ defaultWhtCodeId: whtCodeToRequest(values.defaultWhtCodeId) } as object),
   active: parseBoolean(values.active, true),
   openingBalanceExchangeRate: toNumber(values.openingBalanceExchangeRate) ?? 1,
 
@@ -192,6 +198,7 @@ export const transformFormToEditRequest = (
   registeredTaxpayer: !!values.registeredTaxpayer,
   displayNameKm: values.displayNameKm?.trim() || null,
   billingAddressKm: values.billingAddressKm?.trim() || null,
+  ...({ defaultWhtCodeId: whtCodeToRequest(values.defaultWhtCodeId) } as object),
 
   salutation: values.salutation,
   firstName: values.firstName,

@@ -21,6 +21,10 @@ import { TaxRateTransaction } from '@/modules/TaxRates/models/TaxRateTransaction
 export class Bill extends TenantBaseModel {
   public amount: number;
   public paymentAmount: number;
+  /** 103 DiTech: withholding tax kept back from the vendor (posted to WHT payable). */
+  public whtCodeId: number | null;
+  public whtRate: number | null;
+  public whtAmount: number;
   public landedCostAmount: number;
   public allocatedCostAmount: number;
   public isInclusiveTax: boolean;
@@ -71,6 +75,7 @@ export class Bill extends TenantBaseModel {
     return [
       'balance',
       'dueAmount',
+      'payableAmount',
       'isOpen',
       'isPartiallyPaid',
       'isFullyPaid',
@@ -243,7 +248,23 @@ export class Bill extends TenantBaseModel {
    * @return {number}
    */
   get dueAmount(): number {
-    return Math.max(this.total - this.balance, 0);
+    return Math.max(this.payableAmount - this.balance, 0);
+  }
+
+  /**
+   * 103 DiTech: what the vendor is owed, the total less withholding tax.
+   * @return {number}
+   */
+  get payableAmount(): number {
+    return this.total - (Number(this.whtAmount) || 0);
+  }
+
+  /**
+   * Withholding tax in base currency.
+   * @return {number}
+   */
+  get whtAmountLocal(): number {
+    return (Number(this.whtAmount) || 0) * defaultTo(this.exchangeRate, 1);
   }
 
   /**
@@ -267,7 +288,7 @@ export class Bill extends TenantBaseModel {
    * @return {boolean}
    */
   get isPartiallyPaid(): boolean {
-    return this.dueAmount !== this.total && this.dueAmount > 0;
+    return this.dueAmount !== this.payableAmount && this.dueAmount > 0;
   }
 
   /**
@@ -375,6 +396,7 @@ export class Bill extends TenantBaseModel {
       dueBills(query) {
         query.where(
           raw(`COALESCE(AMOUNT, 0) -
+            COALESCE(WHT_AMOUNT, 0) -
             COALESCE(PAYMENT_AMOUNT, 0) -
             COALESCE(CREDITED_AMOUNT, 0) > 0
           `),
@@ -397,13 +419,13 @@ export class Bill extends TenantBaseModel {
        */
       partiallyPaid(query) {
         query.whereNot('payment_amount', 0);
-        query.whereNot(raw('`PAYMENT_AMOUNT` = `AMOUNT`'));
+        query.whereNot(raw('`PAYMENT_AMOUNT` = `AMOUNT` - COALESCE(`WHT_AMOUNT`, 0)'));
       },
       /**
        * Filters the paid bills.
        */
       paid(query) {
-        query.where(raw('`PAYMENT_AMOUNT` = `AMOUNT`'));
+        query.where(raw('`PAYMENT_AMOUNT` = `AMOUNT` - COALESCE(`WHT_AMOUNT`, 0)'));
       },
       /**
        * Filters the bills from the given date.
@@ -417,7 +439,7 @@ export class Bill extends TenantBaseModel {
        */
       sortByStatus(query, order) {
         const dir = sanitizeSortDirection(order);
-        query.orderByRaw(`PAYMENT_AMOUNT = AMOUNT ${dir}`);
+        query.orderByRaw(`PAYMENT_AMOUNT = AMOUNT - COALESCE(WHT_AMOUNT, 0) ${dir}`);
       },
 
       /**
@@ -505,7 +527,21 @@ export class Bill extends TenantBaseModel {
       MatchedBankTransaction,
     } = require('../../BankingMatching/models/MatchedBankTransaction');
 
+    const { WhtCode } = require('../../TaxCompliance/models/WhtCode.model');
+
     return {
+      /**
+       * 103 DiTech: the withholding tax code of the bill.
+       */
+      whtCode: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: WhtCode,
+        join: {
+          from: 'bills.whtCodeId',
+          to: 'wht_codes.id',
+        },
+      },
+
       vendor: {
         relation: Model.BelongsToOneRelation,
         modelClass: Vendor,
