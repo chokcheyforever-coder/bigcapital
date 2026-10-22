@@ -7,8 +7,14 @@ import moment from 'moment';
 import { Card, InputGroup, Tab, Tabs } from '@blueprintjs/core';
 import { DashboardPageContent } from '@/components';
 import { WithholdingTaxTab } from './WithholdingTaxTab';
+import { VatBooksTab } from './VatBooksTab';
+import { ReturnWorksheetTab } from './ReturnWorksheetTab';
 
-export const TAX_REPORT_TABS = [{ id: 'wht', title: 'Withholding tax', Component: WithholdingTaxTab }];
+export const TAX_REPORT_TABS = [
+  { id: 'return', title: 'Monthly return', Component: ReturnWorksheetTab },
+  { id: 'vat', title: 'VAT books', Component: VatBooksTab },
+  { id: 'wht', title: 'Withholding tax', Component: WithholdingTaxTab },
+];
 
 export function TaxReportsPage() {
   const [month, setMonth] = useState(moment().subtract(1, 'month').format('YYYY-MM'));

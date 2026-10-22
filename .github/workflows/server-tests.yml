@@ -81,7 +81,7 @@ jobs:
         run: pnpm build:server
 
       - name: Unit tests (DiTech modules)
-        run: pnpm --filter @bigcapital/server test -- --testPathPattern 'modules/(Budgeting|Projects|PriceLevels|TaxCompliance)/'
+        run: pnpm --filter @bigcapital/server test -- --testPathPattern 'modules/(Budgeting|Projects|PriceLevels|TaxCompliance|TaxReturns)/'
 
       - name: Create server .env file
         run: |
