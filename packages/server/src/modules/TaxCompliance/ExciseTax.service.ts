@@ -6,6 +6,7 @@ import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 import { Account } from '@/modules/Accounts/models/Account.model';
 import { Item } from '@/modules/Items/models/Item';
 import { AuditLogService } from '@/modules/AuditLogs/AuditLog.service';
+import { TenancyContext } from '@/modules/Tenancy/TenancyContext.service';
 import { AbilitySubject } from '@/modules/Roles/Roles.types';
 import { ServiceError } from '@/modules/Items/ServiceError';
 import { ExciseTaxCode } from './models/ExciseTaxCode.model';
@@ -50,6 +51,7 @@ export interface ExciseTaxCodeView {
 export class ExciseTaxService {
   constructor(
     private readonly auditLog: AuditLogService,
+    private readonly tenancyContext: TenancyContext,
 
     @Inject(ExciseTaxCode.name)
     private readonly codeModel: TenantModelProxy<typeof ExciseTaxCode>,
@@ -159,9 +161,12 @@ export class ExciseTaxService {
     const { name, slug } = PAYABLE_ACCOUNTS[kind];
     const found = await this.accountModel().query(trx).findOne({ slug });
     if (found) return found;
+    // In the base currency, as the accounts service does: journals reject
+    // accounts without a currency.
+    const metadata = await this.tenancyContext.getTenantMetadata();
     return this.accountModel()
       .query(trx)
-      .insertAndFetch({ name, slug, accountType: 'tax-payable', description: '', active: true, index: 1, predefined: false } as any);
+      .insertAndFetch({ name, slug, accountType: 'tax-payable', currencyCode: metadata?.baseCurrency, description: '', active: true, index: 1, predefined: false } as any);
   }
 
   private async getOrThrow(id: number) {
