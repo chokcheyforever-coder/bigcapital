@@ -3,6 +3,7 @@ import { Knex } from 'knex';
 import * as moment from 'moment';
 import * as XLSX from 'xlsx';
 import { keyBy } from 'lodash';
+import { TenancyContext } from '@/modules/Tenancy/TenancyContext.service';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 import { SaleInvoice } from '@/modules/SaleInvoices/models/SaleInvoice';
 import { SaleReceipt } from '@/modules/SaleReceipts/models/SaleReceipt';
@@ -36,6 +37,7 @@ export class TaxReturnsService {
     private readonly profiles: TaxProfileService,
     private readonly withholding: WithholdingTaxService,
     private readonly createJournal: CreateManualJournalService,
+    private readonly tenancyContext: TenancyContext,
 
     @Inject(SaleInvoice.name)
     private readonly invoiceModel: TenantModelProxy<typeof SaleInvoice>,
@@ -297,8 +299,10 @@ export class TaxReturnsService {
   private async findOrCreate(spec: { name: string; slug: string; accountType: string }) {
     const found = await this.accountModel().query().findOne({ slug: spec.slug });
     if (found) return found;
+    // In the base currency: journals reject accounts without a currency.
+    const metadata = await this.tenancyContext.getTenantMetadata();
     return this.accountModel()
       .query()
-      .insertAndFetch({ ...spec, description: '', active: true, index: 1, predefined: false } as any);
+      .insertAndFetch({ ...spec, currencyCode: metadata?.baseCurrency, description: '', active: true, index: 1, predefined: false } as any);
   }
 }
