@@ -1,4 +1,5 @@
 import { Intent } from '@blueprintjs/core';
+import { useWhtCodes, whtAmount, whtCodeToForm, whtCodeToRequest } from '@/ditech/wht/useWhtCodes';
 import { useFormikContext } from 'formik';
 import * as FF from 'fp-ts/function';
 import { first, sumBy } from 'lodash';
@@ -55,6 +56,8 @@ export const defaultExpense: ExpenseFormValues = {
   exchangeRate: 1,
   categories: [...repeatValue(defaultExpenseEntry, MIN_LINES_NUMBER)],
   attachments: [],
+  payeeId: '',
+  whtCodeId: '',
 };
 
 /**
@@ -113,6 +116,8 @@ export const transformToEditForm = (
     ...transformToForm(expense, defaultValues),
     categories,
     attachments,
+    payeeId: (expense as any).payeeId ? String((expense as any).payeeId) : '',
+    whtCodeId: whtCodeToForm((expense as any).whtCodeId),
   } as ExpenseFormValues;
 };
 
@@ -156,6 +161,8 @@ export const transformFormValuesToRequest = (values: ExpenseFormValues) => {
     ...values,
     categories: FF.pipe(categories, orderingLinesIndexes),
     attachments,
+    payeeId: values.payeeId ? Number(values.payeeId) : undefined,
+    whtCodeId: whtCodeToRequest(values.whtCodeId),
   };
 };
 
@@ -207,6 +214,28 @@ export const useExpenseTotal = () => {
   const subtotal = useExpenseSubtotal();
 
   return subtotal;
+};
+
+/**
+ * Retrieves the expense total formatted.
+ * @returns {string}
+ */
+export const useExpenseWithholding = () => {
+  const { values } = useFormikContext<ExpenseFormValues>();
+  const { data: codes } = useWhtCodes();
+  const total = useExpenseTotal();
+
+  return React.useMemo(() => {
+    const code = (codes ?? []).find((c) => String(c.id) === String(values.whtCodeId));
+    if (!code) return { code: null, amount: 0, amountFormatted: '', paidFormatted: '' };
+    const amount = whtAmount(total, code.rate);
+    return {
+      code,
+      amount,
+      amountFormatted: formattedAmount(amount, values.currencyCode),
+      paidFormatted: formattedAmount(total - amount, values.currencyCode),
+    };
+  }, [codes, values.whtCodeId, values.currencyCode, total]);
 };
 
 /**

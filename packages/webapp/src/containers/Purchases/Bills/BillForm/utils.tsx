@@ -1,4 +1,5 @@
 import { Intent } from '@blueprintjs/core';
+import { useWhtCodes, whtAmount, whtCodeToForm, whtCodeToRequest } from '@/ditech/wht/useWhtCodes';
 import { useFormikContext, type FormikErrors } from 'formik';
 import * as FF from 'fp-ts/function';
 import { first, chain } from 'lodash';
@@ -70,6 +71,8 @@ export type BillFormValues = {
   adjustment: string | number;
   discount: string | number;
   discountType: 'amount' | 'percentage';
+  /** 103 DiTech: withholding tax code id ('' = none). */
+  whtCodeId: string;
 };
 
 // Default bill entry.
@@ -112,6 +115,9 @@ export const defaultBill: BillFormValues = {
   // Discount
   discount: '',
   discountType: 'amount',
+
+  // 103 DiTech: withholding tax
+  whtCodeId: '',
 };
 
 export const ERRORS = {
@@ -154,6 +160,7 @@ export const transformToEditForm = (bill: Bill): BillFormValues => {
       : TaxType.Exclusive,
     entries,
     attachments,
+    whtCodeId: whtCodeToForm((bill as any).whtCodeId),
   };
 };
 
@@ -198,6 +205,7 @@ export const transformFormValuesToRequest = (
     entries: transformEntriesToSubmit(entries),
     open: false,
     attachments,
+    whtCodeId: whtCodeToRequest(values.whtCodeId),
   } as unknown as CreateBillBody;
 };
 
@@ -526,8 +534,30 @@ export const useBillPaidAmountFormatted = (): string => {
 export const useBillDueAmount = (): number => {
   const total = useBillTotal();
   const paidAmount = useBillPaidAmount();
+  const { amount: whtAmount } = useBillWithholding();
 
-  return total - paidAmount;
+  return total - whtAmount - paidAmount;
+};
+
+/**
+ * 103 DiTech: withholding tax of the bill, on the amount excluding VAT after
+ * the discount (the server recalculates it on save).
+ */
+export const useBillWithholding = () => {
+  const { values } = useFormikContext<BillFormValues>();
+  const { data: codes } = useWhtCodes();
+  const subtotal = useBillSubtotal();
+  const tax = useBillTotalTaxAmount();
+  const discount = useBillDiscountAmount();
+  const isExclusiveTax = useIsBillTaxExclusive();
+
+  return React.useMemo(() => {
+    const code = (codes ?? []).find((c) => String(c.id) === String(values.whtCodeId));
+    if (!code) return { code: null, amount: 0, amountFormatted: '' };
+    const base = Math.max((isExclusiveTax ? subtotal : subtotal - tax) - discount, 0);
+    const amount = whtAmount(base, code.rate);
+    return { code, amount, amountFormatted: formattedAmount(amount, values.currencyCode) };
+  }, [codes, values.whtCodeId, values.currencyCode, subtotal, tax, discount, isExclusiveTax]);
 };
 
 /**

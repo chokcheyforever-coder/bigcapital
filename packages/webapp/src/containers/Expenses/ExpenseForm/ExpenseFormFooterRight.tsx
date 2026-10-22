@@ -1,6 +1,10 @@
 import React from 'react';
 import styled from 'styled-components';
-import { useExpenseSubtotalFormatted, useExpenseTotalFormatted } from './utils';
+import {
+  useExpenseSubtotalFormatted,
+  useExpenseTotalFormatted,
+  useExpenseWithholding,
+} from './utils';
 import {
   T,
   TotalLines,
@@ -12,6 +16,7 @@ import {
 export function ExpenseFormFooterRight() {
   const totalFormatted = useExpenseTotalFormatted();
   const subtotalFormatted = useExpenseSubtotalFormatted();
+  const withholding = useExpenseWithholding();
 
   return (
     <ExpensesTotalLines>
@@ -25,6 +30,20 @@ export function ExpenseFormFooterRight() {
         value={totalFormatted}
         textStyle={TotalLineTextStyle.Bold}
       />
+      {withholding.code && (
+        <>
+          <TotalLine
+            title={`Withholding tax [${withholding.code.rate}%]`}
+            value={`-${withholding.amountFormatted}`}
+            borderStyle={TotalLineBorderStyle.None}
+          />
+          <TotalLine
+            title={'Paid from the account'}
+            value={withholding.paidFormatted}
+            textStyle={TotalLineTextStyle.Bold}
+          />
+        </>
+      )}
     </ExpensesTotalLines>
   );
 }

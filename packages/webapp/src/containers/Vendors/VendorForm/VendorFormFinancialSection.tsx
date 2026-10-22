@@ -27,6 +27,7 @@ import { useDateInputFormatter } from '@/hooks';
 import { useCurrentOrganizationBaseCurrency } from '@/hooks/query';
 import { ContactPriceLevelField } from '@/ditech/pricing/ContactPriceLevelField';
 import { ContactTaxFields } from '@/ditech/compliance/ContactTaxFields';
+import { WhtCodeSelectField } from '@/ditech/wht/WhtCodeSelectField';
 
 export function VendorFormFinancialSection() {
   const { currencies, vendorId, branches } = useVendorFormContext();
@@ -56,6 +57,7 @@ export function VendorFormFinancialSection() {
 
       <ContactPriceLevelField type={'purchase'} />
       <ContactTaxFields />
+      <WhtCodeSelectField name={'defaultWhtCodeId'} label={'Usual withholding tax'} helperText={'Filled in on new bills and expenses for this vendor.'} />
 
       <VendorOpeningBalanceField />
       <VendorOpeningBalanceExchangeRateField />

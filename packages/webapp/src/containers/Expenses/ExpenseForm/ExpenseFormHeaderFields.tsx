@@ -9,6 +9,7 @@ import intl from 'react-intl-universal';
 import { ExpensesExchangeRateInputField } from './components';
 import { SUPPORTED_EXPENSE_PAYMENT_ACCOUNT_TYPES } from './constants';
 import { useExpenseFormContext } from './ExpenseFormPageProvider';
+import { ExpenseWhtFields } from '@/ditech/wht/ExpenseWhtFields';
 import { customersFieldShouldUpdate, accountsFieldShouldUpdate } from './utils';
 import type { Theme } from '@xstyled/emotion';
 import {
@@ -142,6 +143,9 @@ export function ExpenseFormHeader() {
 
       {/* ----------- Customer ----------- */}
       <ExpenseFormCustomerSelect customers={customers} />
+
+      {/* ----------- 103 DiTech: payee and withholding tax ----------- */}
+      <ExpenseWhtFields />
     </Stack>
   );
 }

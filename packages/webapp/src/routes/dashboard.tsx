@@ -1315,6 +1315,17 @@ export const getDashboardRoutes = () => [
     pageTitle: 'Projects',
     subscriptionActive: [SUBSCRIPTION_TYPE.MAIN],
   },
+  // 103 DiTech: monthly tax reports (withholding tax, VAT books, return worksheet).
+  {
+    path: '/tax-reports',
+    component: lazy(() =>
+      import('@/ditech/taxreports/TaxReportsPage').then((m) => ({
+        default: m.TaxReportsPage,
+      })),
+    ),
+    pageTitle: 'Tax reports',
+    subscriptionActive: [SUBSCRIPTION_TYPE.MAIN],
+  },
   // 103 DiTech: price levels.
   {
     path: '/price-levels',
