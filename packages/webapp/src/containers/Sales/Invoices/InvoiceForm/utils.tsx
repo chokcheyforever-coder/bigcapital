@@ -1,4 +1,6 @@
 import { Intent } from '@blueprintjs/core';
+import { useExciseTaxCodes } from '@/ditech/excise/useExciseTaxCodes';
+import { entriesExcise } from '@/ditech/excise/entriesExcise';
 import { useFormikContext } from 'formik';
 import * as FF from 'fp-ts/function';
 import { omit, first, sumBy } from 'lodash';
@@ -205,6 +207,18 @@ export const transformErrors = (
   ) {
     AppToaster.show({
       message: intl.get('sale_invoice.total_smaller_than_paid_amount'),
+      intent: Intent.DANGER,
+    });
+  }
+  // 103 DiTech: items with Specific Tax / PLT need tax-exclusive prices.
+  const excise = errors.find(
+    (error) => error.type === 'EXCISE_TAX_INCLUSIVE_UNSUPPORTED',
+  ) as { message?: string } | undefined;
+  if (excise) {
+    AppToaster.show({
+      message:
+        excise.message ??
+        'Items with Specific Tax or Public Lighting Tax need prices excluding tax.',
       intent: Intent.DANGER,
     });
   }
@@ -518,10 +532,39 @@ export const useInvoiceAggregatedTaxRates = (): AggregatedTaxRate[] => {
     () => aggregateItemEntriesTaxRates(values.currencyCode, taxRates),
     [values.currencyCode, taxRates],
   );
+  const excise = useInvoiceExcise();
+
   // Calculate the total tax amount of invoice entries.
   return React.useMemo(() => {
-    return aggregateTaxRates(values.entries) as AggregatedTaxRate[];
-  }, [aggregateTaxRates, values.entries]);
+    const rates = aggregateTaxRates(values.entries) as AggregatedTaxRate[];
+    // 103 DiTech: VAT is also charged on the Specific Tax and PLT.
+    return rates.map((rate) => {
+      const extra = excise.vatByTaxRateId[String(rate.taxRateId)] ?? 0;
+      if (!extra) return rate;
+      const taxAmount = rate.taxAmount + extra;
+      return {
+        ...rate,
+        taxAmount,
+        taxAmountFormatted: formattedAmount(taxAmount, values.currencyCode),
+      };
+    });
+  }, [aggregateTaxRates, values.entries, excise, values.currencyCode]);
+};
+
+/**
+ * 103 DiTech: Specific/Accommodation Tax and PLT of the invoice lines, from
+ * the items' codes (the server recalculates them on save).
+ */
+export const useInvoiceExcise = () => {
+  const { values } = useFormikContext<InvoiceFormValues>();
+  const { taxRates } = useInvoiceFormContext();
+  const { data: codes } = useExciseTaxCodes();
+  const isExclusiveTax = values.inclusiveExclusiveTax !== TaxType.Inclusive;
+
+  return React.useMemo(
+    () => entriesExcise(values.entries, codes ?? [], taxRates ?? [], isExclusiveTax),
+    [values.entries, codes, taxRates, isExclusiveTax],
+  );
 };
 
 /**
@@ -530,11 +573,12 @@ export const useInvoiceAggregatedTaxRates = (): AggregatedTaxRate[] => {
  */
 export const useInvoiceTotalTaxAmount = () => {
   const { values } = useFormikContext<InvoiceFormValues>();
+  const excise = useInvoiceExcise();
 
   return React.useMemo(() => {
     const filteredEntries = values.entries.filter((entry) => entry.taxAmount);
-    return sumBy(filteredEntries, 'taxAmount');
-  }, [values.entries]);
+    return sumBy(filteredEntries, 'taxAmount') + excise.vat;
+  }, [values.entries, excise]);
 };
 
 /**
@@ -548,7 +592,9 @@ export const useInvoiceTotal = () => {
   const discountAmount = useInvoiceDiscountAmount();
   const adjustmentAmount = useInvoiceAdjustmentAmount();
 
-  const total = subtotal + adjustmentAmount - discountAmount;
+  const excise = useInvoiceExcise();
+
+  const total = subtotal + adjustmentAmount - discountAmount + excise.total;
   return isExclusiveTax ? total + totalTaxAmount : total;
 };
 

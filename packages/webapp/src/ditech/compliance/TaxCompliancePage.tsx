@@ -9,7 +9,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppToaster, FFormGroup, FInputGroup, FTextArea, Stack } from '@/components';
 import { FSelect } from '@/components/Forms';
 import { withDashboardActions } from '@/containers/Dashboard/withDashboardActions';
-import { useAuthOrganizationId, useAuthToken } from '@/hooks/state';
+import { useTaxApi } from './useTaxApi';
+import { ExciseTaxCodesSection } from '../excise/ExciseTaxCodesSection';
 
 const SIZES = [
   { value: 'small', label: 'Small taxpayer' },
@@ -25,21 +26,6 @@ const RATE_SOURCES = [
   { value: 'nbc_daily', label: 'NBC daily rate (automatic)' },
   { value: 'gdt_monthly', label: "GDT monthly rate (previous month's, entered below)" },
 ];
-
-function useTaxApi() {
-  const token = useAuthToken();
-  const organizationId = useAuthOrganizationId();
-  return async (method: string, path: string, body?: unknown) => {
-    const res = await fetch(`/api/tax-compliance${path}`, {
-      method,
-      headers: { Authorization: `Bearer ${token}`, 'organization-id': organizationId ?? '', 'content-type': 'application/json', accept: 'application/json' },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    const data = await res.json().catch(() => null);
-    if (!res.ok) throw Object.assign(new Error('request failed'), { data, status: res.status });
-    return data;
-  };
-}
 
 const toForm = (p) => ({
   enabled: !!p?.enabled,
@@ -89,6 +75,7 @@ function TaxCompliancePageInner({ changePreferencesPageTitle }) {
   if (isLoading) return <div className={Classes.SKELETON} style={{ height: 300 }} />;
 
   return (
+    <>
     <Formik
       initialValues={toForm(profile)}
       enableReinitialize
@@ -205,6 +192,8 @@ function TaxCompliancePageInner({ changePreferencesPageTitle }) {
         </Form>
       )}
     </Formik>
+    <ExciseTaxCodesSection />
+    </>
   );
 }
 

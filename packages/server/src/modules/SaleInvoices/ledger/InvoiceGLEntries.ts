@@ -28,7 +28,7 @@ export class SaleInvoiceGLEntries {
     const saleInvoice = await this.saleInvoiceModel()
       .query(trx)
       .findById(saleInvoiceId)
-      .withGraphFetched('entries.item');
+      .withGraphFetched('entries.[item, specificTaxCode, pltCode]');
 
     // Find or create the A/R account.
     const ARAccount =

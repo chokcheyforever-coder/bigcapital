@@ -14,11 +14,17 @@ export interface ComplianceAttributes {
   seller: { name: string; nameKm?: string | null; address?: string | null; addressKm?: string | null; tin?: string | null };
   buyer: { name: string; nameKm?: string | null; address?: string | null; addressKm?: string | null; tin?: string | null };
   labels: Record<string, string>;
-  khr?: { rate: string; source: string; date: string; subtotal: string; tax: string; total: string; label: string };
+  khr?: { rate: string; source: string; date: string; subtotal: string; tax: string; total: string; label: string; excise?: string };
   signatory?: { name?: string | null; title?: string | null };
 }
 
 type DocType = 'SaleInvoice' | 'SaleReceipt' | 'CreditNote';
+/** In the document currency: total payable, VAT, and Specific Tax + PLT (invoices). */
+export interface DocumentAmounts {
+  total: number;
+  tax: number;
+  excise?: number;
+}
 const TABLES: Record<DocType, string> = { SaleInvoice: 'sales_invoices', SaleReceipt: 'sales_receipts', CreditNote: 'credit_notes' };
 const riel = (n: number) => `${n.toLocaleString('en-US')} ៛`;
 
@@ -37,12 +43,12 @@ export class TaxDocumentPdfService {
    * has not switched Cambodian tax documents on (the PDF stays as before).
    * `amounts` are in the document currency: total payable and tax in it.
    */
-  async attributes(doc: DocType, id: number, amounts: { total: number; tax: number }): Promise<ComplianceAttributes | undefined> {
+  async attributes(doc: DocType, id: number, amounts: DocumentAmounts): Promise<ComplianceAttributes | undefined> {
     return (await this.explain(doc, id, amounts)).attributes;
   }
 
   /** The attributes, or why there are none (profile off, document not found). */
-  async explain(doc: DocType, id: number, amounts: { total: number; tax: number }): Promise<{ attributes?: ComplianceAttributes; reason?: string }> {
+  async explain(doc: DocType, id: number, amounts: DocumentAmounts): Promise<{ attributes?: ComplianceAttributes; reason?: string }> {
     const profile = await this.profiles.get();
     if (!profile.enabled) return { reason: 'profile_off' };
     const knex = this.tenantKnex();
@@ -91,7 +97,7 @@ export class TaxDocumentPdfService {
     };
   }
 
-  private async build(doc: DocType, row: any, profile: Awaited<ReturnType<TaxProfileService['get']>>, amounts: { total: number; tax: number }): Promise<ComplianceAttributes> {
+  private async build(doc: DocType, row: any, profile: Awaited<ReturnType<TaxProfileService['get']>>, amounts: DocumentAmounts): Promise<ComplianceAttributes> {
     const knex = this.tenantKnex();
     const get = (camel: string, snake: string) => row[camel] ?? row[snake];
     const contact = await knex('contacts')
@@ -111,6 +117,7 @@ export class TaxDocumentPdfService {
     const source = get('khrRateSource', 'khr_rate_source') as RateSource | null;
     const total = Number(amounts.total ?? 0);
     const tax = Number(amounts.tax ?? 0);
+    const excise = Number(amounts.excise ?? 0);
     const khr =
       rate > 0
         ? {
@@ -118,7 +125,8 @@ export class TaxDocumentPdfService {
             rate: `1 ${get('currencyCode', 'currency_code') ?? ''} = ${riel(rate)}`.trim(),
             source: source ? label(RATE_SOURCE_LABELS[source], lang) : '',
             date: get('khrRateDate', 'khr_rate_date') ? moment(get('khrRateDate', 'khr_rate_date')).format('YYYY-MM-DD') : '',
-            subtotal: riel(toKhr(total - tax, rate)),
+            subtotal: riel(toKhr(total - tax - excise, rate)),
+            ...(excise > 0 ? { excise: riel(toKhr(excise, rate)) } : {}),
             tax: riel(toKhr(tax, rate)),
             total: riel(toKhr(total, rate)),
           }

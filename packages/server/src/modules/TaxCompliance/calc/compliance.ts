@@ -105,6 +105,7 @@ export const LABELS: Record<string, { km: string; en: string }> = {
   khrRate: { km: 'អត្រាប្តូរប្រាក់', en: 'Exchange rate' },
   khrSubtotal: { km: 'សរុប (មិនរួមអាករ)', en: 'Subtotal' },
   khrTax: { km: 'អាករលើតម្លៃបន្ថែម', en: 'VAT' },
+  khrExcise: { km: 'អាករពិសេស និងអាករបំភ្លឺសាធារណៈ', en: 'Specific Tax & PLT' },
   khrTotal: { km: 'សរុបរួម', en: 'Total' },
   sellerSignature: { km: 'ហត្ថលេខា និងឈ្មោះអ្នកលក់', en: "Seller's signature and name" },
   buyerSignature: { km: 'ហត្ថលេខា និងឈ្មោះអ្នកទិញ', en: "Buyer's signature and name" },

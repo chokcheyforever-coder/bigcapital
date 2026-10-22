@@ -106,6 +106,7 @@ export class SaleInvoicePdf {
       compliance: await this.taxDocumentPdf.attributes('SaleInvoice', invoiceId, {
         total: Number((invoice as any).total ?? 0),
         tax: Number((invoice as any).taxAmountWithheld ?? 0),
+        excise: Number((invoice as any).exciseAmount ?? 0),
       }),
     };
   }

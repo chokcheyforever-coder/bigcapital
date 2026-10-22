@@ -1,5 +1,6 @@
 import { useFormikContext } from 'formik';
 import React from 'react';
+import { Callout, Intent } from '@blueprintjs/core';
 import styled from 'styled-components';
 import { AdjustmentTotalLine } from './AdjustmentTotalLine';
 import { DiscountTotalLine } from './DiscountTotalLine';
@@ -8,6 +9,7 @@ import {
   useInvoiceAggregatedTaxRates,
   useInvoiceDiscountAmountFormatted,
   useInvoiceDueAmountFormatted,
+  useInvoiceExcise,
   useInvoicePaidAmountFormatted,
   useInvoiceSubtotalFormatted,
   useInvoiceTotalFormatted,
@@ -23,6 +25,7 @@ import {
 import { Features } from '@/constants';
 import { useFeatureCan } from '@/hooks/state';
 import { TaxType } from '@/interfaces/TaxRates';
+import { formattedAmount } from '@/utils';
 
 export function InvoiceFormFooterRight() {
   const {
@@ -33,6 +36,7 @@ export function InvoiceFormFooterRight() {
   const isSalesTaxFeatureCan = featureCan(Features.SalesTax);
 
   const taxEntries = useInvoiceAggregatedTaxRates();
+  const excise = useInvoiceExcise();
   const adjustmentAmount = useInvoiceAdjustmentAmountFormatted();
   const discountAmount = useInvoiceDiscountAmountFormatted();
   const totalFormatted = useInvoiceTotalFormatted();
@@ -42,6 +46,11 @@ export function InvoiceFormFooterRight() {
 
   return (
     <InvoiceTotalLines labelColWidth={'180px'} amountColWidth={'180px'}>
+      {excise.hasExciseItems && inclusiveExclusiveTax === TaxType.Inclusive && (
+        <Callout intent={Intent.WARNING} icon={'warning-sign'} style={{ marginBottom: 10 }} data-testid="excise-inclusive-warning">
+          Some items carry Specific Tax or Public Lighting Tax: switch the invoice to "Exclusive of tax" and enter their prices excluding tax.
+        </Callout>
+      )}
       <TotalLine
         title={
           <>
@@ -58,6 +67,14 @@ export function InvoiceFormFooterRight() {
       />
       <AdjustmentTotalLine adjustmentAmount={adjustmentAmount} />
 
+      {excise.lines.map((line) => (
+        <TotalLine
+          key={line.code}
+          title={line.label}
+          value={formattedAmount(line.amount, currencyCode)}
+          borderStyle={TotalLineBorderStyle.None}
+        />
+      ))}
       {isSalesTaxFeatureCan &&
         taxEntries.map((tax, index) => (
           <TotalLine

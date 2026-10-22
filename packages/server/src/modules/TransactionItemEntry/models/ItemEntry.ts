@@ -6,6 +6,7 @@ import {
   getInclusiveTaxAmount,
 } from '@/modules/TaxRates/utils';
 import { Model } from 'objection';
+import { exciseAmounts } from '@bigcapital/pdf-templates';
 
 export class ItemEntry extends BaseModel {
   public referenceType: string;
@@ -34,6 +35,15 @@ export class ItemEntry extends BaseModel {
   public adjustment: number;
 
   public taxRateId: number;
+
+  // 103 DiTech: Specific/Accommodation Tax and Public Lighting Tax charged
+  // before VAT, at the rates of the item's codes when the line was saved.
+  public specificTaxCodeId: number | null;
+  public specificTaxRate: number | null;
+  public specificTaxBase: number | null;
+  public pltCodeId: number | null;
+  public pltRate: number | null;
+  public pltBase: number | null;
 
   public warehouseId: number;
 
@@ -80,6 +90,11 @@ export class ItemEntry extends BaseModel {
 
       // Total (Subtotal - Discount)
       'total',
+
+      // Specific/Accommodation Tax + PLT (charged before VAT).
+      'specificTaxAmount',
+      'pltAmount',
+      'exciseAmount',
     ];
   }
 
@@ -122,7 +137,9 @@ export class ItemEntry extends BaseModel {
    * @returns {number}
    */
   get subtotalInclusingTax() {
-    return this.isInclusiveTax ? this.amount : this.amount + this.taxAmount;
+    return this.isInclusiveTax
+      ? this.amount
+      : this.amount + this.exciseAmount + this.taxAmount;
   }
 
   /**
@@ -158,7 +175,28 @@ export class ItemEntry extends BaseModel {
   get taxAmount() {
     return this.isInclusiveTax
       ? getInclusiveTaxAmount(this.amount, this.taxRate)
-      : getExlusiveTaxAmount(this.amount, this.taxRate);
+      : getExlusiveTaxAmount(this.amount + this.exciseAmount, this.taxRate);
+  }
+
+  /**
+   * Specific Tax and PLT of the line (103 DiTech). Zero on tax-inclusive
+   * documents, which do not accept these taxes.
+   */
+  get exciseAmounts() {
+    if (this.isInclusiveTax) return { specificTax: 0, plt: 0, total: 0 };
+    return exciseAmounts(this.amount, this);
+  }
+
+  get specificTaxAmount() {
+    return this.exciseAmounts.specificTax;
+  }
+
+  get pltAmount() {
+    return this.exciseAmounts.plt;
+  }
+
+  get exciseAmount() {
+    return this.exciseAmounts.total;
   }
 
   /**
@@ -186,6 +224,7 @@ export class ItemEntry extends BaseModel {
     const { SaleReceipt } = require('../../SaleReceipts/models/SaleReceipt');
     const { SaleEstimate } = require('../../SaleEstimates/models/SaleEstimate');
     const { TaxRateModel } = require('../../TaxRates/models/TaxRate.model');
+    const { ExciseTaxCode } = require('../../TaxCompliance/models/ExciseTaxCode.model');
     // const { Expense } = require('../../Expenses/models/Expense.model');
     // const ProjectTask = require('models/Task');
 
@@ -196,6 +235,24 @@ export class ItemEntry extends BaseModel {
         join: {
           from: 'items_entries.itemId',
           to: 'items.id',
+        },
+      },
+
+      specificTaxCode: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: ExciseTaxCode,
+        join: {
+          from: 'items_entries.specificTaxCodeId',
+          to: 'excise_tax_codes.id',
+        },
+      },
+
+      pltCode: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: ExciseTaxCode,
+        join: {
+          from: 'items_entries.pltCodeId',
+          to: 'excise_tax_codes.id',
         },
       },
 

@@ -40,10 +40,17 @@ export const transformInvoiceToPdfTemplate = (
       quantity: entry.quantityFormatted,
       total: entry.totalFormatted,
     })),
-    taxes: invoice.taxes.map((tax) => ({
-      label: tax.name,
-      amount: tax.taxRateAmountFormatted,
-    })),
+    // 103 DiTech: Specific/Accommodation Tax and PLT print before VAT.
+    taxes: [
+      ...((invoice as any).exciseTaxes ?? []).map((tax) => ({
+        label: `${tax.name} [${tax.rate}%]`,
+        amount: tax.amountFormatted,
+      })),
+      ...invoice.taxes.map((tax) => ({
+        label: tax.name,
+        amount: tax.taxRateAmountFormatted,
+      })),
+    ],
     discount: invoice.discountAmountFormatted,
     discountLabel: invoice.discountPercentageFormatted
       ? `Discount [${invoice.discountPercentageFormatted}]`
