@@ -4,13 +4,16 @@
  * and the monthly return (VAT, withholding, prepayment of tax on income,
  * Specific Tax, PLT, Accommodation Tax); check against the current templates.
  */
+import * as moment from 'moment';
+
 export type BookParty = 'taxpayer' | 'non_taxpayer';
+export type BookDocType = 'invoice' | 'receipt' | 'credit_note' | 'bill' | 'vendor_credit' | 'expense';
 
 export interface BookRow {
   no: number;
   date: string;
   number: string;
-  type: 'invoice' | 'receipt' | 'bill';
+  type: BookDocType;
   id: number;
   party: BookParty;
   partyTin: string | null;
@@ -31,6 +34,99 @@ export interface BookRow {
   taxableKhr: number | null;
   vatKhr: number | null;
   totalKhr: number | null;
+}
+
+/** A document's figures in its own currency, before it becomes a book row. */
+export interface BookDoc {
+  type: BookDocType;
+  id: number;
+  date: string;
+  number: string;
+  contactId: number | null;
+  currencyCode: string;
+  exchangeRate: number;
+  /** The riel rate stored on the document, if any. */
+  khrRate: number | null;
+  /** Value excluding VAT, after discount. */
+  taxable: number;
+  vat: number;
+  specificTax: number;
+  accommodationTax: number;
+  plt: number;
+  total: number;
+  /** -1 for credit notes and vendor credits. */
+  sign: 1 | -1;
+}
+
+const num = (v: unknown) => Number(v) || 0;
+
+/**
+ * A document with item lines (invoice, receipt, credit note, bill, vendor
+ * credit) as a BookDoc. Reads the model's getters: VAT is
+ * taxAmountWithheld, and the lines' Specific/Accommodation Tax and PLT.
+ */
+export function itemDoc(
+  model: any,
+  opts: {
+    type: BookDocType;
+    date: Date | string;
+    number: string;
+    contactId: number | null;
+    subtotalExcludingTax?: number;
+    sign?: 1 | -1;
+    /** Use the riel rate stored on the document (sales documents). */
+    ownRate?: boolean;
+  },
+): BookDoc {
+  let specificTax = 0;
+  let accommodationTax = 0;
+  let plt = 0;
+  for (const e of model.entries ?? []) {
+    if (e.specificTaxCode?.kind === 'accommodation') accommodationTax += num(e.specificTaxAmount);
+    else specificTax += num(e.specificTaxAmount);
+    plt += num(e.pltAmount);
+  }
+  const subtotal = opts.subtotalExcludingTax ?? model.subtotalExcludingTax ?? model.subtotal;
+  return {
+    type: opts.type,
+    id: model.id,
+    date: moment(opts.date).format('YYYY-MM-DD'),
+    number: opts.number,
+    contactId: opts.contactId ?? null,
+    currencyCode: model.currencyCode,
+    exchangeRate: num(model.exchangeRate) || 1,
+    khrRate: opts.ownRate === false ? null : num(model.khrRate) || null,
+    taxable: Math.max(num(subtotal) - num(model.discountAmount), 0),
+    vat: num(model.taxAmountWithheld),
+    specificTax,
+    accommodationTax,
+    plt,
+    total: num(model.total),
+    sign: opts.sign ?? 1,
+  };
+}
+
+/** A published expense as a BookDoc: its categories' total, input VAT if any. */
+export function expenseDoc(model: any): BookDoc {
+  const vat = num(model.taxAmountWithheld);
+  const total = num(model.totalAmount);
+  return {
+    type: 'expense',
+    id: model.id,
+    date: moment(model.paymentDate).format('YYYY-MM-DD'),
+    number: model.referenceNo || `EXP-${model.id}`,
+    contactId: model.payeeId || null,
+    currencyCode: model.currencyCode,
+    exchangeRate: num(model.exchangeRate) || 1,
+    khrRate: null,
+    taxable: total - vat,
+    vat,
+    specificTax: 0,
+    accommodationTax: 0,
+    plt: 0,
+    total,
+    sign: 1,
+  };
 }
 
 export const PREPAYMENT_RATE = 1;

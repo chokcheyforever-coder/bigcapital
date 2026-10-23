@@ -8,6 +8,7 @@ import { useAuthOrganizationId, useAuthToken } from '@/hooks/state';
 import { useTaxApi } from '../compliance/useTaxApi';
 
 const n = (v) => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const TYPE_LABELS = { receipt: 'receipt', credit_note: 'credit note', vendor_credit: 'vendor credit', expense: 'expense' };
 const riel = (v) => (v === null || v === undefined ? '—' : `${Number(v).toLocaleString('en-US')} ៛`);
 
 export function VatBooksTab({ month }) {
@@ -42,8 +43,8 @@ export function VatBooksTab({ month }) {
       </div>
       <Callout icon={'info-sign'} style={{ marginBottom: 12 }}>
         {isSales
-          ? 'Delivered invoices and closed receipts dated in the month. Receipts carry no VAT and are listed as non-taxable sales. Credit notes are not listed: BigCapital records them without VAT, so adjust the return for them by hand.'
-          : 'Open bills dated in the month. Expenses carry no VAT and are not listed.'}{' '}
+          ? 'Delivered invoices, closed receipts and open credit notes (as negative rows) dated in the month.'
+          : 'Open bills, published expenses and open vendor credits (as negative rows) dated in the month.'}{' '}
         Amounts are in the base currency, with riel at each document's rate. Check the columns against the current GDT e-VAT template before importing.
       </Callout>
       {isLoading ? (
@@ -59,7 +60,7 @@ export function VatBooksTab({ month }) {
               <tr>
                 <th>No.</th>
                 <th>Date</th>
-                <th>{isSales ? 'Invoice' : 'Bill'}</th>
+                <th>{'Document'}</th>
                 <th>{isSales ? 'Buyer' : 'Supplier'}</th>
                 <th>TIN</th>
                 <th style={{ textAlign: 'right' }}>Non-taxable</th>
@@ -76,7 +77,7 @@ export function VatBooksTab({ month }) {
                   <td>{r.no}</td>
                   <td>{r.date}</td>
                   <td>
-                    {r.number} {r.type === 'receipt' ? <span className={Classes.TEXT_MUTED}>(receipt)</span> : null}
+                    {r.number} {TYPE_LABELS[r.type] ? <span className={Classes.TEXT_MUTED}>({TYPE_LABELS[r.type]})</span> : null}
                   </td>
                   <td>
                     {r.party_name}

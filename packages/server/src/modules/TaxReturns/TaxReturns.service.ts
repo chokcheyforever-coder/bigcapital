@@ -8,6 +8,9 @@ import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 import { SaleInvoice } from '@/modules/SaleInvoices/models/SaleInvoice';
 import { SaleReceipt } from '@/modules/SaleReceipts/models/SaleReceipt';
 import { Bill } from '@/modules/Bills/models/Bill';
+import { CreditNote } from '@/modules/CreditNotes/models/CreditNote';
+import { VendorCredit } from '@/modules/VendorCredit/models/VendorCredit';
+import { Expense } from '@/modules/Expenses/models/Expense.model';
 import { Account } from '@/modules/Accounts/models/Account.model';
 import { ManualJournal } from '@/modules/ManualJournals/models/ManualJournal';
 import { CreateManualJournalService } from '@/modules/ManualJournals/commands/CreateManualJournal.service';
@@ -16,7 +19,7 @@ import { TENANCY_DB_CONNECTION } from '@/modules/Tenancy/TenancyDB/TenancyDB.con
 import { TaxProfileService, TaxProfileView } from '@/modules/TaxCompliance/TaxProfile.service';
 import { WithholdingTaxService } from '@/modules/TaxCompliance/WithholdingTax.service';
 import { TaxPrepayment } from './models/TaxPrepayment.model';
-import { BookParty, BookRow, bookAoa, worksheet } from './calc/returns';
+import { BookDoc, BookRow, bookAoa, expenseDoc, itemDoc, worksheet } from './calc/returns';
 
 export const TAX_RETURN_ERRORS = {
   NOTHING_TO_POST: 'TAX_PREPAYMENT_NOTHING_TO_POST',
@@ -47,6 +50,15 @@ export class TaxReturnsService {
 
     @Inject(Bill.name)
     private readonly billModel: TenantModelProxy<typeof Bill>,
+
+    @Inject(CreditNote.name)
+    private readonly creditNoteModel: TenantModelProxy<typeof CreditNote>,
+
+    @Inject(VendorCredit.name)
+    private readonly vendorCreditModel: TenantModelProxy<typeof VendorCredit>,
+
+    @Inject(Expense.name)
+    private readonly expenseModel: TenantModelProxy<typeof Expense>,
 
     @Inject(Account.name)
     private readonly accountModel: TenantModelProxy<typeof Account>,
@@ -97,137 +109,107 @@ export class TaxReturnsService {
     );
   }
 
-  /** The sales book: delivered invoices and closed receipts dated in the month. */
-  async salesBook(month: string): Promise<BookRow[]> {
-    const [from, to] = this.range(month);
+  /**
+   * One book row from a document's own-currency figures. Credit notes and
+   * vendor credits come in with sign -1 so they reduce the month's totals.
+   */
+  private async row(doc: BookDoc, parties: Record<number, any>, rateOf: ReturnType<TaxReturnsService['rateFinder']>): Promise<BookRow> {
+    const fx = Number(doc.exchangeRate) || 1;
+    const k = doc.sign * fx;
+    const khr = await rateOf(doc.currencyCode, doc.date, doc.khrRate);
+    const party = doc.contactId ? parties[doc.contactId] : undefined;
+    const taxableDoc = doc.vat ? doc.taxable : 0;
+    return {
+      no: 0,
+      date: doc.date,
+      number: doc.number,
+      type: doc.type,
+      id: doc.id,
+      party: party?.registered ? 'taxpayer' : 'non_taxpayer',
+      partyTin: party?.tin ?? null,
+      partyNameKm: party?.nameKm ?? null,
+      partyName: party?.name ?? '',
+      currencyCode: doc.currencyCode,
+      khrRate: khr,
+      nonTaxable: doc.vat ? 0 : doc.taxable * k,
+      taxable: taxableDoc * k,
+      vat: doc.vat * k,
+      specificTax: doc.specificTax * k,
+      accommodationTax: doc.accommodationTax * k,
+      plt: doc.plt * k,
+      total: doc.total * k,
+      taxableKhr: khr ? Math.round(taxableDoc * khr) * doc.sign : null,
+      vatKhr: khr ? Math.round(doc.vat * khr) * doc.sign : null,
+      totalKhr: khr ? Math.round(doc.total * khr) * doc.sign : null,
+    };
+  }
+
+  private async rows(docs: BookDoc[]): Promise<BookRow[]> {
     const profile = await this.profiles.get();
     const rateOf = this.rateFinder(profile);
+    const parties = await this.contacts(docs.map((d) => d.contactId).filter(Boolean) as number[]);
+    const rows: BookRow[] = [];
+    for (const doc of docs) rows.push(await this.row(doc, parties, rateOf));
+    return this.number(rows);
+  }
+
+  /**
+   * The sales book: delivered invoices, closed receipts and open credit notes
+   * (negative) dated in the month.
+   */
+  async salesBook(month: string): Promise<BookRow[]> {
+    const [from, to] = this.range(month);
     const invoices = await this.invoiceModel()
       .query()
       .whereBetween('invoiceDate', [from, to])
       .whereNotNull('deliveredAt')
-      .withGraphFetched('entries.[specificTaxCode, pltCode]')
-      .orderBy('invoiceDate')
-      .orderBy('id');
-    const receipts = await this.receiptModel().query().whereBetween('receiptDate', [from, to]).whereNotNull('closedAt').orderBy('receiptDate').orderBy('id');
-    const parties = await this.contacts([...invoices.map((i) => i.customerId), ...receipts.map((r) => r.customerId)]);
-    const rows: BookRow[] = [];
-
-    for (const inv of invoices) {
-      const fx = Number(inv.exchangeRate) || 1;
-      const vatDoc = Number(inv.taxAmountWithheld) || 0;
-      const taxableDoc = Math.max((Number(inv.subtotalExludingTax) || 0) - (Number(inv.discountAmount) || 0), 0);
-      let specific = 0;
-      let accommodation = 0;
-      let plt = 0;
-      for (const e of inv.entries ?? []) {
-        const kind = (e as any).specificTaxCode?.kind;
-        if (kind === 'accommodation') accommodation += e.specificTaxAmount;
-        else specific += e.specificTaxAmount;
-        plt += e.pltAmount;
-      }
-      const date = moment(inv.invoiceDate).format('YYYY-MM-DD');
-      const khr = await rateOf(inv.currencyCode, date, (inv as any).khrRate);
-      const party = parties[inv.customerId];
-      const totalDoc = Number(inv.total) || 0;
-      rows.push({
-        no: 0,
-        date,
-        number: inv.invoiceNo,
-        type: 'invoice',
-        id: inv.id,
-        party: party?.registered ? 'taxpayer' : 'non_taxpayer',
-        partyTin: party?.tin ?? null,
-        partyNameKm: party?.nameKm ?? null,
-        partyName: party?.name ?? '',
-        currencyCode: inv.currencyCode,
-        khrRate: khr,
-        nonTaxable: vatDoc ? 0 : taxableDoc * fx,
-        taxable: vatDoc ? taxableDoc * fx : 0,
-        vat: vatDoc * fx,
-        specificTax: specific * fx,
-        accommodationTax: accommodation * fx,
-        plt: plt * fx,
-        total: totalDoc * fx,
-        taxableKhr: khr ? Math.round((vatDoc ? taxableDoc : 0) * khr) : null,
-        vatKhr: khr ? Math.round(vatDoc * khr) : null,
-        totalKhr: khr ? Math.round(totalDoc * khr) : null,
-      });
-    }
-    for (const rec of receipts) {
-      const fx = Number(rec.exchangeRate) || 1;
-      const totalDoc = Number(rec.total) || 0;
-      const date = moment(rec.receiptDate).format('YYYY-MM-DD');
-      const khr = await rateOf(rec.currencyCode, date, (rec as any).khrRate);
-      const party = parties[rec.customerId];
-      rows.push({
-        no: 0,
-        date,
-        number: rec.receiptNumber,
-        type: 'receipt',
-        id: rec.id,
-        party: party?.registered ? 'taxpayer' : 'non_taxpayer',
-        partyTin: party?.tin ?? null,
-        partyNameKm: party?.nameKm ?? null,
-        partyName: party?.name ?? '',
-        currencyCode: rec.currencyCode,
-        khrRate: khr,
-        nonTaxable: totalDoc * fx,
-        taxable: 0,
-        vat: 0,
-        specificTax: 0,
-        accommodationTax: 0,
-        plt: 0,
-        total: totalDoc * fx,
-        taxableKhr: khr ? 0 : null,
-        vatKhr: khr ? 0 : null,
-        totalKhr: khr ? Math.round(totalDoc * khr) : null,
-      });
-    }
-    return this.number(rows);
+      .withGraphFetched('entries.[specificTaxCode, pltCode]');
+    const receipts = await this.receiptModel().query().whereBetween('receiptDate', [from, to]).whereNotNull('closedAt').withGraphFetched('entries.[specificTaxCode, pltCode]');
+    const creditNotes = await this.creditNoteModel().query().whereBetween('creditNoteDate', [from, to]).whereNotNull('openedAt').withGraphFetched('entries.[specificTaxCode, pltCode]');
+    return this.rows([
+      ...invoices.map((inv) =>
+        itemDoc(inv, {
+          type: 'invoice',
+          date: inv.invoiceDate,
+          number: inv.invoiceNo,
+          contactId: inv.customerId,
+          subtotalExcludingTax: (inv as any).subtotalExludingTax,
+        }),
+      ),
+      ...receipts.map((rec) => itemDoc(rec, { type: 'receipt', date: rec.receiptDate, number: rec.receiptNumber, contactId: rec.customerId })),
+      ...creditNotes.map((cn) => itemDoc(cn, { type: 'credit_note', date: cn.creditNoteDate, number: cn.creditNoteNumber, contactId: cn.customerId, sign: -1 })),
+    ]);
   }
 
-  /** The purchase book: open bills dated in the month. */
+  /**
+   * The purchase book: open bills, published expenses and open vendor credits
+   * (negative) dated in the month.
+   */
   async purchaseBook(month: string): Promise<BookRow[]> {
     const [from, to] = this.range(month);
-    const profile = await this.profiles.get();
-    const rateOf = this.rateFinder(profile);
-    const bills = await this.billModel().query().whereBetween('billDate', [from, to]).whereNotNull('openedAt').orderBy('billDate').orderBy('id');
-    const parties = await this.contacts(bills.map((b) => b.vendorId));
-    const rows: BookRow[] = [];
-    for (const bill of bills) {
-      const fx = Number(bill.exchangeRate) || 1;
-      const vatDoc = Number(bill.taxAmountWithheld) || 0;
-      const taxableDoc = Math.max((Number(bill.subtotalExcludingTax) || 0) - (Number(bill.discountAmount) || 0), 0);
-      const totalDoc = Number(bill.total) || 0;
-      const date = moment(bill.billDate).format('YYYY-MM-DD');
-      const khr = await rateOf(bill.currencyCode, date);
-      const party = parties[bill.vendorId];
-      rows.push({
-        no: 0,
-        date,
-        number: bill.billNumber || bill.referenceNo || `#${bill.id}`,
-        type: 'bill',
-        id: bill.id,
-        party: party?.registered ? 'taxpayer' : 'non_taxpayer',
-        partyTin: party?.tin ?? null,
-        partyNameKm: party?.nameKm ?? null,
-        partyName: party?.name ?? '',
-        currencyCode: bill.currencyCode,
-        khrRate: khr,
-        nonTaxable: vatDoc ? 0 : taxableDoc * fx,
-        taxable: vatDoc ? taxableDoc * fx : 0,
-        vat: vatDoc * fx,
-        specificTax: 0,
-        accommodationTax: 0,
-        plt: 0,
-        total: totalDoc * fx,
-        taxableKhr: khr ? Math.round((vatDoc ? taxableDoc : 0) * khr) : null,
-        vatKhr: khr ? Math.round(vatDoc * khr) : null,
-        totalKhr: khr ? Math.round(totalDoc * khr) : null,
-      });
-    }
-    return this.number(rows);
+    const bills = await this.billModel().query().whereBetween('billDate', [from, to]).whereNotNull('openedAt').withGraphFetched('entries.[specificTaxCode, pltCode]');
+    const vendorCredits = await this.vendorCreditModel()
+      .query()
+      .whereBetween('vendorCreditDate', [from, to])
+      .whereNotNull('openedAt')
+      .withGraphFetched('entries.[specificTaxCode, pltCode]');
+    const expenses = await this.expenseModel().query().whereBetween('paymentDate', [from, to]).whereNotNull('publishedAt');
+    return this.rows([
+      ...bills.map((bill) =>
+        itemDoc(bill, { type: 'bill', date: bill.billDate, number: bill.billNumber || bill.referenceNo || `#${bill.id}`, contactId: bill.vendorId, ownRate: false }),
+      ),
+      ...vendorCredits.map((vc) =>
+        itemDoc(vc, {
+          type: 'vendor_credit',
+          date: vc.vendorCreditDate,
+          number: vc.vendorCreditNumber || vc.referenceNo || `#${vc.id}`,
+          contactId: vc.vendorId,
+          sign: -1,
+          ownRate: false,
+        }),
+      ),
+      ...expenses.map((exp) => expenseDoc(exp)),
+    ]);
   }
 
   private number(rows: BookRow[]) {
