@@ -9,8 +9,16 @@ export const transformCreditNoteToPdfTemplate = (
     creditNoteDate: creditNote.formattedCreditNoteDate,
     creditNoteNumebr: creditNote.creditNoteNumber,
 
-    total: creditNote.formattedAmount,
+    // 103 DiTech: the total after discount and taxes, with each tax on its line.
+    total: (creditNote as any).totalFormatted ?? creditNote.formattedAmount,
     subtotal: creditNote.formattedSubtotal,
+    discount: (creditNote as any).discountAmount
+      ? (creditNote as any).discountAmountFormatted
+      : undefined,
+    taxes: ((creditNote as any).taxLines ?? []).map((tax) => ({
+      label: `${tax.name} [${tax.rate}%]`,
+      amount: tax.amountFormatted,
+    })),
 
     lines: creditNote.entries?.map((entry) => ({
       item: entry.item.name,

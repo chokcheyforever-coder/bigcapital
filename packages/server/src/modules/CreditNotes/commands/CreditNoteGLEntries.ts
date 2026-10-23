@@ -40,7 +40,7 @@ export class CreditNoteGLEntries {
     // Retrieve the credit note with associated entries and items.
     const creditNoteWithItems = await CreditNote.query(trx)
       .findById(creditNoteId)
-      .withGraphFetched('entries.item');
+      .withGraphFetched('entries.[item, specificTaxCode, pltCode]');
 
     // Retreive the the `accounts receivable` account based on the given currency.
     const ARAccount =
@@ -53,10 +53,15 @@ export class CreditNoteGLEntries {
     const adjustmentAccount =
       await this.accountRepository.findOrCreateOtherChargesAccount({});
 
+    // 103 DiTech: credit notes reverse VAT.
+    const taxPayableAccount =
+      await this.accountRepository.findOrCreateTaxPayable({}, trx);
+
     const creditNoteLedger = new CreditNoteGL(creditNoteWithItems)
       .setARAccountId(ARAccount.id)
       .setDiscountAccountId(discountAccount.id)
       .setAdjustmentAccountId(adjustmentAccount.id)
+      .setTaxPayableAccountId(taxPayableAccount.id)
       .getCreditNoteLedger();
 
     // Saves the credit note GL entries.

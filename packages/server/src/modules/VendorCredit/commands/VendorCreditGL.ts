@@ -8,6 +8,7 @@ export class VendorCreditGL {
   private APAccountId: number;
   private purchaseDiscountAccountId: number;
   private otherExpensesAccountId: number;
+  private taxPayableAccountId: number;
 
   constructor(private vendorCredit: VendorCredit) {}
 
@@ -45,6 +46,15 @@ export class VendorCreditGL {
    * Retrieve the vendor credit GL common entry.
    * @param {IVendorCredit} vendorCredit
    */
+  /**
+   * Sets the tax payable account id (103 DiTech).
+   * @param {number} taxPayableAccountId
+   */
+  public setTaxPayableAccountId(taxPayableAccountId: number) {
+    this.taxPayableAccountId = taxPayableAccountId;
+    return this;
+  }
+
   public get vendorCreditGLCommonEntry() {
     return {
       date: this.vendorCredit.vendorCreditDate,
@@ -110,6 +120,26 @@ export class VendorCreditGL {
    * Retrieves the vendor credit discount GL entry.
    * @returns {ILedgerEntry}
    */
+  /**
+   * The input VAT of a line, credited back to tax payable (bills debit it)
+   * (103 DiTech).
+   * @param {ItemEntry} entry
+   * @param {number} index
+   * @returns {ILedgerEntry}
+   */
+  private getVendorCreditTaxEntry(entry: ItemEntry, index: number): ILedgerEntry {
+    return {
+      ...this.vendorCreditGLCommonEntry,
+      credit: entry.taxAmount * (this.vendorCredit.exchangeRate || 1),
+      accountId: this.taxPayableAccountId,
+      index: index + 1,
+      indexGroup: 30,
+      accountNormal: AccountNormal.CREDIT,
+      taxRateId: entry.taxRateId,
+      taxRate: entry.taxRate,
+    };
+  }
+
   public get discountEntry(): ILedgerEntry {
     const commonEntry = this.vendorCreditGLCommonEntry;
 
@@ -153,8 +183,17 @@ export class VendorCreditGL {
     );
     const discountEntry = this.discountEntry;
     const adjustmentEntry = this.adjustmentEntry;
+    const taxEntries = this.vendorCredit.entries
+      .filter((entry) => entry.taxAmount > 0)
+      .map((entry, index) => this.getVendorCreditTaxEntry(entry, index));
 
-    return [payableEntry, discountEntry, adjustmentEntry, ...itemsEntries];
+    return [
+      payableEntry,
+      discountEntry,
+      adjustmentEntry,
+      ...itemsEntries,
+      ...taxEntries,
+    ];
   }
 
   /**

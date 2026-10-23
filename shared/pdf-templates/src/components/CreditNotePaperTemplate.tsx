@@ -72,6 +72,11 @@ export interface CreditNotePaperTemplateProps extends PaperTemplateProps {
   subtotalLabel?: string;
   subtotal?: string;
 
+  // 103 DiTech: discount and taxes (VAT, Specific/Accommodation Tax, PLT).
+  discountLabel?: string;
+  discount?: string;
+  taxes?: Array<{ label: string; amount: string }>;
+
   // Total
   showTotal?: boolean;
   totalLabel?: string;
@@ -127,6 +132,10 @@ export function CreditNotePaperTemplate({
   subtotalLabel = 'Subtotal',
   showSubtotal = true,
   subtotal = '1000.00',
+
+  discountLabel = 'Discount',
+  discount,
+  taxes = [],
 
   // Total
   totalLabel = 'Total',
@@ -250,6 +259,15 @@ export function CreditNotePaperTemplate({
                 border={PaperTemplateTotalBorder.Gray}
               />
             )}
+            {discount && (
+              <PaperTemplate.TotalLine
+                label={L?.discount ?? discountLabel}
+                amount={discount}
+              />
+            )}
+            {taxes.map((tax, index) => (
+              <PaperTemplate.TotalLine key={index} label={tax.label} amount={tax.amount} />
+            ))}
             {showTotal && (
               <PaperTemplate.TotalLine
                 label={L?.totalInclTax ?? totalLabel}

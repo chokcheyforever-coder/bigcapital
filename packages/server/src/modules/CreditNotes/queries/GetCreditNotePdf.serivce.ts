@@ -124,8 +124,9 @@ export class GetCreditNotePdf {
       ...brandingTemplate.attributes,
       ...transformCreditNoteToPdfTemplate(creditNote),
       compliance: await this.taxDocumentPdf.attributes('CreditNote', creditNoteId, {
-        total: Number((creditNote as any).amount ?? (creditNote as any).total ?? 0),
-        tax: 0,
+        total: Number((creditNote as any).total ?? (creditNote as any).amount ?? 0),
+        tax: Number((creditNote as any).taxAmountWithheld ?? 0),
+        excise: Number((creditNote as any).exciseAmount ?? 0),
       }),
     };
   }

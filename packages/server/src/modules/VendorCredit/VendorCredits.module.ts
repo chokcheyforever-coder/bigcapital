@@ -31,8 +31,10 @@ import { VendorCreditsImportable } from './commands/VendorCreditsImportable';
 import { BulkDeleteVendorCreditsService } from './BulkDeleteVendorCredits.service';
 import { ValidateBulkDeleteVendorCreditsService } from './ValidateBulkDeleteVendorCredits.service';
 
+import { TaxComplianceModule } from '../TaxCompliance/TaxCompliance.module';
 @Module({
   imports: [
+    TaxComplianceModule,
     ItemsModule,
     PdfTemplatesModule,
     ChromiumlyTenancyModule,

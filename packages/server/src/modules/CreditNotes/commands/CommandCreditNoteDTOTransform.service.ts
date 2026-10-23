@@ -13,6 +13,7 @@ import { assocItemEntriesDefaultIndex } from '@/utils/associate-item-entries-ind
 import { formatDateFields } from '@/utils/format-date-fields';
 import { CreditNoteAutoIncrementService } from './CreditNoteAutoIncrement.service';
 import { CreditNote } from '../models/CreditNote';
+import { DocumentTaxesService } from '@/modules/TaxCompliance/DocumentTaxes.service';
 import {
   CreateCreditNoteDto,
   CreditNoteEntryDto,
@@ -34,6 +35,7 @@ export class CommandCreditNoteDTOTransform {
     private readonly warehouseDTOTransform: WarehouseTransactionDTOTransform,
     private readonly brandingTemplatesTransformer: BrandingTemplateDTOTransformer,
     private readonly creditNoteAutoIncrement: CreditNoteAutoIncrementService,
+    private readonly documentTaxes: DocumentTaxesService,
   ) {}
 
   /**
@@ -50,7 +52,7 @@ export class CommandCreditNoteDTOTransform {
     const amount = this.itemsEntriesService.getTotalItemsEntries(
       creditNoteDTO.entries,
     );
-    const entries = R.compose(
+    const initialEntries = R.compose(
       // Associate the default index to each item entry.
       assocItemEntriesDefaultIndex,
 
@@ -60,6 +62,12 @@ export class CommandCreditNoteDTOTransform {
         referenceType: 'CreditNote',
       })),
     )(creditNoteDTO.entries);
+
+    // 103 DiTech: VAT and Specific/Accommodation Tax + PLT on the lines.
+    const entries = await this.documentTaxes.assocEntries(
+      initialEntries,
+      creditNoteDTO.isInclusiveTax,
+    );
 
     // Retrieves the next credit note number.
     const autoNextNumber = this.creditNoteAutoIncrement.getNextCreditNumber();
@@ -78,6 +86,8 @@ export class CommandCreditNoteDTOTransform {
       amount,
       currencyCode: customerCurrencyCode,
       exchangeRate: creditNoteDTO.exchangeRate || 1,
+      isInclusiveTax: !!creditNoteDTO.isInclusiveTax,
+      ...this.documentTaxes.totals(entries),
       entries,
       ...(creditNoteDTO.open &&
         !oldCreditNote?.openedAt && {
@@ -132,4 +142,12 @@ export class CommandCreditNoteDTOTransform {
       throw new ServiceError(ERRORS.CREDIT_NOTE_AMOUNT_SMALLER_THAN_USED);
     }
   };
+
+  /**
+   * What the credit can be used for, lines plus their taxes (103 DiTech).
+   * @param {{ amount: number }} model - The transformed credit.
+   * @returns {number}
+   */
+  public creditable = (model: any): number => this.documentTaxes.creditable(model);
+
 }

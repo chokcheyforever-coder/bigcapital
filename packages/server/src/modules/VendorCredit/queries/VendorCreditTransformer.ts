@@ -1,6 +1,7 @@
 import { AttachmentTransformer } from '@/modules/Attachments/Attachment.transformer';
 import { ItemEntryTransformer } from '@/modules/TransactionItemEntry/ItemEntry.transformer';
 import { Transformer } from '@/modules/Transformer/Transformer';
+import { documentTaxLines } from '@/modules/TaxCompliance/calc/taxLines';
 import { VendorCredit } from '../models/VendorCredit';
 
 export class VendorCreditTransformer extends Transformer {
@@ -25,6 +26,12 @@ export class VendorCreditTransformer extends Transformer {
       'adjustmentLocalFormatted',
 
       'totalFormatted',
+
+      // 103 DiTech: VAT and Specific/Accommodation Tax + PLT.
+      'subtotalExcludingTaxFormatted',
+      'taxAmountWithheldFormatted',
+      'exciseAmountFormatted',
+      'taxLines',
       'entries',
       'attachments',
     ];
@@ -178,5 +185,44 @@ export class VendorCreditTransformer extends Transformer {
    */
   protected attachments = (vendorCredit: VendorCredit) => {
     return this.item(vendorCredit.attachments, new AttachmentTransformer());
+  };
+
+  /**
+   * Subtotal excluding VAT, formatted (103 DiTech).
+   */
+  protected subtotalExcludingTaxFormatted = (vendorCredit: VendorCredit): string => {
+    return this.formatNumber(vendorCredit.subtotalExcludingTax, {
+      currencyCode: vendorCredit.currencyCode,
+    });
+  };
+
+  /**
+   * VAT, formatted (103 DiTech).
+   */
+  protected taxAmountWithheldFormatted = (vendorCredit: VendorCredit): string => {
+    return this.formatNumber(Number(vendorCredit.taxAmountWithheld) || 0, {
+      currencyCode: vendorCredit.currencyCode,
+    });
+  };
+
+  /**
+   * Specific/Accommodation Tax + PLT, formatted (103 DiTech).
+   */
+  protected exciseAmountFormatted = (vendorCredit: VendorCredit): string => {
+    return this.formatNumber(Number(vendorCredit.exciseAmount) || 0, {
+      currencyCode: vendorCredit.currencyCode,
+    });
+  };
+
+  /**
+   * The taxes as lines, excise then VAT by rate (103 DiTech).
+   */
+  protected taxLines = (vendorCredit: VendorCredit) => {
+    return documentTaxLines(vendorCredit.entries ?? []).map((line) => ({
+      ...line,
+      amountFormatted: this.formatNumber(line.amount, {
+        currencyCode: vendorCredit.currencyCode,
+      }),
+    }));
   };
 }

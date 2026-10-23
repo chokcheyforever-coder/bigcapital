@@ -7,6 +7,7 @@ import { ItemsEntriesService } from '@/modules/Items/ItemsEntries.service';
 import { BranchTransactionDTOTransformer } from '@/modules/Branches/integrations/BranchTransactionDTOTransform';
 import { WarehouseTransactionDTOTransform } from '@/modules/Warehouses/Integrations/WarehouseTransactionDTOTransform';
 import { VendorCredit } from '../models/VendorCredit';
+import { DocumentTaxesService } from '@/modules/TaxCompliance/DocumentTaxes.service';
 import { assocItemEntriesDefaultIndex } from '@/utils/associate-item-entries-index';
 import { formatDateFields } from '@/utils/format-date-fields';
 import { VendorCreditAutoIncrementService } from './VendorCreditAutoIncrement.service';
@@ -31,6 +32,7 @@ export class VendorCreditDTOTransformService {
     private branchDTOTransform: BranchTransactionDTOTransformer,
     private warehouseDTOTransform: WarehouseTransactionDTOTransform,
     private vendorCreditAutoIncrement: VendorCreditAutoIncrementService,
+    private documentTaxes: DocumentTaxesService,
   ) {}
 
   /**
@@ -49,7 +51,7 @@ export class VendorCreditDTOTransformService {
     const amount = this.itemsEntriesService.getTotalItemsEntries(
       vendorCreditDTO.entries,
     );
-    const entries = R.compose(
+    const initialEntries = R.compose(
       // Associate the default index to each item entry.
       assocItemEntriesDefaultIndex,
 
@@ -59,6 +61,14 @@ export class VendorCreditDTOTransformService {
         ...entry,
       })),
     )(vendorCreditDTO.entries);
+
+    // 103 DiTech: VAT on the lines. The supplier's Specific Tax/PLT is part
+    // of the cost (bills), so it comes with purchase excise.
+    const entries = await this.documentTaxes.assocEntries(
+      initialEntries,
+      vendorCreditDTO.isInclusiveTax,
+      { excise: false },
+    );
 
     // Retreive the next vendor credit number.
     const autoNextNumber =
@@ -77,6 +87,8 @@ export class VendorCreditDTOTransformService {
       amount,
       currencyCode: vendorCurrencyCode,
       exchangeRate: vendorCreditDTO.exchangeRate || 1,
+      isInclusiveTax: !!vendorCreditDTO.isInclusiveTax,
+      ...this.documentTaxes.totals(entries),
       vendorCreditNumber,
       entries,
       ...(vendorCreditDTO.open &&
@@ -121,4 +133,12 @@ export class VendorCreditDTOTransformService {
       throw new ServiceError(ERRORS.VENDOR_CREDIT_AMOUNT_SMALLER_THAN_USED);
     }
   };
+
+  /**
+   * What the credit can be used for, lines plus their taxes (103 DiTech).
+   * @param {{ amount: number }} model - The transformed credit.
+   * @returns {number}
+   */
+  public creditable = (model: any): number => this.documentTaxes.creditable(model);
+
 }

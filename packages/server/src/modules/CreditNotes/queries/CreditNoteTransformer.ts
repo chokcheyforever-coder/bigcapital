@@ -1,6 +1,7 @@
 import { AttachmentTransformer } from '@/modules/Attachments/Attachment.transformer';
 import { ItemEntryTransformer } from '@/modules/TransactionItemEntry/ItemEntry.transformer';
 import { Transformer } from '@/modules/Transformer/Transformer';
+import { documentTaxLines } from '@/modules/TaxCompliance/calc/taxLines';
 
 export class CreditNoteTransformer extends Transformer {
   /**
@@ -26,6 +27,12 @@ export class CreditNoteTransformer extends Transformer {
       'adjustmentLocalFormatted',
 
       'totalFormatted',
+
+      // 103 DiTech: VAT and Specific/Accommodation Tax + PLT.
+      'subtotalExcludingTaxFormatted',
+      'taxAmountWithheldFormatted',
+      'exciseAmountFormatted',
+      'taxLines',
       'totalLocalFormatted',
 
       'entries',
@@ -190,5 +197,44 @@ export class CreditNoteTransformer extends Transformer {
    */
   protected attachments = (creditNote) => {
     return this.item(creditNote.attachments, new AttachmentTransformer());
+  };
+
+  /**
+   * Subtotal excluding VAT, formatted (103 DiTech).
+   */
+  protected subtotalExcludingTaxFormatted = (credit: any): string => {
+    return this.formatNumber(credit.subtotalExcludingTax, {
+      currencyCode: credit.currencyCode,
+    });
+  };
+
+  /**
+   * VAT, formatted (103 DiTech).
+   */
+  protected taxAmountWithheldFormatted = (credit: any): string => {
+    return this.formatNumber(Number(credit.taxAmountWithheld) || 0, {
+      currencyCode: credit.currencyCode,
+    });
+  };
+
+  /**
+   * Specific/Accommodation Tax + PLT, formatted (103 DiTech).
+   */
+  protected exciseAmountFormatted = (credit: any): string => {
+    return this.formatNumber(Number(credit.exciseAmount) || 0, {
+      currencyCode: credit.currencyCode,
+    });
+  };
+
+  /**
+   * The taxes as lines, excise then VAT by rate (103 DiTech).
+   */
+  protected taxLines = (credit: any) => {
+    return documentTaxLines(credit.entries ?? []).map((line) => ({
+      ...line,
+      amountFormatted: this.formatNumber(line.amount, {
+        currencyCode: credit.currencyCode,
+      }),
+    }));
   };
 }

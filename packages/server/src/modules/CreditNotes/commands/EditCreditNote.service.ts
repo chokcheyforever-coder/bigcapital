@@ -132,7 +132,7 @@ export class EditCreditNoteService {
     // and applied-to-invoices amounts against the locked row.
     this.commandCreditNoteDTOTransform.validateCreditAmountNotBelowUsed(
       oldCreditNote,
-      creditNoteModel.amount,
+      this.commandCreditNoteDTOTransform.creditable(creditNoteModel),
     );
     return { oldCreditNote, creditNoteModel };
   }

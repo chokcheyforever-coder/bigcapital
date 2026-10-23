@@ -9,6 +9,7 @@ export class CreditNoteGL {
   ARAccountId: number;
   discountAccountId: number;
   adjustmentAccountId: number;
+  taxPayableAccountId: number;
 
   /**
    * @param {CreditNote} creditNoteModel - Credit note model.
@@ -41,6 +42,15 @@ export class CreditNoteGL {
    */
   public setAdjustmentAccountId(adjustmentAccountId: number) {
     this.adjustmentAccountId = adjustmentAccountId;
+    return this;
+  }
+
+  /**
+   * Sets the tax payable account id (103 DiTech).
+   * @param {number} taxPayableAccountId - Tax payable account id.
+   */
+  public setTaxPayableAccountId(taxPayableAccountId: number) {
+    this.taxPayableAccountId = taxPayableAccountId;
     return this;
   }
 
@@ -117,6 +127,51 @@ export class CreditNoteGL {
   }
 
   /**
+   * The VAT of a line, debited back to tax payable (103 DiTech).
+   * @param {ItemEntry} entry
+   * @param {number} index
+   * @returns {ILedgerEntry}
+   */
+  private getCreditNoteTaxEntry(entry: ItemEntry, index: number): ILedgerEntry {
+    return {
+      ...this.creditNoteCommonEntry,
+      debit: entry.taxAmount * this.creditNoteModel.exchangeRate,
+      accountId: this.taxPayableAccountId,
+      index: index + 1,
+      indexGroup: 30,
+      accountNormal: AccountNormal.CREDIT,
+      taxRateId: entry.taxRateId,
+      taxRate: entry.taxRate,
+    };
+  }
+
+  /**
+   * The Specific/Accommodation Tax and PLT of a line, debited back to each
+   * code's payable account (tax payable when a code has none) (103 DiTech).
+   * @param {ItemEntry} entry
+   * @param {number} index
+   * @returns {ILedgerEntry[]}
+   */
+  private getCreditNoteExciseEntries(entry: ItemEntry, index: number): ILedgerEntry[] {
+    const parts = [
+      { amount: entry.specificTaxAmount, accountId: (entry as any).specificTaxCode?.accountId },
+      { amount: entry.pltAmount, accountId: (entry as any).pltCode?.accountId },
+    ];
+    return parts
+      .filter((part) => part.amount > 0)
+      .map((part, partIndex) => ({
+        ...this.creditNoteCommonEntry,
+        debit: part.amount * this.creditNoteModel.exchangeRate,
+        accountId: part.accountId || this.taxPayableAccountId,
+        note: entry.description,
+        index: index * 2 + partIndex + 1,
+        indexGroup: 20,
+        itemId: entry.itemId,
+        accountNormal: AccountNormal.CREDIT,
+      }));
+  }
+
+  /**
    * Retrieves the credit note discount entry.
    * @param {ICreditNote} creditNote
    * @param {number} discountAccountId
@@ -168,8 +223,21 @@ export class CreditNoteGL {
     );
     const discountEntry = this.discountEntry;
     const adjustmentEntry = this.adjustmentEntry;
+    const taxEntries = this.creditNoteModel.entries
+      .filter((entry) => entry.taxAmount > 0)
+      .map((entry, index) => this.getCreditNoteTaxEntry(entry, index));
+    const exciseEntries = this.creditNoteModel.entries.flatMap((entry, index) =>
+      this.getCreditNoteExciseEntries(entry, index),
+    );
 
-    return [AREntry, discountEntry, adjustmentEntry, ...itemsEntries];
+    return [
+      AREntry,
+      discountEntry,
+      adjustmentEntry,
+      ...itemsEntries,
+      ...exciseEntries,
+      ...taxEntries,
+    ];
   }
 
   /**

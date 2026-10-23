@@ -45,10 +45,15 @@ export class VendorCreditGLEntries {
     const otherExpensesAccount =
       await this.accountRepository.findOrCreateOtherExpensesAccount({}, trx);
 
+    // 103 DiTech: vendor credits reverse input VAT.
+    const taxPayableAccount =
+      await this.accountRepository.findOrCreateTaxPayable({}, trx);
+
     const vendorCreditLedger = new VendorCreditGL(vendorCredit)
       .setAPAccountId(APAccount.id)
       .setPurchaseDiscountAccountId(purchaseDiscountAccount.id)
       .setOtherExpensesAccountId(otherExpensesAccount.id)
+      .setTaxPayableAccountId(taxPayableAccount.id)
       .getVendorCreditLedger();
 
     // Commits the ledger entries to the storage.

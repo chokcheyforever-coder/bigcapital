@@ -29,7 +29,7 @@ export class GetVendorCreditService {
     const vendorCredit = await this.vendorCreditModel()
       .query(trx)
       .findById(vendorCreditId)
-      .withGraphFetched('entries.item')
+      .withGraphFetched('entries.[item, tax, specificTaxCode, pltCode]')
       .withGraphFetched('vendor')
       .withGraphFetched('branch')
       .withGraphFetched('attachments');

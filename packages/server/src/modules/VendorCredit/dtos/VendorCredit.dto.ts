@@ -48,6 +48,15 @@ export class CommandVendorCreditDto {
   })
   exchangeRate?: number;
 
+  @IsOptional()
+  @IsBoolean()
+  @ApiProperty({
+    description: 'Whether the prices include VAT (103 DiTech)',
+    required: false,
+    example: false,
+  })
+  isInclusiveTax?: boolean;
+
   @IsString()
   @IsOptional()
   @ApiProperty({ description: 'The vendor credit number', example: '123456' })

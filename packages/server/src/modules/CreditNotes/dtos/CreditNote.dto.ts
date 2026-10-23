@@ -44,6 +44,15 @@ export class CommandCreditNoteDto {
   @ApiProperty({ example: 3.43, description: 'The exchange rate' })
   exchangeRate?: number;
 
+  @IsOptional()
+  @IsBoolean()
+  @ApiProperty({
+    description: 'Whether the prices include VAT (103 DiTech)',
+    required: false,
+    example: false,
+  })
+  isInclusiveTax?: boolean;
+
   @IsNotEmpty()
   @IsDateString()
   @ApiProperty({ example: '2021-09-01', description: 'The credit note date' })

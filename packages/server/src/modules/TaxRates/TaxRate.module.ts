@@ -52,6 +52,11 @@ const models = [RegisterTenancyModel(TaxRateTransaction)];
     TaxRatesImportable,
     SalesTaxFeatureGuard,
   ],
-  exports: [ItemEntriesTaxTransactions, ...models],
+  exports: [
+    ItemEntriesTaxTransactions,
+    WriteTaxTransactionsItemEntries,
+    CommandTaxRatesValidators,
+    ...models,
+  ],
 })
 export class TaxRatesModule {}

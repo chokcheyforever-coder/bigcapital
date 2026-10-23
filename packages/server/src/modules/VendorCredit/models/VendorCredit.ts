@@ -14,6 +14,14 @@ import { InjectModelDefaultViews } from '@/modules/Views/decorators/InjectModelD
 import { VendorCreditDefaultViews } from '../constants';
 import { InjectAttachable } from '@/modules/Attachments/decorators/InjectAttachable.decorator';
 
+
+/**
+ * 103 DiTech: what the credit can be used for, the lines plus their VAT
+ * (unless inside the prices) and Specific Tax/PLT, matching `creditable`.
+ */
+const CREDITABLE_AMOUNT_SQL =
+  'COALESCE(AMOUNT, 0) + IF(IS_INCLUSIVE_TAX, 0, COALESCE(TAX_AMOUNT_WITHHELD, 0)) + COALESCE(EXCISE_AMOUNT, 0)';
+
 @InjectAttachable()
 @ExportableModel()
 @ImportableModel()
@@ -22,6 +30,10 @@ import { InjectAttachable } from '@/modules/Attachments/decorators/InjectAttacha
 export class VendorCredit extends TenantBaseModel {
   vendorId: number;
   amount: number;
+  // 103 DiTech: VAT and Specific/Accommodation Tax + PLT, as on invoices.
+  public isInclusiveTax: boolean;
+  public taxAmountWithheld: number;
+  public exciseAmount: number;
   currencyCode: string;
 
   vendorCreditDate: Date;
@@ -123,7 +135,49 @@ export class VendorCredit extends TenantBaseModel {
    * @returns {number}
    */
   get total() {
-    return this.subtotal - this.discountAmount + this.adjustment;
+    return (
+      this.subtotal -
+      this.discountAmount +
+      this.adjustment +
+      this.exclusiveTaxes
+    );
+  }
+
+  /**
+   * VAT added on top of the prices (none when prices include it) plus
+   * Specific/Accommodation Tax and PLT (103 DiTech).
+   * @returns {number}
+   */
+  get exclusiveTaxes() {
+    const vat = this.isInclusiveTax ? 0 : Number(this.taxAmountWithheld) || 0;
+    return vat + (Number(this.exciseAmount) || 0);
+  }
+
+  /**
+   * Vendor credit amount excluding VAT (103 DiTech).
+   * @returns {number}
+   */
+  get subtotalExcludingTax() {
+    return this.isInclusiveTax
+      ? this.subtotal - (Number(this.taxAmountWithheld) || 0)
+      : this.subtotal;
+  }
+
+  /**
+   * VAT in base currency (103 DiTech).
+   * @returns {number}
+   */
+  get taxAmountWithheldLocal() {
+    return (Number(this.taxAmountWithheld) || 0) * this.exchangeRate;
+  }
+
+  /**
+   * What the credit can be applied or refunded up to: the lines plus their
+   * taxes (103 DiTech; upstream used the lines' amount only).
+   * @returns {number}
+   */
+  get creditable() {
+    return this.amount + this.exclusiveTaxes;
   }
 
   /**
@@ -160,7 +214,7 @@ export class VendorCredit extends TenantBaseModel {
         query
           .where(
             raw(`COALESCE(REFUNDED_AMOUNT) + COALESCE(INVOICED_AMOUNT) <
-            COALESCE(AMOUNT)`),
+            ${CREDITABLE_AMOUNT_SQL}`),
           )
           .modify('published');
       },
@@ -172,7 +226,7 @@ export class VendorCredit extends TenantBaseModel {
         query
           .where(
             raw(`COALESCE(REFUNDED_AMOUNT) + COALESCE(INVOICED_AMOUNT) =
-            COALESCE(AMOUNT)`),
+            ${CREDITABLE_AMOUNT_SQL}`),
           )
           .modify('published');
       },
@@ -204,7 +258,7 @@ export class VendorCredit extends TenantBaseModel {
       sortByStatus(query, order) {
         const dir = sanitizeSortDirection(order);
         query.orderByRaw(
-          `COALESCE(REFUNDED_AMOUNT) + COALESCE(INVOICED_AMOUNT) = COALESCE(AMOUNT) ${dir}`,
+          `COALESCE(REFUNDED_AMOUNT) + COALESCE(INVOICED_AMOUNT) = ${CREDITABLE_AMOUNT_SQL} ${dir}`,
         );
       },
     };
@@ -238,6 +292,10 @@ export class VendorCredit extends TenantBaseModel {
 
       'total',
       'totalLocal',
+
+      'subtotalExcludingTax',
+      'taxAmountWithheldLocal',
+      'creditable',
     ];
   }
 
@@ -278,7 +336,7 @@ export class VendorCredit extends TenantBaseModel {
    * @returns {number}
    */
   get creditsRemaining() {
-    return Math.max(this.amount - this.refundedAmount - this.invoicedAmount, 0);
+    return Math.max(this.creditable - this.refundedAmount - this.invoicedAmount, 0);
   }
 
   /**

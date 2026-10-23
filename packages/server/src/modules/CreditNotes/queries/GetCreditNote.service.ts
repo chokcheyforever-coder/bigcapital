@@ -24,7 +24,7 @@ export class GetCreditNoteService {
     const creditNote = await this.creditNoteModel()
       .query()
       .findById(creditNoteId)
-      .withGraphFetched('entries.item')
+      .withGraphFetched('entries.[item, tax, specificTaxCode, pltCode]')
       .withGraphFetched('customer')
       .withGraphFetched('branch')
       .withGraphFetched('attachments');
