@@ -7,8 +7,10 @@ import {
   useCreditNoteAdjustmentFormatted,
   useCreditNoteDiscountAmountFormatted,
   useCreditNoteSubtotalFormatted,
+  useCreditNoteTaxTotals,
   useCreditNoteTotalFormatted,
 } from './utils';
+import { DocumentTaxTotalLines } from '@/ditech/taxes/DocumentTaxes';
 import type { CreditNoteFormValues } from './utils';
 import {
   T,
@@ -27,6 +29,7 @@ export function CreditNoteFormFooterRight() {
   const totalFormatted = useCreditNoteTotalFormatted();
   const discountAmount = useCreditNoteDiscountAmountFormatted();
   const adjustmentAmount = useCreditNoteAdjustmentFormatted();
+  const taxTotals = useCreditNoteTaxTotals();
 
   return (
     <CreditNoteTotalLines labelColWidth={'180px'} amountColWidth={'180px'}>
@@ -40,6 +43,7 @@ export function CreditNoteFormFooterRight() {
         discountAmount={discountAmount}
       />
       <AdjustmentTotalLine adjustmentAmount={adjustmentAmount} />
+      <DocumentTaxTotalLines totals={taxTotals} currencyCode={currencyCode} />
       <TotalLine
         title={<T id={'credit_note.label_total'} />}
         value={totalFormatted}

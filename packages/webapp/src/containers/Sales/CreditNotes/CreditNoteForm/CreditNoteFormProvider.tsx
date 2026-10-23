@@ -28,6 +28,7 @@ import {
 } from '@/hooks/query';
 import { useGetPdfTemplates } from '@/hooks/query/pdf-templates';
 import { useFeatureCan } from '@/hooks/state';
+import { useTaxRates } from '@/hooks/query/tax-rates';
 
 type CreditNoteFormSubmitPayload = {
   redirect?: boolean;
@@ -38,6 +39,8 @@ type CreditNoteFormSubmitPayload = {
 type CreditNoteFormContextValue = {
   creditNote: CreditNote | undefined;
   items: Item[];
+  /** 103 DiTech: VAT on credit notes. */
+  taxRates: any[];
   customers: Customer[];
   branches: Branch[];
   warehouses: Warehouse[];
@@ -129,6 +132,11 @@ function CreditNoteFormProvider({
   const { data: brandingTemplates, isLoading: isBrandingTemplatesLoading } =
     useGetPdfTemplates({ resource: 'CreditNote' });
 
+  // 103 DiTech: tax rates for the lines' VAT.
+  const { data: taxRates, isLoading: isTaxRatesLoading } = useTaxRates({
+    enabled: featureCan(Features.SalesTax),
+  });
+
   // Fetches the credit note state.
   const { data: creditNoteState, isLoading: isCreditNoteStateLoading } =
     useGetCreditNoteState();
@@ -153,7 +161,7 @@ function CreditNoteFormProvider({
 
   const newCreditNote = !isEmpty(invoice)
     ? transformToEditForm({
-        ...pick(invoice, ['customerId', 'currencyCode', 'entries']),
+        ...pick(invoice, ['customerId', 'currencyCode', 'entries', 'isInclusiveTax']),
       })
     : ([] as []);
 
@@ -162,12 +170,14 @@ function CreditNoteFormProvider({
     isCustomersLoading ||
     isCreditNoteLoading ||
     isInvoiceLoading ||
+    isTaxRatesLoading ||
     isBrandingTemplatesLoading;
 
   // Provider payload.
   const provider: CreditNoteFormContextValue = {
     creditNote,
     items: itemsData?.data ?? [],
+    taxRates: taxRates ?? [],
     customers: customersData?.data ?? [],
     branches: branches ?? [],
     warehouses: warehouses ?? [],

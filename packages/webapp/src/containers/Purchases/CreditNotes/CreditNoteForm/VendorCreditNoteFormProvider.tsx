@@ -25,6 +25,7 @@ import {
   useBill,
 } from '@/hooks/query';
 import { useFeatureCan } from '@/hooks/state';
+import { useTaxRates } from '@/hooks/query/tax-rates';
 
 type VendorCreditFormSubmitPayload = {
   redirect?: boolean;
@@ -35,6 +36,8 @@ type VendorCreditFormSubmitPayload = {
 type VendorCreditFormContextValue = {
   vendorCredit: VendorCredit | undefined;
   items: Item[];
+  /** 103 DiTech: VAT on vendor credits. */
+  taxRates: any[];
   vendors: Vendor[];
   branches: Branch[];
   warehouses: Warehouse[];
@@ -122,6 +125,11 @@ function VendorCreditNoteFormProvider({
     isSuccess: isBranchesSuccess,
   } = useBranches({}, { enabled: isBranchFeatureCan });
 
+  // 103 DiTech: tax rates for the lines' VAT.
+  const { data: taxRates, isLoading: isTaxRatesLoading } = useTaxRates({
+    enabled: featureCan(Features.SalesTax),
+  });
+
   // Form submit payload.
   const [submitPayload, setSubmitPayload] = React.useState<
     VendorCreditFormSubmitPayload | undefined
@@ -139,7 +147,7 @@ function VendorCreditNoteFormProvider({
 
   const newVendorCredit = !isEmpty(bill)
     ? transformToEditForm({
-        ...pick(bill, ['vendorId', 'currencyCode', 'entries']),
+        ...pick(bill, ['vendorId', 'currencyCode', 'entries', 'isInclusiveTax']),
       })
     : ([] as []);
 
@@ -147,6 +155,7 @@ function VendorCreditNoteFormProvider({
   const provider: VendorCreditFormContextValue = {
     vendorCredit,
     items: itemsData?.data ?? [],
+    taxRates: taxRates ?? [],
     vendors: vendorsData?.data ?? [],
     branches: branches ?? [],
     warehouses: warehouses ?? [],
@@ -173,6 +182,7 @@ function VendorCreditNoteFormProvider({
       loading={
         isVendorCreditLoading ||
         isItemsLoading ||
+        isTaxRatesLoading ||
         isVendorsLoading ||
         isVendorCreditLoading ||
         isBillLoading

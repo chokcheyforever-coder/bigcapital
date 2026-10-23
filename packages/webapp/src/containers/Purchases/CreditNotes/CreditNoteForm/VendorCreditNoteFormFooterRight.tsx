@@ -5,10 +5,12 @@ import {
   useVendorCreditAdjustmentAmountFormatted,
   useVendorCreditDiscountAmountFormatted,
   useVendorCreditSubtotalFormatted,
+  useVendorCreditTaxTotals,
   useVendorCreditTotalFormatted,
   type VendorCreditFormValues,
 } from './utils';
 import { T, TotalLines, TotalLine, TotalLineTextStyle } from '@/components';
+import { DocumentTaxTotalLines } from '@/ditech/taxes/DocumentTaxes';
 import { AdjustmentTotalLine } from '@/containers/Sales/Invoices/InvoiceForm/AdjustmentTotalLine';
 import { DiscountTotalLine } from '@/containers/Sales/Invoices/InvoiceForm/DiscountTotalLine';
 
@@ -21,6 +23,7 @@ export function VendorCreditNoteFormFooterRight() {
 
   const discountAmountFormatted = useVendorCreditDiscountAmountFormatted();
   const adjustmentAmountFormatted = useVendorCreditAdjustmentAmountFormatted();
+  const taxTotals = useVendorCreditTaxTotals();
 
   return (
     <VendorCreditNoteTotalLines
@@ -36,6 +39,7 @@ export function VendorCreditNoteFormFooterRight() {
         discountAmount={discountAmountFormatted}
       />
       <AdjustmentTotalLine adjustmentAmount={adjustmentAmountFormatted} />
+      <DocumentTaxTotalLines totals={taxTotals} currencyCode={currencyCode} />
       <TotalLine
         title={<T id={'vendor_credit_form.label.total'} />}
         value={totalFormatted}

@@ -6,18 +6,22 @@ import type { CreditNoteFormValues } from './utils';
 import type { FieldProps } from 'formik';
 import { Box } from '@/components';
 import { ItemsEntriesTable } from '@/containers/Entries/ItemsEntriesTable';
+import { TaxType } from '@/interfaces/TaxRates';
+import { DocumentTaxModeBar } from '@/ditech/taxes/DocumentTaxes';
 
 /**
  * Credit note items entries editor field.
  */
 export function CreditNoteItemsEntriesEditorField() {
-  const { items } = useCreditNoteFormContext();
+  const { items, taxRates } = useCreditNoteFormContext();
 
   return (
     <Box p="18px 32px 0">
+      <DocumentTaxModeBar />
       <FastField
         name={'entries'}
         items={items}
+        taxRates={taxRates}
         shouldUpdate={entriesFieldShouldUpdate}
       >
         {({
@@ -34,7 +38,8 @@ export function CreditNoteItemsEntriesEditorField() {
             errors={error}
             linesNumber={4}
             currencyCode={values.currencyCode}
-            enableTaxRates={false}
+            taxRates={taxRates}
+            isInclusiveTax={values.inclusiveExclusiveTax === TaxType.Inclusive}
           />
         )}
       </FastField>

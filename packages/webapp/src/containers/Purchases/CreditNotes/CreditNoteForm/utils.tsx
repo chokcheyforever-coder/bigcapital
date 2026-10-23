@@ -15,6 +15,8 @@ import {
   getEntriesTotal,
 } from '@/containers/Entries/utils';
 import { useCurrentOrganizationBaseCurrency } from '@/hooks/query';
+import { TaxType } from '@/interfaces/TaxRates';
+import { isInclusive, taxModeFromDocument, useDocumentTaxTotals } from '@/ditech/taxes/DocumentTaxes';
 import {
   defaultFastFieldShouldUpdate,
   transformToForm,
@@ -35,6 +37,10 @@ export type VendorCreditEntry = {
   quantity: string | number;
   description: string;
   amount: string | number;
+  // 103 DiTech: VAT on vendor credits.
+  taxRateId?: string | number;
+  taxRate?: number;
+  taxAmount?: number;
 };
 
 export type VendorCreditFormValues = {
@@ -54,6 +60,7 @@ export type VendorCreditFormValues = {
   discount: string;
   discountType: 'amount' | 'percentage';
   adjustment: string;
+  inclusiveExclusiveTax: TaxType;
   entries: VendorCreditEntry[];
   attachments: unknown[];
 };
@@ -67,6 +74,7 @@ export const defaultVendorCreditEntry: VendorCreditEntry = {
   quantity: '',
   description: '',
   amount: '',
+  taxRateId: '',
 };
 
 // Default vendor credit note.
@@ -87,6 +95,7 @@ export const defaultVendorCredit: VendorCreditFormValues = {
   discount: '',
   discountType: 'amount',
   adjustment: '',
+  inclusiveExclusiveTax: TaxType.Exclusive,
   entries: [...repeatValue(defaultVendorCreditEntry, MIN_LINES_NUMBER)],
   attachments: [],
 };
@@ -122,6 +131,7 @@ export function transformToEditForm(
       vendorCredit,
       defaultVendorCredit,
     ) as Partial<VendorCreditFormValues>),
+    inclusiveExclusiveTax: taxModeFromDocument(vendorCredit),
     entries,
     attachments: transformAttachmentsToForm(vendorCredit),
   };
@@ -135,6 +145,7 @@ const defaultReqVendorCreditEntry = {
   discount: '',
   quantity: '',
   description: '',
+  taxRateId: '',
 };
 
 /**
@@ -169,6 +180,7 @@ export function transformFormValuesToRequest(
   return {
     ...values,
     entries: transformEntriesToSubmit(filterNonZeroEntries(values.entries)),
+    isInclusiveTax: isInclusive(values),
     open: false,
     attachments: transformAttachmentsToRequest(values),
   } as unknown as CreateVendorCreditBody;
@@ -177,6 +189,7 @@ export function transformFormValuesToRequest(
 type FastFieldShouldUpdateProps = {
   shouldUpdateDeps?: { items?: unknown[] };
   items?: unknown;
+  taxRates?: unknown;
   [key: string]: unknown;
 };
 
@@ -202,6 +215,7 @@ export const entriesFieldShouldUpdate = (
 ): boolean => {
   return (
     newProps.items !== oldProps.items ||
+    newProps.taxRates !== oldProps.taxRates ||
     defaultFastFieldShouldUpdate(newProps, oldProps)
   );
 };
@@ -327,11 +341,16 @@ export const useVendorCreditAdjustmentAmountFormatted = () => {
  * Retrieves the vendor credit total.
  */
 export const useVendorCreditTotal = () => {
-  const subtotal = useVendorCreditSubtotal();
-  const discountAmount = useVendorCreditDiscountAmount();
-  const adjustmentAmount = useVendorCreditAdjustmentAmount();
+  return useVendorCreditTaxTotals().total;
+};
 
-  return subtotal + adjustmentAmount - discountAmount;
+/**
+ * 103 DiTech: the vendor credit's VAT and total with VAT. The supplier's
+ * Specific Tax/PLT comes with purchase excise, so none here.
+ */
+export const useVendorCreditTaxTotals = () => {
+  const { taxRates } = useVendorCreditNoteFormContext();
+  return useDocumentTaxTotals(taxRates, { excise: false });
 };
 
 /**

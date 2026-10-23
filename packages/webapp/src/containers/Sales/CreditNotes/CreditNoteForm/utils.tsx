@@ -16,6 +16,8 @@ import {
   ensureEntriesHaveEmptyLine,
 } from '@/containers/Entries/utils';
 import { useCurrentOrganizationBaseCurrency } from '@/hooks/query';
+import { TaxType } from '@/interfaces/TaxRates';
+import { isInclusive, taxModeFromDocument, useDocumentTaxTotals } from '@/ditech/taxes/DocumentTaxes';
 import {
   defaultFastFieldShouldUpdate,
   transformToForm,
@@ -35,6 +37,10 @@ export type CreditNoteEntry = {
   quantity: string | number;
   description: string;
   amount: string | number;
+  // 103 DiTech: VAT on credit notes.
+  taxRateId?: string | number;
+  taxRate?: number;
+  taxAmount?: number;
 };
 
 export type CreditNoteFormValues = {
@@ -56,6 +62,7 @@ export type CreditNoteFormValues = {
   discount: string;
   discountType: 'amount' | 'percentage';
   adjustment: string;
+  inclusiveExclusiveTax: TaxType;
   entries: CreditNoteEntry[];
   attachments: unknown[];
 };
@@ -69,6 +76,7 @@ export const defaultCreditNoteEntry: CreditNoteEntry = {
   quantity: '',
   description: '',
   amount: '',
+  taxRateId: '',
 };
 
 // Default credit note object.
@@ -91,6 +99,7 @@ export const defaultCreditNote: CreditNoteFormValues = {
   discount: '',
   discountType: 'amount',
   adjustment: '',
+  inclusiveExclusiveTax: TaxType.Exclusive,
   entries: [...repeatValue(defaultCreditNoteEntry, MIN_LINES_NUMBER)],
   attachments: [],
 };
@@ -126,6 +135,7 @@ export function transformToEditForm(
       creditNote,
       defaultCreditNote,
     ) as Partial<CreditNoteFormValues>),
+    inclusiveExclusiveTax: taxModeFromDocument(creditNote),
     entries,
     attachments: transformAttachmentsToForm(creditNote),
   };
@@ -139,6 +149,7 @@ const defaultReqCreditNoteEntry = {
   discount: '',
   quantity: '',
   description: '',
+  taxRateId: '',
 };
 
 /**
@@ -173,6 +184,7 @@ export function transformFormValuesToRequest(
   return {
     ...values,
     entries: transformEntriesToSubmit(filterNonZeroEntries(values.entries)),
+    isInclusiveTax: isInclusive(values),
     open: false,
     attachments: transformAttachmentsToRequest(values),
   } as unknown as CreateCreditNoteBody;
@@ -181,6 +193,7 @@ export function transformFormValuesToRequest(
 type FastFieldShouldUpdateProps = {
   shouldUpdateDeps?: { items?: unknown[] };
   items?: unknown;
+  taxRates?: unknown;
   [key: string]: unknown;
 };
 
@@ -206,6 +219,7 @@ export const entriesFieldShouldUpdate = (
 ): boolean => {
   return (
     newProps.items !== oldProps.items ||
+    newProps.taxRates !== oldProps.taxRates ||
     defaultFastFieldShouldUpdate(newProps, oldProps)
   );
 };
@@ -315,11 +329,15 @@ export const useCreditNoteAdjustmentFormatted = () => {
  * Retrieves the credit note total.
  */
 export const useCreditNoteTotal = () => {
-  const subtotal = useCreditNoteSubtotal();
-  const discountAmount = useCreditNoteDiscountAmount();
-  const adjustmentAmount = useCreditNoteAdjustmentAmount();
+  return useCreditNoteTaxTotals().total;
+};
 
-  return subtotal + adjustmentAmount - discountAmount;
+/**
+ * 103 DiTech: the credit note's taxes and total with tax.
+ */
+export const useCreditNoteTaxTotals = () => {
+  const { taxRates } = useCreditNoteFormContext();
+  return useDocumentTaxTotals(taxRates);
 };
 
 /**

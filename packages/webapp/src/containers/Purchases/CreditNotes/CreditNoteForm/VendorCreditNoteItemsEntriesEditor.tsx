@@ -6,14 +6,18 @@ import { useVendorCreditNoteFormContext } from './VendorCreditNoteFormProvider';
 import type { FieldProps } from 'formik';
 import { CLASSES } from '@/constants/classes';
 import { ItemsEntriesTable } from '@/containers/Entries/ItemsEntriesTable';
+import { TaxType } from '@/interfaces/TaxRates';
+import { DocumentTaxModeBar } from '@/ditech/taxes/DocumentTaxes';
 
 export function VendorCreditNoteItemsEntriesEditor() {
-  const { items } = useVendorCreditNoteFormContext();
+  const { items, taxRates } = useVendorCreditNoteFormContext();
   return (
     <div className={classNames(CLASSES.PAGE_FORM_BODY)}>
+      <DocumentTaxModeBar />
       <FastField
         name={'entries'}
         items={items}
+        taxRates={taxRates}
         shouldUpdate={entriesFieldShouldUpdate}
       >
         {({
@@ -30,7 +34,8 @@ export function VendorCreditNoteItemsEntriesEditor() {
             errors={error}
             linesNumber={4}
             currencyCode={values.currencyCode}
-            enableTaxRates={false}
+            taxRates={taxRates}
+            isInclusiveTax={values.inclusiveExclusiveTax === TaxType.Inclusive}
           />
         )}
       </FastField>
